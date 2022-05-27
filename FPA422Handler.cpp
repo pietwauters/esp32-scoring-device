@@ -1,12 +1,12 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
-#include <weaponenum.h>
-#include <RS422_FPA_Type2_Message.h>
-#include <RS422_FPA_Type8_Message.h>
-#include <RS422_FPA_Type3_Message.h>
-#include <RS422_FPA_Message.h>
-#include <RS422_FPA_Type4_Message.h>
-#include <RS422_FPA_Type1_Message.h>
-#include <RS422_FPA_Type5_Message.h>
+#include "weaponenum.h"
+#include "RS422_FPA_Type2_Message.h"
+#include "RS422_FPA_Type3_Message.h"
+#include "RS422_FPA_Message.h"
+#include "RS422_FPA_Type4_Message.h"
+#include "RS422_FPA_Type1_Message.h"
+#include "RS422_FPA_Type5_Message.h"
+#include "RS422_FPA_Type8_Message.h"
 
 #include "FPA422Handler.h"
 #include <HardwareSerial.h>
