@@ -2,7 +2,7 @@
 #ifndef RS422_FPA_TYPE3_MESSAGE_H
 #define RS422_FPA_TYPE3_MESSAGE_H
 
-#include <RS422_FPA_Message.h>
+#include "RS422_FPA_Message.h"
 
 #define TYPE3MESSAGELENGTH 29
 #define IndexScoreRight

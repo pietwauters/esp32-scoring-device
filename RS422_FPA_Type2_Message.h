@@ -2,7 +2,7 @@
 #ifndef RS422_FPA_TYPE2_MESSAGE_H
 #define RS422_FPA_TYPE2_MESSAGE_H
 
-#include <RS422_FPA_Message.h>
+#include "RS422_FPA_Message.h"
 #define TYPE2MESSAGELENGTH 13
 #define IndexStatus 2
 #define IndexMinutes 5

@@ -2,7 +2,7 @@
 #ifndef RS422_FPA_TYPE4_MESSAGE_H
 #define RS422_FPA_TYPE4_MESSAGE_H
 
-#include <RS422_FPA_Message.h>
+#include "RS422_FPA_Message.h"
 #define TYPE4MESSAGELENGTH 12
 
 class RS422_FPA_Type4_Message : public RS422_FPA_Message

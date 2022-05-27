@@ -2,7 +2,7 @@
 #ifndef RS422_FPA_TYPE8_MESSAGE_H
 #define RS422_FPA_TYPE8_MESSAGE_H
 
-#include <RS422_FPA_Message.h>
+#include "RS422_FPA_Message.h"
 
 
 class RS422_FPA_Type8_Message : public RS422_FPA_Message
