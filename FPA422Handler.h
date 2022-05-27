@@ -1,13 +1,13 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #ifndef FPA422HANDLER_H
 #define FPA422HANDLER_H
-#include <RS422_FPA_Type2_Message.h>
-#include <RS422_FPA_Type3_Message.h>
-#include <RS422_FPA_Message.h>
-#include <RS422_FPA_Type4_Message.h>
-#include <RS422_FPA_Type1_Message.h>
-#include <RS422_FPA_Type5_Message.h>
-#include <RS422_FPA_Type8_Message.h>
+#include "RS422_FPA_Type2_Message.h"
+#include "RS422_FPA_Type3_Message.h"
+#include "RS422_FPA_Message.h"
+#include "RS422_FPA_Type4_Message.h"
+#include "RS422_FPA_Type1_Message.h"
+#include "RS422_FPA_Type5_Message.h"
+#include "RS422_FPA_Type8_Message.h"
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
 #include "EventDefinitions.h"
