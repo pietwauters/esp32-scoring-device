@@ -117,6 +117,7 @@ public:
     void SetActualWeapon(weapon_t val)
     {
         m_ActualWeapon = val;
+        DoReset();
     }
     /** Access m_DetectedWeapon
      * \return The current value of m_DetectedWeapon
