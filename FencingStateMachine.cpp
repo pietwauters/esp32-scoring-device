@@ -43,10 +43,6 @@ FencingStateMachine::FencingStateMachine(int hw_timer_nr, int tickPeriod)
     ResetAll();
     m_Timer.SetTicksPeriod(tickPeriod);
     //m_Timer.SetDisplayResolution(100);
-
-
-
-
 }
 
 FencingStateMachine::~FencingStateMachine()
@@ -158,10 +154,6 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     }
     break;
 
-    case UI_INPUT_CYCLE_WEAPON:
-
-    break;
-
     case UI_INPUT_PRIO:
     if(m_Priority != NO_PRIO)
     {
@@ -246,11 +238,46 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     case UI_INPUT_P_CARD:
     ProcessUW2F();
     StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
-
     break;
+
     case UI_BUZZ:
     StateChanged(EVENT_TOGGLE_BUZZER);
     break;
+
+    case UI_INPUT_CYCLE_WEAPON:
+    m_TheSensor->Setweapon_detection_mode(MANUAL);
+    switch(m_MachineWeapon)
+    {
+      case FOIL:
+      m_MachineWeapon = EPEE;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+      m_TheSensor->SetActualWeapon(EPEE);
+
+      break;
+
+      case EPEE:
+      m_MachineWeapon = SABRE;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_SABRE);
+      m_TheSensor->SetActualWeapon(SABRE);
+
+      break;
+
+      case SABRE:
+      m_MachineWeapon = FOIL;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_FOIL);
+      m_TheSensor->SetActualWeapon(FOIL);
+
+      break;
+
+      default:
+      m_MachineWeapon = EPEE;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+      m_TheSensor->SetActualWeapon(EPEE);
+
+    }
+
+    break;
+
 
   }
 
