@@ -23,15 +23,15 @@ BluetoothSerial SerialBT;
 #include "AsyncUDP.h"
 
 #ifdef HOMENETWORK
-const char  Myssid[] = "Linksys02978";
-const char  Mypassword[] = "r2fz6bpzbs";StateChanged(card_event );
+const char  Myssid[] = "YourHomeSSID";
+const char  Mypassword[] = "YourHomePassWd";StateChanged(card_event );
 #else
 const char Myssid[] = "ESP32_01";
 const char Mypassword[] = "010419671";
 #endif
 
-const char* wifi_network_ssid = "Linksys02978";
-const char* wifi_network_password =  "r2fz6bpzbs";
+const char* wifi_network_ssid = "YourHomeSSID";
+const char* wifi_network_password =  "YourHomePassWd";
 
 const char *soft_ap_ssid = "ESP32_01";
 const char *soft_ap_password = "010419671";
@@ -63,7 +63,7 @@ void FPA422Handler::StartHWSerial()
     if(!m_HWSerialStarted)
     {
         MySerial.begin(38400, SERIAL_8N1, 16, 17);
-      m_HWSerialStarted = true;
+        m_HWSerialStarted = true;
     }
 
 }
