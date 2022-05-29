@@ -306,7 +306,7 @@ void FencingStateMachine::ProcessUW2F()
 uint32_t FencingStateMachine::MakeTimerEvent()
 {
   uint32_t temp = (m_Timer.GetMinutes()<<16 | m_Timer.GetSeconds()<<8  | m_Timer.GetHundredths());
-  //uint32_t temp = (m_Timer.GetMinutes()*256*256 + m_Timer.GetSeconds()*256 +m_Timer.GetHundredths());
+
   temp |= EVENT_TIMER;
   return temp;
 }
@@ -520,11 +520,7 @@ void FencingStateMachine::DoStateMachineTick()
     StateChanged(EVENT_LIGHTS | m_Lights);
 
   }
-  /*if(millis() > RestartTimerTime)
-  {
-    m_Timer.StartTimer();;
-    StateChanged(EVENT_TIMER);
-  }*/
+
 
   if(m_WeaponChanged)
   {
@@ -550,13 +546,5 @@ void FencingStateMachine::DoStateMachineTick()
     }
 
   }
-  /*if(idle)
-  {
-    if(millis() > m_NextIdleTime)
-    {
-      m_NextIdleTime = millis() + 100;
-      StateChanged(EVENT_IDLE_100_MS);
-    }
-  }*/
 
 }

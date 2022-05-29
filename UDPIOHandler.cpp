@@ -6,25 +6,6 @@
 
 AsyncUDP Commandudp;
 
-// Your WiFi credentials.
-// Set password to "" for open networks.
-//char ssid[] = "Linksys02978";
-//char pass[] = "r2fz6bpzbs";
-//const char * espHostName = "Scoring Machine ";
-/*
-WidgetLED ledRed(V12);
-WidgetLED ledWhiteL(V13);
-WidgetLED ledOrangeL(V14);
-WidgetLED ledOrangeR(V15);
-WidgetLED ledWhiteR(V16);
-
-
-
-WidgetLED ledGreen(V17);
-WidgetLED ledPrioLeft(V19);
-WidgetLED ledPrioRight(V20);
-*/
-
 union mix_t
 {
     std::uint32_t theDWord;
@@ -36,27 +17,6 @@ static bool bUDPConnected = false;
 
 void ProcessUDPPacket (AsyncUDPPacket packet)
 {
-  /*Serial.print("UDP Packet Type: ");
-  Serial.print(packet.isBroadcast()?"Broadcast":packet.isMulticast()?"Multicast":"Unicast");
-  Serial.print(", From: ");
-  Serial.print(packet.remoteIP());
-  Serial.print(":");
-  Serial.print(packet.remotePort());
-  Serial.print(", To: ");
-  Serial.print(packet.localIP());
-  Serial.print(":");
-  Serial.print(packet.localPort());
-  Serial.print(", Length: ");
-  Serial.print(packet.length());
-  Serial.print(", Data: ");
-  Serial.write(packet.data(), packet.length());
-  Serial.print(packet.data()[0]);
-  Serial.print(packet.data()[1]);
-  Serial.print(packet.data()[2]);
-  Serial.print(packet.data()[3]);
-  Serial.println();*/
-  //reply to the client
-  //packet.printf("Got %u bytes of data", packet.length());
   mix_t Event;
   Event.theBytes[0] = packet.data()[0];
   Event.theBytes[1] = packet.data()[1];
@@ -164,6 +124,8 @@ UDPIOHandler::~UDPIOHandler()
     //dtor
 }
 
+// For now, below function is not used. It could be used to send back Lights
+// Information to the app
 void UDPIOHandler::ProcessLightsChange(uint32_t eventtype)
 {
   uint32_t event_data = eventtype & SUB_TYPE_MASK;
@@ -266,157 +228,3 @@ void UDPIOHandler::update (FencingStateMachine *subject, uint32_t eventtype)
   }
 
 }
-
-/*
-
-// V1 is the Virual pin connected to the push button: Start/Stop timer
-// V0 is the Virtual pin connected to the time display
-UDP_WRITE(V1)
-{
-  int iTimerStartStopButton = param.asInt(); // assigning incoming value from pin V1 to a variable
-  if(iTimerStartStopButton)
-  {
-    MyUDPIOHandler.InputChanged(UI_INPUT_START_TIMER | EVENT_UI_INPUT);
-
-  }
-  else
-  {
-    MyUDPIOHandler.InputChanged(UI_INPUT_STOP_TIMER | EVENT_UI_INPUT);
-
-  }
-
-}
-
-// V0 is the Virtual pin connected to Reset Button
-UDP_WRITE(V2)
-{
-  int ButtonStatus = param.asInt();
-  if(ButtonStatus)
-    MyUDPIOHandler.InputChanged(UI_INPUT_RESET | EVENT_UI_INPUT);
-
-}
-
-// V5-V8 are the Virtual pin connected score up / dwn buttons
-// We need
-UDP_WRITE(V5)
-{
-  static long allowNext = 0;
-  int ButtonStatus = param.asInt();
-  if(millis() > allowNext)
-  {
-    allowNext = millis() + 250;
-    if(ButtonStatus)
-      MyUDPIOHandler.InputChanged(UI_INPUT_INCR_SCORE_LEFT | EVENT_UI_INPUT);
-  }
-
-}
-
-UDP_WRITE(V6)
-{
-
-  static long allowNext = 0;
-  int ButtonStatus = param.asInt();
-  if(millis() {> allowNext)
-  {
-    allowNext = millis() + 250;
-    if(ButtonStatus)
-      MyUDPIOHandler.InputChanged(UI_INPUT_DECR_SCORE_LEFT | EVENT_UI_INPUT);
-  }
-}
-
-UDP_WRITE(V7)
-{
-
-  static long allowNext = 0;
-  int ButtonStatus = param.asInt();
-  if(millis() > allowNext)
-  {
-    allowNext = millis() + 250;
-    if(ButtonStatus)
-      MyUDPIOHandler.InputChanged(UI_INPUT_INCR_SCORE_RIGHT | EVENT_UI_INPUT);
-  }
-
-}
-UDP_WRITE(V8)
-{
-
-  static long allowNext = 0;
-  int ButtonStatus = param.asInt();
-  if(millis() > allowNext)
-  {
-    allowNext = millis() + 250;
-    if(ButtonStatus)
-      MyUDPIOHandler.InputChanged(UI_INPUT_DECR_SCORE_RIGHT | EVENT_UI_INPUT);
-  }
-}
-
-// SET round button pressed
-UDP_WRITE(V10)
-{
-  if(param.asInt())
-  {
-    //CurentRound = 1;
-    //UDP.virtualWrite(V11, strRoundInfo);
-    MyUDPIOHandler.InputChanged(UI_INPUT_ROUND | EVENT_UI_INPUT);
-  }
-
-}
-
-/*
-// Prio Button Pressed
-UDP_WRITE(V18)
-{
-long TimeOfPress = millis();
- // assigning incoming value from pin V18 to a variable
-  if(ButtonStatus)
-  {
-    if(iPrio)
-    {
-      iPrio = 0;
-      ledPrioLeft.off();
-      ledPrioRight.off();
-    }
-    else
-    {
-        if(TimeOfPress%2)
-        {
-          iPrio = 1;
-        }
-        else
-        {
-          iPrio = 2;
-
-        }
-        for(int i = 0; i < 7 ; i++)
-        {
-          ledPrioLeft.off();
-          ledPrioRight.on();
-          setGreen(true);
-          setRed(false);
-          pixels.show();
-          UDPDelay(300);
-          ledPrioLeft.on();
-          ledPrioRight.off();
-          setGrCommandudpeen(false);
-          setReCommandudpd(true);ProcessLightsChange
-          pixels.show();
-          UDPDelay(300);
-        }
-        if(iPrio == 2)
-        {
-          ledPrioLeft.off();
-          ledPrioRight.on();
-          setGreen(true);
-          setRed(false);
-          pixels.show();
-        }
-    }
-    UDPDelay(1750);
-    setGreen(false);
-    setRed(false);
-    pixels.show();
-
-  }
-
-}
-*/

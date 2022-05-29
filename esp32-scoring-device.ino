@@ -20,57 +20,11 @@ TimeScoreDisplay MyTimeScoreDisplay;
 TaskHandle_t CoreScoringMachineTask;
 void CoreScoringMachineHandler(void *parameter)
 {
-  unsigned char previousLights;
-
- /* int n = 0;
-  int total = 0;
-  int grandtotal =0;
-  int maxvalue =0;
-  int test;
-  for(int j=0; j <100; j++)
-  {MyFPA422Handler
-  int starttime = millis();
-  for(int i = 0;i<1000;i++)
-  {
-    //MySensor.Wait_For_Next_Timer_Tick();
-    MySledMatrix.init();
-  eventtype  ledMatrix.clear(Commandudp);
-    ledMatrix.setCharMyLedStripWidth(8);
-    ledMatrix.setTextAlignment(TEXT_ALIGN_LEFT);
-    ledMatr10ix.setText("3:00");
-    ledMatrix.setIntensity(3);ensor.DoFullScan();
-     test = adc1_get_raw(ADC1_CHANNEL_0);
-     test = adc1MyUDPIOHandler_get_raw(ADC1_CHANNEL_0);
-     test = adc1_get_raw(ADC1_CHANNEL_0);
-     test = adc1_get_raw(ADC1_CHANNEL_0);
-     test = adc1_get_raw(ADC1_CHANNEL_0);
-     test = adc1_get_raw(ADC1_CHANNEL_0);
-     test = adc1_get_raw(ADC1_CHANNEL_0);
-     test = adc1_get_raw(ADC1_CHANNEL_0);
-     test = adc1_get_raw(ADC1_CHANNEL_0);
-     //test = adc1_get_raw(ADC1_CHANNEL_0);
-     //test = analogRead(36);
-     MyLedStrip
-  }
-  total = millis() - starttime;
-  if(n>50)
-  {MyFPA422Handler
-    if(total > maxvalue)
-      maxvalue = total;
-  }
-  n++;
-  grandtotal += total;
-
-  cout << "Average duration = " <<  grandtotal / n << "; Maxvalue = " << maxvalue << endl;
-  }*/
-
-
   while(true)
   {
     MySensor.DoFullScan();
     esp_task_wdt_reset();
   }
-
 }
 
 TaskHandle_t StateMachineTask;
@@ -216,7 +170,7 @@ void setup() {
 
   MyTimeScoreDisplay.begin();
   MyTimeScoreDisplay.DisplayWeapon(EPEE);
-  PrintReasonForReset();    // This is only for debugging instabilities. Comment out when you think it works
+  //PrintReasonForReset();    // This is only for debugging instabilities. Comment out when you think it works
   ShowWelcomeLights();
   MyFPA422Handler.StartWiFi();
   Serial.println("Wifi started");
@@ -276,7 +230,6 @@ void loop() {
   delay(1);
   MyTimeScoreDisplay.ProcessEvents();
   delay(1);
-  //MyTimeScoreDisplay.AlternateScoreAndTimeWhenNotFighting();
   MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
   delay(1);
   MyLedStrip.AnimatePrio();
