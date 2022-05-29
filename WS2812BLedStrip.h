@@ -71,10 +71,20 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         void setYellowCardRight(bool Value);
         void setRedCardLeft(bool Value);
         void setRedCardRight(bool Value);
+        void setYellowPCardLeft(bool Value);
+        void setYellowPCardRight(bool Value);
+        void setRedPCardLeft(bool Value);
+        void setRedPCardRight(bool Value);
+
+        void setUWFTimeLeft(uint8_t tens);
+        void setUWFTimeRight(uint8_t tens);
+
 
     protected:
 
     private:
+
+        void setUWFTime(uint8_t tens, uint8_t bottom);
         unsigned char m_LedStatus; //!< Member variable "m_LedStatus"
         Adafruit_NeoPixel *m_pixels;
         uint8_t m_Brightness = 30;
@@ -84,6 +94,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         uint32_t   m_White;
         uint32_t   m_Orange;
         uint32_t   m_Yellow;
+        uint32_t   m_Blue;
         uint32_t   m_Off;
         uint32_t m_LastEvent = 0;
         bool m_PrioLeft = false;
@@ -92,6 +103,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         bool m_YellowCardRight = false;
         bool m_RedCardLeft = false;
         bool m_RedCardRight = false;
+        uint8_t m_UW2Ftens = 0;
         QueueHandle_t queue = NULL;
         uint32_t m_NextTimeToTogglePrioLights;
         bool m_Animating = false;

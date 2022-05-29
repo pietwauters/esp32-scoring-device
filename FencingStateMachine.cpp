@@ -95,7 +95,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
      {
       m_Timer.StartTimer();
       StateChanged(EVENT_TIMER_STATE | 0x00000001);
-      if(FIGHTING == m_Timerstate)
+      if((FIGHTING == m_Timerstate) && (m_nrOfRounds > 1))  // We only deal with unwillingness to fight in direct eleminiation and team events
       {
           m_UW2FTimer.Start();
       }
@@ -238,6 +238,8 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     case UI_INPUT_P_CARD:
     ProcessUW2F();
     StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+    m_UW2FTimer.Reset();
+    StateChanged(EVENT_UW2F_TIMER);
     break;
 
     case UI_BUZZ:
@@ -388,13 +390,17 @@ void FencingStateMachine::SetNextTimerStateAndRoundAndNewTimeOnTimerZero()
           m_Timerstate = BREAK;
           m_Timer.SetMinutes(BREAK_MINUTES);
           m_Timer.SetSeconds(BREAK_SECONDS);
-
+          m_UW2FTimer.Reset();
+          m_UW2FSeconds = 0;
+          StateChanged(EVENT_UW2F_TIMER);
         }
         else
         {
           m_Timer.SetMinutes(FIGHTING_MINUTES);
           m_Timer.SetSeconds(FIGHTING_SECONDS);
           m_UW2FTimer.Reset();
+          m_UW2FSeconds = 0;
+          StateChanged(EVENT_UW2F_TIMER);
           m_currentRound++;
         }
       }
@@ -407,6 +413,9 @@ void FencingStateMachine::SetNextTimerStateAndRoundAndNewTimeOnTimerZero()
           m_Timer.SetSeconds(ADDITIONAL_TIME_SECONDS);
           m_currentRound = 255;
           StateChanged(MakeTimerEvent());
+          m_UW2FTimer.Reset();
+          m_UW2FSeconds = 0;
+          StateChanged(EVENT_UW2F_TIMER);
 
           // here I could add the automatic priority determination
         }
@@ -422,6 +431,8 @@ void FencingStateMachine::SetNextTimerStateAndRoundAndNewTimeOnTimerZero()
       m_Timer.SetMinutes(FIGHTING_MINUTES);
       m_Timer.SetSeconds(FIGHTING_SECONDS);
       m_UW2FTimer.Reset();
+      m_UW2FSeconds = 0;
+      StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
 
       if(m_currentRound < m_nrOfRounds)
         m_currentRound++;
@@ -487,7 +498,6 @@ void FencingStateMachine::DoStateMachineTick()
       {
           m_UW2FSeconds = m_UW2FTimer.GetIntermediateTime();
           StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
-
       }
   }
 
