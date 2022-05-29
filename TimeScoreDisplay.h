@@ -37,6 +37,7 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>
         void AlternateScoreAndTimeWhenNotFighting();
         void CycleScoreMatchAndTimeWhenNotFighting();
         void ShowScoreForGivenDuration(uint32_t duration);
+        void DisplayWeapon(weapon_t weapon);
 
     protected:
 

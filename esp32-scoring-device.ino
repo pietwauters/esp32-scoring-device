@@ -213,9 +213,11 @@ void setup() {
 
   // put your setup code here, to run once:
   Serial.begin(115200);
+
+  MyTimeScoreDisplay.begin();
+  MyTimeScoreDisplay.DisplayWeapon(EPEE);
   PrintReasonForReset();    // This is only for debugging instabilities. Comment out when you think it works
   ShowWelcomeLights();
-  MyTimeScoreDisplay.begin();
   MyFPA422Handler.StartWiFi();
   Serial.println("Wifi started");
   Serial.println("by now the you should have seen all the lights one by one");
