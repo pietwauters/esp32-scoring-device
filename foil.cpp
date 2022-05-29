@@ -392,7 +392,7 @@ void MultiWeaponSensor::DoFoil(void)
             Counter_parry = Const_FOIL_PARRY_ON_TIME;
         }
     }
-    OrangeR = TempOrangeR;
-    OrangeL = TempOrangeL;
+    OrangeR = TempOrangeL;   // It seems I made a mistake and show the orange at the wrong side
+    OrangeL = TempOrangeR;
     return;
 }
