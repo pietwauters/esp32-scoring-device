@@ -59,7 +59,7 @@ static bool TempOrangeL, TempOrangeR;
     //        Phas_S1: Test if opponent contact: a1-b1-c2 -> c2 =?= high      *
     //*************************************************************************
     AdAboveThreshold = Do_Common_Start();
-    
+
     if (WhiteL)
     {
         // A1-wire is broken
@@ -121,7 +121,7 @@ static bool TempOrangeL, TempOrangeR;
     //*************************************************************************
     Skip_phase();
     /*AdAboveThreshold = Do_Common_Start();
-    
+
     if (AdAboveThreshold)
     {
         TempOrangeR = true;
@@ -160,7 +160,7 @@ static bool TempOrangeL, TempOrangeR;
     {
       Skip_phase();
     }
-      
+
 
 
     //*************************************************************************
@@ -386,7 +386,7 @@ static bool TempOrangeL, TempOrangeR;
     {
       Skip_phase();
     }
-    OrangeR = TempOrangeR;
-    OrangeL = TempOrangeL;
+    OrangeR = TempOrangeL;
+    OrangeL = TempOrangeR;
     return;
 }

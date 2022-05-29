@@ -17,7 +17,7 @@ MeasurementCtl EpeeSets[] = {{IODirection_al_piste & IODirection_al_cl, IOValues
 
 void MultiWeaponSensor::DoEpee(void)
 {
-static bool TempOrangeL, TempOrangeR;
+static bool TempOrangeR, TempOrangeL;
 static bool AdAboveThreshold;
 //*************************************************************************
 //    Start of epee specific code                                         *
@@ -25,8 +25,8 @@ static bool AdAboveThreshold;
 
     //PhaseCounter =START_OF_EPEE_TABLE;
     Set = EpeeSets;
-    TempOrangeR = false;
-    TempOrangeL=false;
+    TempOrangeL = false;
+    TempOrangeR=false;
 //*************************************************************************
 //    Phas_E0: Test if point is pressed down: c1 =?= high                 *
 //*************************************************************************
@@ -73,7 +73,7 @@ static bool AdAboveThreshold;
         if (AdAboveThreshold)
         {
             Counter_c1 = Const_COUNT_Cx_INIT_EPEE;
-            TempOrangeR = true;
+            TempOrangeL = true;
         }
     }
 //*************************************************************************
@@ -85,7 +85,7 @@ static bool AdAboveThreshold;
         if (AdAboveThreshold)
         {
             Counter_c1 = Const_COUNT_Cx_INIT_EPEE;
-            TempOrangeR = true;
+            TempOrangeL = true;
 
         }
     }
@@ -99,7 +99,7 @@ static bool AdAboveThreshold;
         if (AdAboveThreshold)
         {
             Counter_c1 = Const_COUNT_Cx_INIT_EPEE;
-            TempOrangeR = true;
+            TempOrangeL = true;
         }
         else
         {
@@ -161,7 +161,7 @@ static bool AdAboveThreshold;
         if (AdAboveThreshold)
         {
             Counter_c2 = Const_COUNT_Cx_INIT_EPEE;
-            TempOrangeL = true;
+            TempOrangeR = true;
         }
     }
 //*************************************************************************
@@ -173,7 +173,7 @@ static bool AdAboveThreshold;
         if (AdAboveThreshold)
         {
             Counter_c2 = Const_COUNT_Cx_INIT_EPEE;
-            TempOrangeL = true;
+            TempOrangeR = true;
         }
     }
 
@@ -186,7 +186,7 @@ static bool AdAboveThreshold;
         if (AdAboveThreshold)
         {
             Counter_c2 = Const_COUNT_Cx_INIT_EPEE;
-            TempOrangeL = true;
+            TempOrangeR = true;
         }
         else
         {
