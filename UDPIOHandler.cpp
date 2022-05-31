@@ -6,11 +6,6 @@
 
 AsyncUDP Commandudp;
 
-union mix_t
-{
-    std::uint32_t theDWord;
-    std::uint8_t theBytes[4];
-};
 
 static bool bWifiConnected = false;
 static bool bUDPConnected = false;
