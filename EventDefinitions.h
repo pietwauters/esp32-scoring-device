@@ -1,7 +1,12 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #ifndef EVENTDEFINITIONS_H
 #define EVENTDEFINITIONS_H
-
+// Typedefinition to access individual bytes of a 32 bit unsigned
+union mix_t
+{
+    std::uint32_t theDWord;
+    std::uint8_t theBytes[4];
+};
 
 // An event is represented as a 32 bit unsigned integer
 // The most significant 8 bits represent the Main Type
