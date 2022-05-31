@@ -73,8 +73,8 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         void setRedCardRight(bool Value);
         void setYellowPCardLeft(bool Value);
         void setYellowPCardRight(bool Value);
-        void setRedPCardLeft(bool Value);
-        void setRedPCardRight(bool Value);
+        void setRedPCardLeft(uint8_t nr);
+        void setRedPCardRight(uint8_t nr);
 
         void setUWFTimeLeft(uint8_t tens);
         void setUWFTimeRight(uint8_t tens);
@@ -104,6 +104,11 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         bool m_RedCardLeft = false;
         bool m_RedCardRight = false;
         uint8_t m_UW2Ftens = 0;
+        bool m_YellowPCardLeft = false;
+        bool m_YellowPCardRight = false;
+        uint8_t m_RedPCardLeft = 0;
+        uint8_t m_RedPCardRight = 0;
+
         QueueHandle_t queue = NULL;
         uint32_t m_NextTimeToTogglePrioLights;
         bool m_Animating = false;

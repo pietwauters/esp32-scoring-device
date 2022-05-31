@@ -353,6 +353,7 @@ void FencingStateMachine::ResetAll()
      StateChanged(EVENT_YELLOW_CARD_RIGHT);
      StateChanged(EVENT_RED_CARD_LEFT);
      StateChanged(EVENT_YELLOW_CARD_LEFT);
+     StateChanged(EVENT_P_CARD);
 
      if(m_TheSensor)
      {
