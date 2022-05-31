@@ -14,12 +14,6 @@
 
 #define MAX_MESSAGE_TYPE 9
 
-union mix_t
-{
-    std::uint32_t theDWord;
-    std::uint8_t theBytes[4];
-};
-
 class FPA422Handler : public Observer<FencingStateMachine>
 {
     public:

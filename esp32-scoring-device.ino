@@ -142,11 +142,13 @@ void ShowWelcomeLights()
 
   MyLedStrip.setWhiteLeft(true);
   MyLedStrip.myShow();
+  esp_task_wdt_reset();
   delay(500);// Block for 500ms.
   MyLedStrip.setWhiteLeft(false);
   MyLedStrip.myShow();
   MyLedStrip.setRed(true);
   MyLedStrip.myShow();
+  esp_task_wdt_reset();
   delay(500);// Block for 500ms.
   MyLedStrip.setRed(false);
   MyLedStrip.myShow();
@@ -158,8 +160,29 @@ void ShowWelcomeLights()
   MyLedStrip.myShow();
   MyLedStrip.setGreen(true);
   MyLedStrip.myShow();
+  esp_task_wdt_reset();
   delay(500);
   MyLedStrip.ClearAll();
+  MyLedStrip.setUWFTimeLeft(1);
+  MyLedStrip.myShow();
+  delay(500);
+  MyLedStrip.setUWFTimeLeft(2);
+  MyLedStrip.myShow();
+  delay(500);
+  MyLedStrip.setUWFTimeLeft(3);
+  MyLedStrip.myShow();
+  delay(500);
+  MyLedStrip.setUWFTimeLeft(4);
+  MyLedStrip.myShow();
+  delay(500);
+  MyLedStrip.setUWFTimeLeft(5);
+  MyLedStrip.myShow();
+  delay(500);
+  MyLedStrip.setUWFTimeLeft(6);
+  MyLedStrip.myShow();
+  delay(1000);
+  MyLedStrip.setUWFTimeLeft(0);
+  MyLedStrip.myShow();
 }
 
 void setup() {

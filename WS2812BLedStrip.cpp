@@ -1,5 +1,7 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #include "WS2812BLedStrip.h"
+
+
 char Cross[] = {1,1,0,0,0,0,1,1,
                 1,1,1,0,0,1,1,1,
                 0,1,1,1,1,1,1,0,
@@ -21,6 +23,7 @@ WS2812B_LedStrip::WS2812B_LedStrip()
     m_White = Adafruit_NeoPixel::Color(255, 255, 255, m_Brightness);
     m_Orange = Adafruit_NeoPixel::Color(160, 60, 0, m_Brightness);
     m_Yellow = Adafruit_NeoPixel::Color(255, 210, 0, m_Brightness);
+    m_Blue = Adafruit_NeoPixel::Color(0, 0, 255, m_Brightness);
     m_Off = Adafruit_NeoPixel::Color(0, 0, 0, m_Brightness);
     queue = xQueueCreate( 60, sizeof( int ) );
 }
@@ -135,11 +138,11 @@ void WS2812B_LedStrip::setOrangeLeft(bool Value)
 {
     if(Value)
     {
-        m_pixels->fill(m_Orange,40-16,24);
+        m_pixels->fill(m_Orange,40-16,16);
     }
     else
     {
-        m_pixels->fill(m_pixels->Color(0, 0, 0),40-16,24);
+        m_pixels->fill(m_pixels->Color(0, 0, 0),40-16,16);
     }
     //m_pixels->show();   // Send the updated pixel colors to the hardware.
 }
@@ -148,12 +151,12 @@ void WS2812B_LedStrip::setOrangeRight(bool Value)
 {
     if(Value)
     {
-        m_pixels->fill(m_Orange,104-16,24);
+        m_pixels->fill(m_Orange,104-16,16);
 
     }
     else
     {
-        m_pixels->fill(m_pixels->Color(0, 0, 0),104-16,24);
+        m_pixels->fill(m_pixels->Color(0, 0, 0),104-16,16);
     }
     //m_pixels->show();   // Send the updated pixel colors to the hardware.
 }
@@ -165,6 +168,7 @@ void WS2812B_LedStrip::setYellowCardRight(bool Value)
     {
         theFillColor = m_Yellow;
     }
+    m_pixels->fill(theFillColor,70+5*8,2);
     m_pixels->fill(theFillColor,70+6*8,2);
     m_pixels->fill(theFillColor,70+7*8,2);
 }
@@ -176,6 +180,7 @@ void WS2812B_LedStrip::setYellowCardLeft(bool Value)
     {
         theFillColor = m_Yellow;
     }
+    m_pixels->fill(theFillColor,0+5*8,2);
     m_pixels->fill(theFillColor,0+6*8,2);
     m_pixels->fill(theFillColor,0+7*8,2);
 
@@ -189,6 +194,7 @@ void WS2812B_LedStrip::setRedCardRight(bool Value)
     {
         theFillColor = m_Red;
     }
+    m_pixels->fill(theFillColor,68+5*8,2);
     m_pixels->fill(theFillColor,68+6*8,2);
     m_pixels->fill(theFillColor,68+7*8,2);
 
@@ -201,6 +207,7 @@ void WS2812B_LedStrip::setRedCardLeft(bool Value)
     {
         theFillColor = m_Red;
     }
+    m_pixels->fill(theFillColor,2+5*8,2);
     m_pixels->fill(theFillColor,2+6*8,2);
     m_pixels->fill(theFillColor,2+7*8,2);
 }
@@ -278,6 +285,80 @@ void WS2812B_LedStrip:: update (FencingStateMachine *subject, uint32_t eventtype
     case EVENT_TOGGLE_BUZZER:
         m_Loudness = !m_Loudness;
     break;
+
+    case EVENT_UW2F_TIMER:
+//m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
+
+    m_UW2Ftens = (event_data >> 8)/10 ;
+
+    mix_t TimeInfo;
+    TimeInfo.theDWord = event_data & DATA_24BIT_MASK;
+    //m_seconds = TimeInfo.theBytes[1];
+    //m_minutes = TimeInfo.theBytes[2];
+    //m_hundredths = TimeInfo.theBytes[0];
+    m_UW2Ftens = (TimeInfo.theBytes[2] *60 + TimeInfo.theBytes[1]) / 10;
+    setUWFTimeLeft(m_UW2Ftens);
+    setUWFTimeRight(m_UW2Ftens);
+    SetLedStatus(0xff);
+    break;
+
+
+    case EVENT_P_CARD:
+        //StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+        mix_t PCardInfo;
+        PCardInfo.theDWord = event_data;
+        switch (PCardInfo.theBytes[0])
+        {
+          case 0:
+          m_YellowPCardLeft = false;
+          m_RedPCardLeft = 0;
+          break;
+
+          case 1:
+          m_YellowPCardLeft = true;
+          m_RedPCardLeft = 0;
+          break;
+
+          case 2:
+          m_YellowPCardLeft = true;
+          m_RedPCardLeft = 1;
+          break;
+
+          case 3:
+          m_YellowPCardLeft = true;
+          m_RedPCardLeft = 2;
+          break;
+
+        }
+
+        switch (PCardInfo.theBytes[1])
+        {
+          case 0:
+          m_YellowPCardRight = false;
+          m_RedPCardRight = 0;
+          break;
+
+          case 1:
+          m_YellowPCardRight = true;
+          m_RedPCardRight = 0;
+          break;
+
+          case 2:
+          m_YellowPCardRight = true;
+          m_RedPCardRight = 1;
+          break;
+
+          case 3:
+          m_YellowPCardRight = true;
+          m_RedPCardRight = 2;
+          break;
+
+        }
+
+
+        SetLedStatus(0xff);
+    break;
+
   }
 
 }
@@ -323,6 +404,9 @@ void WS2812B_LedStrip::SetLedStatus(unsigned char val)
           setRedPrio(m_PrioLeft);
           setYellowCardLeft(m_YellowCardLeft);
           setRedCardLeft(m_RedCardLeft);
+          setUWFTimeLeft(m_UW2Ftens);
+          setYellowPCardLeft(m_YellowPCardLeft);
+          setRedPCardLeft(m_RedPCardLeft);
       }
     }
 
@@ -337,6 +421,9 @@ void WS2812B_LedStrip::SetLedStatus(unsigned char val)
         setGreenPrio(m_PrioRight);
         setYellowCardRight(m_YellowCardRight);
         setRedCardRight(m_RedCardRight);
+        setUWFTimeRight(m_UW2Ftens);
+        setYellowPCardRight(m_YellowPCardRight);
+        setRedPCardRight(m_RedPCardRight);
       }
     }
     setBuzz(m_LedStatus & MASK_BUZZ);
@@ -429,5 +516,110 @@ void WS2812B_LedStrip::setBuzz(bool Value)
             digitalWrite(BUZZERPIN, HIGH);
         }
     }
+
+}
+
+void WS2812B_LedStrip::setUWFTime(uint8_t tens, uint8_t bottom)
+{
+  if(tens > 8)
+    tens = 8;
+  if(tens == 0)
+  {
+    for(int i=0;i<8;i++)
+    {
+      m_pixels->setPixelColor(bottom - 8*i,m_Off);
+    }
+  }
+  else
+  {
+    for(int i=0;i<tens;i++)
+    {
+      m_pixels->setPixelColor(bottom - 8*i,m_Blue);
+    }
+    for(int i=5;i<tens;i++)
+    {
+      {
+        m_pixels->setPixelColor(bottom -i*8,m_Red);
+      }
+    }
+  }
+}
+
+void WS2812B_LedStrip::setUWFTimeLeft(uint8_t tens)
+{
+  setUWFTime(tens,63);
+}
+
+void WS2812B_LedStrip::setUWFTimeRight(uint8_t tens)
+{
+  setUWFTime(tens,120);
+}
+
+void WS2812B_LedStrip::setYellowPCardRight(bool Value)
+{
+  uint32_t theFillColor = m_Off;
+    if(Value)
+    {
+        theFillColor = m_Yellow;
+    }
+    m_pixels->setPixelColor(121,theFillColor);
+    m_pixels->setPixelColor(121 - 8,theFillColor);
+
+}
+
+void WS2812B_LedStrip::setYellowPCardLeft(bool Value)
+{
+  uint32_t theFillColor = m_Off;
+    if(Value)
+    {
+        theFillColor = m_Yellow;
+    }
+    m_pixels->setPixelColor(62,theFillColor);
+    m_pixels->setPixelColor(62 - 8,theFillColor);
+
+}
+
+void WS2812B_LedStrip::setRedPCardRight(uint8_t nr)
+{
+  uint32_t theFillColor1 = m_Off;
+  uint32_t theFillColor2 = m_Off;
+
+    if(nr == 2)
+    {
+        theFillColor1 = m_Red;
+        theFillColor2 = m_Red;
+    }
+    if(nr == 1)
+    {
+        theFillColor1 = m_Red;
+    }
+
+// Red2
+    m_pixels->setPixelColor(122 + 1,theFillColor2);
+    m_pixels->setPixelColor(122 + 1 - 8,theFillColor2);
+// Red1
+    m_pixels->setPixelColor(122 ,theFillColor1);
+    m_pixels->setPixelColor(122 - 8,theFillColor1);
+
+}
+
+void WS2812B_LedStrip::setRedPCardLeft(uint8_t nr)
+{
+  uint32_t theFillColor1 = m_Off;
+  uint32_t theFillColor2 = m_Off;
+
+    if(nr == 2)
+    {
+        theFillColor1 = m_Red;
+        theFillColor2 = m_Red;
+    }
+    if(nr == 1)
+    {
+        theFillColor1 = m_Red;
+    }
+    m_pixels->setPixelColor(61 ,theFillColor1);
+    m_pixels->setPixelColor(61 - 8,theFillColor1);
+    m_pixels->setPixelColor(61 - 1,theFillColor2);
+    m_pixels->setPixelColor(61 - 1  - 8,theFillColor2);
 
 }

@@ -13,12 +13,6 @@ static const int spiClk = 1000000; // 1 MHz
 SPIClass hspi(HSPI);
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, hspi, CS_PIN, MAX_DEVICES);
 
-union mix_t
-{
-    std::uint32_t theDWord;
-    std::uint8_t theBytes[4];
-};
-
 
 uint8_t numbers[][9]= {{5,62,81,73,69,62,0,0,0},
 {3,66,127,64,0,0,0,0,0},
