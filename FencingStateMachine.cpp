@@ -211,16 +211,22 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     break;
 
     case UI_INPUT_YELLOW_CARD_LEFT:
+      if(m_RedCardLeft == 0)
+      {
+        m_YellowCardLeft=1;
+        card_event = m_YellowCardLeft | EVENT_YELLOW_CARD_LEFT;
+        StateChanged(card_event );
+      }
 
-      m_YellowCardLeft=1;
-      card_event = m_YellowCardLeft | EVENT_YELLOW_CARD_LEFT;
-      StateChanged(card_event );
     break;
 
     case UI_INPUT_YELLOW_CARD_RIGHT:
-      m_YellowCardRight = 1;
-      card_event = m_YellowCardRight | EVENT_YELLOW_CARD_RIGHT;
-      StateChanged(card_event );
+      if(m_RedCardRight == 0)
+      {
+        m_YellowCardRight = 1;
+        card_event = m_YellowCardRight | EVENT_YELLOW_CARD_RIGHT;
+        StateChanged(card_event );
+      }
 
     break;
 
@@ -266,7 +272,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       m_TheSensor->SetActualWeapon(FOIL);
       m_TheSensor->Setweapon_detection_mode(MANUAL);
       break;
-      
+
       case FOIL:
       m_MachineWeapon = EPEE;
       StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
