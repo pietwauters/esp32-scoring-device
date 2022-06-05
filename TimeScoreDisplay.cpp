@@ -294,6 +294,10 @@ void TimeScoreDisplay::ProcessEvents ()
       DisplayWeapon(SABRE);
       break;
 
+      case WEAPON_MASK_UNKNOWN:
+      DisplayWeapon(UNKNOWN);
+      break;
+
     }
 
 
@@ -418,6 +422,14 @@ void TimeScoreDisplay::DisplayWeapon(weapon_t weapon)
       digit2 = 'B' - 'A' + 15;
       digit3 = 'R' - 'A' + 15;
       startpos = 1;
+
+    break;
+
+    case UNKNOWN:
+      digit0 = 'A' - 'A' + 15;
+      digit1 = 'U' - 'A' + 15;
+      digit2 = 'T' - 'A' + 15;
+      digit3 = 'O' - 'A' + 15;
 
     break;
 

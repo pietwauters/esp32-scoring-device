@@ -9,6 +9,7 @@
 #include "driver/adc.h"
 #include "esp_task_wdt.h"
 
+#define WELCOME_ANIMATION_SPEED 70
 
 MultiWeaponSensor MySensor(1);
 WS2812B_LedStrip MyLedStrip;
@@ -143,44 +144,44 @@ void ShowWelcomeLights()
   MyLedStrip.setWhiteLeft(true);
   MyLedStrip.myShow();
   esp_task_wdt_reset();
-  delay(500);// Block for 500ms.
+  delay(5 * WELCOME_ANIMATION_SPEED);// Block for 500ms.
   MyLedStrip.setWhiteLeft(false);
   MyLedStrip.myShow();
   MyLedStrip.setRed(true);
   MyLedStrip.myShow();
   esp_task_wdt_reset();
-  delay(500);// Block for 500ms.
+  delay(5 * WELCOME_ANIMATION_SPEED);// Block for 500ms.
   MyLedStrip.setRed(false);
   MyLedStrip.myShow();
   MyLedStrip.setWhiteRight(true);
   MyLedStrip.myShow();
   esp_task_wdt_reset();
-  delay(500);
+  delay(5 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setWhiteRight(false);
   MyLedStrip.myShow();
   MyLedStrip.setGreen(true);
   MyLedStrip.myShow();
   esp_task_wdt_reset();
-  delay(500);
+  delay(5 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.ClearAll();
   MyLedStrip.setUWFTimeLeft(1);
   MyLedStrip.myShow();
-  delay(500);
+  delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(2);
   MyLedStrip.myShow();
-  delay(500);
+  delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(3);
   MyLedStrip.myShow();
-  delay(500);
+  delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(4);
   MyLedStrip.myShow();
-  delay(500);
+  delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(5);
   MyLedStrip.myShow();
-  delay(500);
+  delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(6);
   MyLedStrip.myShow();
-  delay(1000);
+  delay(4 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(0);
   MyLedStrip.myShow();
 }
@@ -240,6 +241,8 @@ void setup() {
             &LedStripTask,           /* Task handle. */
             1);
   esp_task_wdt_add(LedStripTask);
+  delay(100);
+  MyStatemachine.ResetAll();
 
 }
 
