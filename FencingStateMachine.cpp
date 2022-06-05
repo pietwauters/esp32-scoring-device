@@ -97,7 +97,13 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       StateChanged(EVENT_TIMER_STATE | 0x00000001);
       if((FIGHTING == m_Timerstate) && (m_nrOfRounds > 1))  // We only deal with unwillingness to fight in direct eleminiation and team events
       {
+        if(m_Timer.GetMinutes() * 60 + m_Timer.GetSeconds() > 60)  // don't start a new period if there is less than a minute left
           m_UW2FTimer.Start();
+        else
+        {
+          if(m_UW2FTimer.GetIntermediateTime() > 0)  // The timer had already been running without reset, so continue
+            m_UW2FTimer.Start();
+        }
       }
       if(m_TheSensor)
       {
@@ -224,6 +230,8 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       StateChanged(card_event );
       m_UW2FTimer.Reset();
       StateChanged(EVENT_UW2F_TIMER);
+      m_ScoreRight++;
+      StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
     break;
 
     case UI_INPUT_RED_CARD_RIGHT:
@@ -232,6 +240,8 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       StateChanged(card_event );
       m_UW2FTimer.Reset();
       StateChanged(EVENT_UW2F_TIMER);
+      m_ScoreLeft++;
+      StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
     break;
 
 
@@ -247,27 +257,38 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     break;
 
     case UI_INPUT_CYCLE_WEAPON:
-    m_TheSensor->Setweapon_detection_mode(MANUAL);
+
     switch(m_MachineWeapon)
     {
-      case FOIL:
-      m_MachineWeapon = EPEE;
-      StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
-      m_TheSensor->SetActualWeapon(EPEE);
-
-      break;
-
-      case EPEE:
-      m_MachineWeapon = SABRE;
-      StateChanged(EVENT_WEAPON | WEAPON_MASK_SABRE);
-      m_TheSensor->SetActualWeapon(SABRE);
-
-      break;
-
       case SABRE:
       m_MachineWeapon = FOIL;
       StateChanged(EVENT_WEAPON | WEAPON_MASK_FOIL);
       m_TheSensor->SetActualWeapon(FOIL);
+      m_TheSensor->Setweapon_detection_mode(MANUAL);
+      break;
+      
+      case FOIL:
+      m_MachineWeapon = EPEE;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+      m_TheSensor->SetActualWeapon(EPEE);
+      m_TheSensor->Setweapon_detection_mode(MANUAL);
+
+      break;
+
+      case EPEE:
+      m_MachineWeapon = UNKNOWN;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_UNKNOWN);
+      m_TheSensor->SetActualWeapon(EPEE);
+      m_TheSensor->Setweapon_detection_mode(AUTO);
+
+      break;
+
+
+      case UNKNOWN:
+      m_MachineWeapon = SABRE;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_SABRE);
+      m_TheSensor->SetActualWeapon(SABRE);
+      m_TheSensor->Setweapon_detection_mode(MANUAL);
 
       break;
 
@@ -275,6 +296,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       m_MachineWeapon = EPEE;
       StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
       m_TheSensor->SetActualWeapon(EPEE);
+      m_TheSensor->Setweapon_detection_mode(AUTO);
 
     }
 
@@ -290,17 +312,53 @@ void FencingStateMachine::ProcessUW2F()
     if(m_ScoreLeft != m_ScoreRight)
     {
         if(m_ScoreLeft > m_ScoreRight)
+        {
+          if(m_PCardRight < 3)
+          {
             m_PCardRight++;
+            if(m_PCardRight > 1)
+            {
+              m_ScoreLeft++;
+              StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
+            }
+          }
+        }
+
         else
+        {
+          if(m_PCardLeft < 3)
+          {
             m_PCardLeft++;
+            if(m_PCardLeft > 1)
+            {
+              m_ScoreRight++;
+              StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
+            }
+          }
+        }
+
     }
     else
     {
-        if(((m_ScoreLeft == 14) && (m_ScoreRight == 14)) || ((m_ScoreLeft == 44) && (m_ScoreRight == 44)))
-            return;
 
+      if(m_PCardLeft < 3)
+      {
         m_PCardLeft++;
+        if(m_PCardLeft > 1)
+        {
+          m_ScoreRight++;
+          StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
+        }
+      }
+      if(m_PCardRight < 3)
+      {
         m_PCardRight++;
+        if(m_PCardRight > 1)
+        {
+          m_ScoreLeft++;
+          StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
+        }
+      }
 
     }
 }
@@ -325,7 +383,7 @@ void FencingStateMachine::ResetAll()
      m_Timerstate = FIGHTING;
      StateChanged(MakeTimerEvent());
      m_currentRound = 1;
-     m_nrOfRounds = 1;
+     //m_nrOfRounds = 1;   // a "simple reset should not change the nr of rounds"
      m_Priority = NO_PRIO;
      m_YellowCardLeft =0;
      m_YellowCardRight =0;
@@ -510,10 +568,14 @@ void FencingStateMachine::DoStateMachineTick()
     {
       if(GetRed() || GetGreen())
       {
+        if(m_Timer.IsRunning())
+        {
+          m_UW2FTimer.Reset();
+          StateChanged(EVENT_UW2F_TIMER);
+        }
         m_Timer.StopTimer();
         StateChanged(EVENT_TIMER_STATE);
-        m_UW2FTimer.Reset();
-        StateChanged(EVENT_UW2F_TIMER);
+
         // Make sure you show the the score for a bit longer than normal
 
       }
@@ -521,10 +583,15 @@ void FencingStateMachine::DoStateMachineTick()
       {
         if(GetWhiteL() || GetWhiteR())
         {
+          if(m_Timer.IsRunning())
+          {
+            m_UW2FTimer.Reset();
+            StateChanged(EVENT_UW2F_TIMER);
+          }
           m_Timer.StopTimer();
           StateChanged(EVENT_TIMER_STATE);
-          m_UW2FTimer.Reset();
-          StateChanged(EVENT_UW2F_TIMER);
+
+
         }
       }
     }

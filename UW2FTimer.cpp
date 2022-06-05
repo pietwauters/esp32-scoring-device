@@ -32,5 +32,8 @@ void UW2FTimer::Reset()
 
 long UW2FTimer::GetIntermediateTime()
 {
+  if(m_IsRunning)
     return((m_TotalTime + millis() - m_TimeStarted)/1000);
+  else
+    return m_TotalTime;
 }
