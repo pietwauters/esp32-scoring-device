@@ -240,6 +240,8 @@ void setup() {
             &LedStripTask,           /* Task handle. */
             1);
   esp_task_wdt_add(LedStripTask);
+  delay(100);
+  MyStatemachine.ResetAll();
 
 }
 
