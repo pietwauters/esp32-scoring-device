@@ -98,11 +98,16 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       if((FIGHTING == m_Timerstate) && (m_nrOfRounds > 1))  // We only deal with unwillingness to fight in direct eleminiation and team events
       {
         if(m_Timer.GetMinutes() * 60 + m_Timer.GetSeconds() > 60)  // don't start a new period if there is less than a minute left
+        {
           m_UW2FTimer.Start();
+        }
         else
         {
           if(m_UW2FTimer.GetIntermediateTime() > 0)  // The timer had already been running without reset, so continue
+          {
             m_UW2FTimer.Start();
+          }
+
         }
       }
       if(m_TheSensor)
@@ -122,12 +127,6 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       StateChanged(EVENT_TIMER_STATE );
 
     break;
-      StateChanged(EVENT_TIMER_STATE);
-      m_Timer.SetMinutes(0);
-      m_Timer.SetSeconds(33);
-      m_Timer.SetHundredths(0);
-
-      StateChanged(MakeTimerEvent());
 
     case UI_INPUT_RESET:
     ResetAll();
