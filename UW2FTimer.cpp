@@ -20,7 +20,11 @@ void UW2FTimer::Start()
 void UW2FTimer::Stop()
 {
     m_TimeStopped = millis();
-    m_TotalTime += m_TimeStopped - m_TimeStarted;
+    if(m_IsRunning)  // if the timer never started, we shouldn't update the total time
+    {
+      m_TotalTime += m_TimeStopped - m_TimeStarted;
+    }
+
     m_IsRunning = false;
 }
 
