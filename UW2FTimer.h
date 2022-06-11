@@ -15,6 +15,7 @@ class UW2FTimer
         void Start();
         void Stop();
         void Reset();
+        void RestorePreviousState(){m_TotalTime = m_TotalTime_backup;};
         long GetIntermediateTime();
 
 
@@ -22,6 +23,7 @@ class UW2FTimer
 
     private:
         long m_TotalTime =0;
+        long m_TotalTime_backup =0;
         long m_TimeStarted =0;
         long m_TimeStopped =0;
         bool m_IsRunning = false;

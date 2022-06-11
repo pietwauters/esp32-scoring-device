@@ -58,6 +58,8 @@ uint8_t numbers[][9]= {{5,62,81,73,69,62,0,0,0},
 };
 
 
+#define TIME_SCORE_PERIOD_INTERVAL_MS 2000
+
 TimeScoreDisplay::TimeScoreDisplay()
 {
     //ctor
@@ -371,25 +373,25 @@ void TimeScoreDisplay::CycleScoreMatchAndTimeWhenNotFighting()
       case 0:
       ShowTime();
       m_objectshown = 1;
-      NextTimeToSwitchBetweenScoreAndTime = millis() + 2500;
+      NextTimeToSwitchBetweenScoreAndTime = millis() + TIME_SCORE_PERIOD_INTERVAL_MS;
       break;
 
       case 1:
       ShowScore();
       m_objectshown = 2;
-      NextTimeToSwitchBetweenScoreAndTime = millis() + 2500;
+      NextTimeToSwitchBetweenScoreAndTime = millis() + TIME_SCORE_PERIOD_INTERVAL_MS;
       break;
 
       case 2:
       DisplayMatchCount(m_round, m_maxround);
       m_objectshown = 0;
-      NextTimeToSwitchBetweenScoreAndTime = millis() + 750;
+      NextTimeToSwitchBetweenScoreAndTime = millis() + TIME_SCORE_PERIOD_INTERVAL_MS / 3;
       break;
 
       case 3:
       ShowTime();
       m_objectshown = 1;
-      NextTimeToSwitchBetweenScoreAndTime = millis() + 2500;
+      NextTimeToSwitchBetweenScoreAndTime = millis() + TIME_SCORE_PERIOD_INTERVAL_MS;
       break;
 
     }

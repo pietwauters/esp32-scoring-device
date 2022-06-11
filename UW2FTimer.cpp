@@ -24,12 +24,14 @@ void UW2FTimer::Stop()
     {
       m_TotalTime += m_TimeStopped - m_TimeStarted;
     }
-
     m_IsRunning = false;
 }
 
 void UW2FTimer::Reset()
 {
+    Stop();
+    if(m_TotalTime > 0)
+      m_TotalTime_backup = m_TotalTime;
     m_TotalTime = 0;
     m_IsRunning = false;
 }
@@ -39,5 +41,5 @@ long UW2FTimer::GetIntermediateTime()
   if(m_IsRunning)
     return((m_TotalTime + millis() - m_TimeStarted)/1000);
   else
-    return m_TotalTime;
+    return m_TotalTime/1000;
 }
