@@ -243,7 +243,7 @@ void setup() {
   esp_task_wdt_add(LedStripTask);
   delay(100);
   MyStatemachine.ResetAll();
-
+  MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
 }
 
 
@@ -256,9 +256,12 @@ void loop() {
   delay(1);
   MyTimeScoreDisplay.ProcessEvents();
   delay(1);
-  MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
-  delay(1);
-  MyLedStrip.AnimatePrio();
+  if(MyStatemachine.IsConnectedToRemote())
+  {
+    MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
+    delay(1);
+    MyLedStrip.AnimatePrio();
+  }
   esp_task_wdt_reset();
 
 }
