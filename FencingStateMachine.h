@@ -154,7 +154,9 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         void ResetAll();
         uint32_t MakeTimerEvent();
         void GetFormattedStringTime(char *Destination, int MinutePrecision, int HundredthsPrecision){m_Timer.GetFormattedStringTime(Destination, MinutePrecision, HundredthsPrecision);};
-
+        bool IsConnectedToRemote(){return m_IsConnectedToRemote;};
+        void SetConnectedToRemote(bool value){m_IsConnectedToRemote = value;};
+        void ClearAllCards();
 
     protected:
 
@@ -205,6 +207,7 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         hw_timer_t * timer_FSMPeriod = NULL;
         MultiWeaponSensor *m_TheSensor = NULL;
         long m_NextIdleTime = 0;
+        bool m_IsConnectedToRemote = false;
 
 };
 

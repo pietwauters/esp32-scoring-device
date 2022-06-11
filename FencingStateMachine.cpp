@@ -67,6 +67,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
   uint32_t event_data = eventtype & SUB_TYPE_MASK;;
   uint32_t maineventtype = eventtype & MAIN_TYPE_MASK ;
   uint32_t card_event;
+  m_IsConnectedToRemote = true;
 
   if(EVENT_UI_INPUT != maineventtype)
     return;
@@ -261,6 +262,16 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     StateChanged(EVENT_TOGGLE_BUZZER);
     break;
 
+    case UI_INPUT_RESTORE_UW2F_TIMER:
+
+    m_UW2FTimer.RestorePreviousState();
+    m_UW2FSeconds = m_UW2FTimer.GetIntermediateTime();
+    StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
+
+    break;
+
+
+
     case UI_INPUT_CYCLE_WEAPON:
 
     switch(m_MachineWeapon)
@@ -375,7 +386,31 @@ uint32_t FencingStateMachine::MakeTimerEvent()
   temp |= EVENT_TIMER;
   return temp;
 }
+void FencingStateMachine::ClearAllCards()
+{
+  m_YellowCardLeft =0;
+  m_YellowCardRight =0;
+  m_RedCardLeft =0;
+  m_RedCardRight =0;
+  m_BlackCardLeft =0;
+  m_BlackCardRight =0;
+  m_YellowPCardLeft =0;
+  m_YellowPCardRight =0;
+  m_RedPCardLeft =0;
+  m_RedPCardRight =0;
+  m_BlackPCardLeft =0;
+  m_BlackPCardRight =0;
+  m_PCardLeft = 0;
+  m_PCardRight = 0;
+  StateChanged(EVENT_P_CARD);
+  StateChanged(EVENT_YELLOW_CARD_RIGHT);
+  StateChanged(EVENT_RED_CARD_RIGHT);
+  StateChanged(EVENT_BLACK_CARD_RIGHT);
+  StateChanged(EVENT_YELLOW_CARD_LEFT);
+  StateChanged(EVENT_RED_CARD_LEFT);
+  StateChanged(EVENT_BLACK_CARD_LEFT);
 
+}
 void FencingStateMachine::ResetAll()
 {
      m_Timer.StopTimer();
@@ -390,20 +425,7 @@ void FencingStateMachine::ResetAll()
      m_currentRound = 1;
      //m_nrOfRounds = 1;   // a "simple reset should not change the nr of rounds"
      m_Priority = NO_PRIO;
-     m_YellowCardLeft =0;
-     m_YellowCardRight =0;
-     m_RedCardLeft =0;
-     m_RedCardRight =0;
-     m_BlackCardLeft =0;
-     m_BlackCardRight =0;
-     m_YellowPCardLeft =0;
-     m_YellowPCardRight =0;
-     m_RedPCardLeft =0;
-     m_RedPCardRight =0;
-     m_BlackPCardLeft =0;
-     m_BlackPCardRight =0;
-     m_PCardLeft = 0;
-     m_PCardRight = 0;
+     ClearAllCards();
      m_ScoreLeft =0;
      m_ScoreRight =0;
 
@@ -465,6 +487,7 @@ void FencingStateMachine::SetNextTimerStateAndRoundAndNewTimeOnTimerZero()
           m_UW2FTimer.Reset();
           m_UW2FSeconds = 0;
           StateChanged(EVENT_UW2F_TIMER);
+          ClearAllCards();
           m_currentRound++;
         }
       }
