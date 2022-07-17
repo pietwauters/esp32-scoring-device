@@ -6,8 +6,10 @@
 #include "FPA422Handler.h"
 #include "UDPIOHandler.h"
 #include "TimeScoreDisplay.h"
+#include "CyranoHandler.h"
 #include "driver/adc.h"
 #include "esp_task_wdt.h"
+
 
 #define WELCOME_ANIMATION_SPEED 70
 
@@ -17,6 +19,7 @@ FencingStateMachine MyStatemachine(2,10);
 FPA422Handler MyFPA422Handler;
 UDPIOHandler MyUDPIOHandler;
 TimeScoreDisplay MyTimeScoreDisplay;
+CyranoHandler MyCyranoHandler;
 
 TaskHandle_t CoreScoringMachineTask;
 void CoreScoringMachineHandler(void *parameter)
@@ -208,6 +211,9 @@ void setup() {
   MyStatemachine.attach(MyTimeScoreDisplay);
   MyUDPIOHandler.attach(MyStatemachine);
   MyStatemachine.attach(MyUDPIOHandler);
+  MyStatemachine.attach(MyCyranoHandler);
+
+
   esp_task_wdt_init(10, false);
 
   xTaskCreatePinnedToCore(
