@@ -20,7 +20,7 @@ void IRAM_ATTR onTimer()
 }
 
 //0.05 milliseconds
-#define TimeInMicroSeconds 4800 
+#define TimeInMicroSeconds 4800
 
 MultiWeaponSensor::MultiWeaponSensor(int hw_timer_nr)
 {
@@ -187,7 +187,7 @@ void MultiWeaponSensor::HandleLights()
     Lights =temp;
     SensorStateChanged(EVENT_LIGHTS | temp);
   }
-  
+
 }
 
 bool MultiWeaponSensor::OKtoReset()
@@ -200,15 +200,15 @@ bool MultiWeaponSensor::OKtoReset()
     switch (m_ActualWeapon)
     {
       case FOIL:
-        TimeToReset = millis() + 2000 - FOIL_LOCK_TIME;
+        TimeToReset = millis() + LIGHTS_DURATION_MS - FOIL_LOCK_TIME;
         break;
 
       case EPEE:
-        TimeToReset = millis() + 2000 - EPEE_LOCK_TIME;
+        TimeToReset = millis() + LIGHTS_DURATION_MS - EPEE_LOCK_TIME;
         break;
 
       case SABRE:
-        TimeToReset = millis() + 2000 - SABRE_LOCK_TIME;
+        TimeToReset = millis() + LIGHTS_DURATION_MS - SABRE_LOCK_TIME;
         break;
 
     }
@@ -219,7 +219,7 @@ bool MultiWeaponSensor::OKtoReset()
     if (Buzz == false)
     {
       return (true);
-      
+
     }
 
     //BUZZPIN = false;
@@ -326,24 +326,24 @@ void MultiWeaponSensor::DoFullScan()
     /***************************************************************************************************/
     /*************  Start of Dummy phase          ******************************************************/
     /***************************************************************************************************/
-    
-    
+
+
     if(esp_timer_get_time() <  TimetoNextPhase)
       return;
     TimetoNextPhase = esp_timer_get_time() + CurrentPhaseDuration;
     /*while(esp_timer_get_time() <  TimetoNextPhase)
     {
-        
+
     }*/
     weapon_t temp = GetWeapon();
-    
+
     if (m_ActualWeapon != temp)
     {
         m_ActualWeapon = temp;
         SensorStateChanged(EVENT_WEAPON | temp);
         DoReset();
     }
-    
+
     if (WeHaveBlockedAhit)
     {
         BlockedAHitCounter--;
@@ -380,7 +380,7 @@ void MultiWeaponSensor::DoFullScan()
         }
     }
     HandleLights();
-    
+
     switch (m_ActualWeapon)
     {
     case FOIL:
@@ -396,12 +396,12 @@ void MultiWeaponSensor::DoFullScan()
         break;
 
     }
-    
+
     if(FullScanCounter)
       FullScanCounter --;
     else
       FullScanCounter = 3;
-      
+
 }
 
 weapon_t MultiWeaponSensor::GetWeapon()
@@ -411,7 +411,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
     bAutoDetect = 0;
     return m_ActualWeapon;
   }
-  
+
   m_DetectedWeapon = m_ActualWeapon;
   bAutoDetect = 1;
 
@@ -445,8 +445,8 @@ weapon_t MultiWeaponSensor::GetWeapon()
       // if (ax-cx) & !(ax-bx) -> switch to epee
 
       if ((!LongCounter_c1) && (!LongCounter_c2))
-      { // certainly not foil anymore) 
-        
+      { // certainly not foil anymore)
+
         if ((Counter_b1) && (Counter_b2))
         {
           m_DetectedWeapon =  EPEE;

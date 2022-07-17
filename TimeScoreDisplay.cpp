@@ -155,7 +155,7 @@ void TimeScoreDisplay::DisplayTime(uint8_t minutes, uint8_t seconds, uint8_t hun
   {
     SetChar(13,10);    // ::
   }
-SetChar(13,10);
+
   uint8_t w = numbers[digit0][0];
   uint8_t diff = 5 - w;
   SetChar(6 + diff/2,digit0);

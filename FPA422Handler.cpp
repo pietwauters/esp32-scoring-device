@@ -20,11 +20,16 @@ BluetoothSerial SerialBT;
 
 #include <WiFi.h>
 #include <WiFiAP.h>
+#include <Preferences.h>
 #include "AsyncUDP.h"
+
+Preferences preferences;
+String ssid;
+String password;
 
 #ifdef HOMENETWORK
 const char  Myssid[] = "YourHomeSSID";
-const char  Mypassword[] = "YourHomePassWd";StateChanged(card_event );
+const char  Mypassword[] = "YourHomePassWd";
 #else
 const char Myssid[] = "ESP32_01";
 const char Mypassword[] = "010419671";
@@ -70,10 +75,13 @@ void FPA422Handler::StartHWSerial()
 
 void FPA422Handler::StartWiFi()
 {
+  preferences.begin("credentials", false);
+  ssid = preferences.getString("ssid", "");
+  password = preferences.getString("password", "");
 
-  WiFi.mode(WIFI_MODE_AP);
+  WiFi.mode(WIFI_MODE_APSTA);
   WiFi.softAP(soft_ap_ssid, soft_ap_password);
-  /*WiFi.begin(wifi_network_ssid, wifi_network_password);
+  WiFi.begin(ssid.c_str(), password.c_str());
   for(int i =0; i<50;i++)
   {
     if (WiFi.waitForConnectResult() != WL_CONNECTED)
@@ -82,7 +90,7 @@ void FPA422Handler::StartWiFi()
     }
     else
      i = 1000;
-  }*/
+  }
 
 
 
@@ -92,8 +100,8 @@ void FPA422Handler::StartWiFi()
   Serial.print("ESP32 IP as soft AP: ");
   Serial.println(WiFi.softAPIP());
 
-  //Serial.print("ESP32 IP on the WiFi network: ");
-  //Serial.println(WiFi.localIP());
+  Serial.print("ESP32 IP on the WiFi network: ");
+  Serial.println(WiFi.localIP());
 
   m_WifiStarted = true;
   TimeForNext1_2s =millis() + 1200;

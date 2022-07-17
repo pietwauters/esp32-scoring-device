@@ -82,6 +82,7 @@
 #define MASK_WHITE_R 0x08
 #define MASK_GREEN 0x04
 #define MASK_BUZZ 0x02
+#define LIGHTS_DURATION_MS 2000
 
 //enum weapon_t {FOIL, EPEE, SABRE, UNKNOWN};
 enum weapon_detection_mode_t{MANUAL,AUTO, HYBRID};
@@ -126,20 +127,20 @@ public:
     {
         return m_DetectedWeapon;
     }
-   
-    
+
+
     void DoFullScan();
     bool Wait_For_Next_Timer_Tick();
     unsigned char get_Lights(){return Lights;};
     void BlockAllNewHits(){SignalLeft = true; SignalRight = true;};
     void AllowAllNewHits(){SignalLeft = false; SignalRight = false;};
     void Setweapon_detection_mode(weapon_detection_mode_t mode){m_DectionMode = mode;};
-    
+
 
 protected:
 
 private:
-    
+
     bool Do_Common_Start();
     void Skip_phase();
     void HandleLights();
@@ -153,9 +154,9 @@ private:
     weapon_t GetWeapon();
     int tempADValue = 0;
 
-    
+
     hw_timer_t * timer = NULL;
-    
+
 
     weapon_t m_ActualWeapon = EPEE; //!< Member variable "m_ActualWeapon"
     weapon_t m_DetectedWeapon = EPEE; //!< Member variable "m_DetectedWeapon"
@@ -235,7 +236,7 @@ private:
     int TimeToReset;
     int64_t TimetoNextPhase = 0;
     int CurrentPhaseDuration = FULLSCANDURATION_EPEE;
-    SemaphoreHandle_t  SensorMutex; 
+    SemaphoreHandle_t  SensorMutex;
     uint32_t ShortIndicatorsDebouncer = 0;
 
 };
