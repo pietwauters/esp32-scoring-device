@@ -85,7 +85,7 @@ class EFP1Message
         std::string ToString(std::string & Buffer);
         std::string & operator[](int i);
         const std::string & operator[](int i) const;
-        //void CopyIfNotEmpty(EFP1Message &Source);
+        void CopyIfNotEmpty(const EFP1Message &Source);
         void TruncateToMaxLength(void){return;}  // ToDo make sure the length of the fields is conform to the specification. I don't think I really need it.
         MessageType GetType() const;
         string MakeNextMessageString();

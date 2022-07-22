@@ -1,5 +1,7 @@
 #ifndef CYRANOHANDLER_H
 #define CYRANOHANDLER_H
+#include <WiFi.h>
+#include "AsyncUDP.h"
 #include <iostream>
 #include "EFP1Message.h"
 #include "SubjectObserverTemplate.h"
@@ -17,15 +19,16 @@ enum CyranoState
     WAITING
 };
 
-enum EventType
+/*enum EventType
 {
     NextButtonPressed,
     PrevButtonPressed,
     BeginButtonPressed,
     EndButtonPressed
-};
+};*/
 
-class CyranoHandler : public Observer<FencingStateMachine>
+class UDPIOHandler;
+class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDPIOHandler>, public Subject<CyranoHandler>
 {
     public:
         /** Default constructor */
@@ -33,11 +36,16 @@ class CyranoHandler : public Observer<FencingStateMachine>
         /** Default destructor */
         virtual ~CyranoHandler();
         void ProcessMessageFromSoftware(const EFP1Message &input);
-        void SendInfoMessage(){cout << "Sending info message" << endl; return;};
-        void ProcessUIEvents(EventType const event);
+        void SendInfoMessage();
+        void ProcessUIEvents(uint32_t const event);
         void SetPisteID(const string & ID){m_MachineStatus[PisteId]=ID;};
         void update (FencingStateMachine *subject, uint32_t eventtype);
+        void update (UDPIOHandler *subject, uint32_t eventtype){ProcessUIEvents(eventtype);};
+        void StateChanged (uint32_t eventtype) {notify(eventtype);}
         void ProcessLightsChange(uint32_t eventtype);
+        void CheckConnection();
+        void ProcessDisplayMessage (const EFP1Message &input);
+
 
     protected:
 
@@ -46,7 +54,14 @@ class CyranoHandler : public Observer<FencingStateMachine>
         CyranoState m_State = WAITING;
         int previous_seconds =99;  // This will always result in setting a correct initial value
         uint32_t m_timeToShowTimer = 0;
+        long NextTimeToCheckConnection = 0;
+        bool bWifiConnected = false;
+        bool bCyranoConnected = false;
+
+        AsyncUDP CyranoHandlerudp;
+        AsyncUDP CyranoHandlerudpRcv;
 
 };
 
+extern CyranoHandler MyCyranoHandler;
 #endif // CYRANOHANDLER_H

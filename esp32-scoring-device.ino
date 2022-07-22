@@ -212,6 +212,7 @@ void setup() {
   MyUDPIOHandler.attach(MyStatemachine);
   MyStatemachine.attach(MyUDPIOHandler);
   MyStatemachine.attach(MyCyranoHandler);
+  MyUDPIOHandler.attach(MyCyranoHandler);
 
 
   esp_task_wdt_init(10, false);
@@ -262,6 +263,7 @@ void loop() {
   delay(1);
   MyTimeScoreDisplay.ProcessEvents();
   delay(1);
+  MyCyranoHandler.CheckConnection();
   if(MyStatemachine.IsConnectedToRemote())
   {
     MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();

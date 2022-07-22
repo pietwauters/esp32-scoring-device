@@ -76,6 +76,10 @@ union mix_t
 #define UI_INPUT_RESTORE_UW2F_TIMER 0x00000019
 #define UI_BUZZ 0x00000018
 
+#define UI_INPUT_CYRANO_NEXT 0x00000101
+#define UI_INPUT_CYRANO_PREV 0x00000102
+#define UI_INPUT_CYRANO_BEGIN 0x00000103
+#define UI_INPUT_CYRANO_END 0x00000104
 
 
 // Below are the subtype definitions for P-Card related events

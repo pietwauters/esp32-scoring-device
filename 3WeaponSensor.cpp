@@ -4,6 +4,9 @@
 #include "driver/adc.h"
 #include "esp_timer.h"
 #include <iostream>
+#include <Preferences.h>
+
+Preferences mypreferences;
 using namespace std;
 
 // I have 7 Output /Tristate pins (3 per weapon + piste)
@@ -64,6 +67,15 @@ MultiWeaponSensor::MultiWeaponSensor(int hw_timer_nr)
   LongCounter_c1 = LONG_COUNT_C_INIT_FOIL;
   LongCounter_c2 = LONG_COUNT_C_INIT_FOIL;
   LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
+
+  mypreferences.begin("scoringdevice", false);
+  LightsDuration = mypreferences.getInt("LIGHTS_DURATION_MS",0);
+  if(!LightsDuration)
+  {
+    mypreferences.putInt("LIGHTS_DURATION_MS", LIGHTS_DURATION_MS);
+    LightsDuration = LIGHTS_DURATION_MS;
+  }
+
   DoReset();
   //m_ActualWeapon = FOIL;
   SensorMutex = xSemaphoreCreateBinary();
@@ -200,15 +212,15 @@ bool MultiWeaponSensor::OKtoReset()
     switch (m_ActualWeapon)
     {
       case FOIL:
-        TimeToReset = millis() + LIGHTS_DURATION_MS - FOIL_LOCK_TIME;
+        TimeToReset = millis() + LightsDuration - FOIL_LOCK_TIME;
         break;
 
       case EPEE:
-        TimeToReset = millis() + LIGHTS_DURATION_MS - EPEE_LOCK_TIME;
+        TimeToReset = millis() + LightsDuration - EPEE_LOCK_TIME;
         break;
 
       case SABRE:
-        TimeToReset = millis() + LIGHTS_DURATION_MS - SABRE_LOCK_TIME;
+        TimeToReset = millis() + LightsDuration - SABRE_LOCK_TIME;
         break;
 
     }

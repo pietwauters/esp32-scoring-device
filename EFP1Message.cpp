@@ -211,8 +211,8 @@ MessageType EFP1Message::GetType() const
 }
 
 
-/*void EFP1Message::CopyIfNotEmpty(EFP1Message &Source)
-{
+void EFP1Message::CopyIfNotEmpty(const EFP1Message &Source)
+{// we should check if the versions are equal
     for(int i=0; i < MAX_NR_FIELDS; i++)
     {
         if(Source[i] != "")
@@ -221,4 +221,3 @@ MessageType EFP1Message::GetType() const
         }
     }
 }
-*/

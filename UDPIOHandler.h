@@ -3,6 +3,7 @@
 #define UDPIOHANDLER_H
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
+#include "CyranoHandler.h"
 
 #include <WiFi.h>
 #include <WiFiClient.h>
@@ -28,25 +29,24 @@ class UDPIOHandler : public Subject<UDPIOHandler> , public Observer<FencingState
         virtual ~UDPIOHandler();
 
         void update (FencingStateMachine *subject, uint32_t eventtype);
-
         void InputChanged(uint32_t eventtype = EVENT_UI_INPUT) {notify(eventtype);}
 
         void run();
         void ConnectToAP();
 
         void Start();
-        
+
 
     protected:
 
     private:
-    
+
     void ProcessLightsChange(uint32_t eventtype);
     int m_minutes;
     int m_seconds;
     int m_hundredths;
     int previous_seconds;
-    
+
 };
 
 extern UDPIOHandler MyUDPIOHandler;
