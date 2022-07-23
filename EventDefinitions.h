@@ -90,5 +90,15 @@ union mix_t
 #define EVENT_BLACK_P_CARD 0x00000004
 #define EVENT_BLACK_P_CARD2 0x00000005
 
+// Below are the subtype definitions for Timerstate related events
+/*, BREAK, INJURY, ADDITIONAL_MINUTE, MATCH_ENDED,UNDEFINED
+// Currently: 0 NOT running, running is everything else
+
+#define EVENT_NO_P_CARD 0x00000000
+#define FIGHTING 0x00000001
+#define EVENT_RED_P_CARD1 0x00000002
+#define EVENT_RED_P_CARD2 0x00000003
+#define EVENT_BLACK_P_CARD 0x00000004
+#define EVENT_BLACK_P_CARD2 0x00000005*/
 
 #endif // EVENTDEFINITIONS_H

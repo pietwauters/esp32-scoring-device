@@ -213,6 +213,8 @@ void setup() {
   MyStatemachine.attach(MyUDPIOHandler);
   MyStatemachine.attach(MyCyranoHandler);
   MyUDPIOHandler.attach(MyCyranoHandler);
+  MyCyranoHandler.attach(MyStatemachine);
+  MyCyranoHandler.attach(MyFPA422Handler);
 
 
   esp_task_wdt_init(10, false);

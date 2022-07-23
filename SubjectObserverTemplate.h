@@ -32,7 +32,7 @@ class Subject
          typename std::vector<Observer<T> *>::iterator it;
          for (it=m_observers.begin();it!=m_observers.end();it++) (*it)->update(static_cast<T *>(this), eventtype);
          }
-         void notify (std::string eventtype = "")
+      void notify (std::string eventtype = "")
             {
             typename std::vector<Observer<T> *>::iterator it;
             for (it=m_observers.begin();it!=m_observers.end();it++) (*it)->update(static_cast<T *>(this), eventtype);

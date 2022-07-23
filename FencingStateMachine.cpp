@@ -61,6 +61,12 @@ void FencingStateMachine::update (MultiWeaponSensor *subject, uint32_t eventtype
     SetMachineWeapon(subject->GetActualWeapon());
 }
 
+void FencingStateMachine::update (CyranoHandler *subject, string eventtype)
+{
+  Serial.print("received message =");
+  Serial.println(eventtype.c_str());
+}
+
 
 void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
 {
@@ -652,5 +658,11 @@ void FencingStateMachine::DoStateMachineTick()
     }
 
   }
+
+}
+
+
+void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
+{
 
 }

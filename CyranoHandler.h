@@ -42,9 +42,10 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         void update (FencingStateMachine *subject, uint32_t eventtype);
         void update (UDPIOHandler *subject, uint32_t eventtype){ProcessUIEvents(eventtype);};
         void StateChanged (uint32_t eventtype) {notify(eventtype);}
+        void StateChanged (string eventtype) {notify(eventtype);}
         void ProcessLightsChange(uint32_t eventtype);
         void CheckConnection();
-        void ProcessDisplayMessage (const EFP1Message &input);
+
 
 
     protected:

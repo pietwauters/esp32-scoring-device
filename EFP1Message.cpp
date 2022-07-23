@@ -17,17 +17,18 @@ EFP1Message::EFP1Message()
 EFP1Message::~EFP1Message()
 {
     //dtor
+
 }
 
-EFP1Message::EFP1Message(const EFP1Message& other)
-{
-    //copy ctor
-}
 
 EFP1Message& EFP1Message::operator=(const EFP1Message& rhs)
 {
     if (this == &rhs) return *this; // handle self assignment
     //assignment operator
+    for(int i=0; i < MAX_NR_FIELDS; i++)
+    {
+        (*this)[i] = rhs[i];
+    }
     return *this;
 }
 
@@ -218,6 +219,21 @@ void EFP1Message::CopyIfNotEmpty(const EFP1Message &Source)
         if(Source[i] != "")
         {
             (*this)[i] = Source[i];
+        }
+    }
+}
+
+void EFP1Message::Prune(const EFP1Message &Source)
+{// we should check if the versions are equal
+    for(int i=CompetitionId; i < MAX_NR_FIELDS; i++)
+    {
+        if((*this)[i] == Source[i])
+        {
+            (*this)[i] = "";
+        }
+        else
+        {
+          (*this)[i] = Source[i];
         }
     }
 }

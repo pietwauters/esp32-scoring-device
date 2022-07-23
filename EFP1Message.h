@@ -73,10 +73,7 @@ class EFP1Message
         EFP1Message(const std::string &Buffer);
         /** Default destructor */
         virtual ~EFP1Message();
-        /** Copy constructor
-         *  \param other Object to copy from
-         */
-        EFP1Message(const EFP1Message& other);
+
         /** Assignment operator
          *  \param other Object to assign from
          *  \return A reference to this
@@ -86,6 +83,7 @@ class EFP1Message
         std::string & operator[](int i);
         const std::string & operator[](int i) const;
         void CopyIfNotEmpty(const EFP1Message &Source);
+        void Prune(const EFP1Message &Source);
         void TruncateToMaxLength(void){return;}  // ToDo make sure the length of the fields is conform to the specification. I don't think I really need it.
         MessageType GetType() const;
         string MakeNextMessageString();

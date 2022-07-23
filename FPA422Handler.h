@@ -13,8 +13,10 @@
 #include "EventDefinitions.h"
 
 #define MAX_MESSAGE_TYPE 9
+class CyranoHandler;
+class FencingStateMachine;
 
-class FPA422Handler : public Observer<FencingStateMachine>
+class FPA422Handler : public Observer<FencingStateMachine> , public Observer<CyranoHandler>
 {
     public:
         /** Default constructor */
@@ -22,6 +24,8 @@ class FPA422Handler : public Observer<FencingStateMachine>
         /** Default destructor */
         virtual ~FPA422Handler();
         void update (FencingStateMachine *subject, uint32_t eventtype);
+        void update (CyranoHandler *subject, string strEFP1Message);
+        void update (CyranoHandler *subject, uint32_t eventtype){};
         void ProcessLightsChange(uint32_t eventtype);
         void StartBluetooth();
         void StartWiFi();
@@ -38,7 +42,11 @@ class FPA422Handler : public Observer<FencingStateMachine>
     RS422_FPA_Type2_Message Message2;
     RS422_FPA_Type3_Message Message3;
     RS422_FPA_Type4_Message Message4;
+    RS422_FPA_Type5_6_Message Message5;
+    RS422_FPA_Type5_6_Message Message6;
+    //RS422_FPA_Type7_Message Message7;
     RS422_FPA_Type8_Message Message8;
+
 
     uint8_t m_minutes;
     uint8_t m_seconds;
