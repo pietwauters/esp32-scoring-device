@@ -494,6 +494,4 @@ void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
     Message5.SetName(EFP1Input[LeftFencerName].c_str(),EFP1Input[LeftFencerName].length());
   if(EFP1Input[LeftFencerNation] != "")
     Message5.SetNOC(EFP1Input[LeftFencerNation].c_str());
-  Serial.print("in FPA422Handler:");
-  Serial.println(strEFP1Message.c_str());
 }

@@ -59,8 +59,8 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         bool bWifiConnected = false;
         bool bCyranoConnected = false;
 
-        AsyncUDP CyranoHandlerudp;
         AsyncUDP CyranoHandlerudpRcv;
+        bool bOKToSend = false;
 
 };
 

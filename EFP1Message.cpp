@@ -8,6 +8,7 @@ EFP1Message::EFP1Message()
     for(int i=0; i < GetNrOfGeneralFields(); i++)
         mGeneralFields.push_back("");
     mGeneralFields[Protocol] = "EFP1.1";
+    mGeneralFields[Command] = "INFO";
     for(int i=0; i < GetNrOfFencerFields(); i++)
         mLeftFencerFields.push_back("");
     for(int i=0; i < GetNrOfFencerFields(); i++)
