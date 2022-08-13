@@ -8,6 +8,7 @@ EFP1Message::EFP1Message()
     for(int i=0; i < GetNrOfGeneralFields(); i++)
         mGeneralFields.push_back("");
     mGeneralFields[Protocol] = "EFP1.1";
+    mGeneralFields[Command] = "INFO";
     for(int i=0; i < GetNrOfFencerFields(); i++)
         mLeftFencerFields.push_back("");
     for(int i=0; i < GetNrOfFencerFields(); i++)
@@ -17,17 +18,18 @@ EFP1Message::EFP1Message()
 EFP1Message::~EFP1Message()
 {
     //dtor
+
 }
 
-EFP1Message::EFP1Message(const EFP1Message& other)
-{
-    //copy ctor
-}
 
 EFP1Message& EFP1Message::operator=(const EFP1Message& rhs)
 {
     if (this == &rhs) return *this; // handle self assignment
     //assignment operator
+    for(int i=0; i < MAX_NR_FIELDS; i++)
+    {
+        (*this)[i] = rhs[i];
+    }
     return *this;
 }
 
@@ -211,8 +213,8 @@ MessageType EFP1Message::GetType() const
 }
 
 
-/*void EFP1Message::CopyIfNotEmpty(EFP1Message &Source)
-{
+void EFP1Message::CopyIfNotEmpty(const EFP1Message &Source)
+{// we should check if the versions are equal
     for(int i=0; i < MAX_NR_FIELDS; i++)
     {
         if(Source[i] != "")
@@ -221,4 +223,18 @@ MessageType EFP1Message::GetType() const
         }
     }
 }
-*/
+
+void EFP1Message::Prune(const EFP1Message &Source)
+{// we should check if the versions are equal
+    for(int i=CompetitionId; i < MAX_NR_FIELDS; i++)
+    {
+        if((*this)[i] == Source[i])
+        {
+            (*this)[i] = "";
+        }
+        else
+        {
+          (*this)[i] = Source[i];
+        }
+    }
+}

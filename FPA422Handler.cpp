@@ -128,9 +128,9 @@ void FPA422Handler::BTTPeriodicalUpdate()
     if(millis() > TimeForNext12s)
     {
         BTTransmitMessage(4);
-        /*BTTransmitMessage(5);
+        BTTransmitMessage(5);
         BTTransmitMessage(6);
-        BTTransmitMessage(7);*/
+        BTTransmitMessage(7);
         BTTransmitMessage(8);
         TimeForNext12s = millis() + 12000;
         return;
@@ -151,9 +151,9 @@ void FPA422Handler::WifiPeriodicalUpdate()
     if(millis() > TimeForNext12s)
     {
         WifiTransmitMessage(4);
-        /*WifiTransmitMessage(5);
+        WifiTransmitMessage(5);
         WifiTransmitMessage(6);
-        WifiTransmitMessage(7);*/
+        WifiTransmitMessage(7);
         WifiTransmitMessage(8);
         if(m_WifiStarted)
         {
@@ -194,11 +194,11 @@ void FPA422Handler::BTTransmitMessage(int Type)
       break;
 
       case 5:
-      //SerialBT.write(Message5.GetBuffer(),Message5.GetCurrentSize());
+      SerialBT.write(Message5.GetBuffer(),Message5.GetCurrentSize());
       break;
 
       case 6:
-      //SerialBT.write(Message6.GetBuffer(),Message6.GetCurrentSize());
+      SerialBT.write(Message6.GetBuffer(),Message6.GetCurrentSize());
       break;
 
       case 7:
@@ -251,13 +251,13 @@ void FPA422Handler::WifiTransmitMessage(int Type)
 
       case 5:
 
-      //udp.broadcastTo(Message5.GetBuffer(),Message5.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
+      udp.broadcastTo(Message5.GetBuffer(),Message5.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message5.GetBuffer(),Message5.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
       break;
 
       case 6:
 
-      //udp.broadcastTo(Message6.GetBuffer(),Message6.GetCurrentSize(), UDPPort,TCPIP_ADAPTERSubject_IF_AP);
+      udp.broadcastTo(Message6.GetBuffer(),Message6.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message6.GetBuffer(),Message6.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
       break;
 
@@ -345,11 +345,15 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
 
     case EVENT_SCORE_LEFT:
     Message3.SetScoreLeft(event_data);
+    BTTransmitMessage(3);
+    WifiTransmitMessage(3);
 
     break;
 
     case EVENT_SCORE_RIGHT:
       Message3.SetScoreRight(event_data);
+      BTTransmitMessage(3);
+      WifiTransmitMessage(3);
     break;
 
     case EVENT_TIMER_STATE:
@@ -473,4 +477,25 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
 
   }
 
+}
+
+
+/*void SetName(const char* name, size_t len = 20);
+void SetNOC(const char* NOC);*/
+
+void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
+{
+  EFP1Message EFP1Input(strEFP1Message);
+  if(EFP1Input[RightFencerId] != "")
+    Message6.SetUID(EFP1Input[RightFencerId].c_str(),EFP1Input[RightFencerId].length());
+  if(EFP1Input[RightFencerName] != "")
+    Message6.SetName(EFP1Input[RightFencerName].c_str(),EFP1Input[RightFencerName].length());
+  if(EFP1Input[RightFencerNation] != "")
+    Message6.SetNOC(EFP1Input[RightFencerNation].c_str());
+  if(EFP1Input[LeftFencerId] != "")
+    Message5.SetUID(EFP1Input[LeftFencerId].c_str(),EFP1Input[LeftFencerId].length());
+  if(EFP1Input[LeftFencerName] != "")
+    Message5.SetName(EFP1Input[LeftFencerName].c_str(),EFP1Input[LeftFencerName].length());
+  if(EFP1Input[LeftFencerNation] != "")
+    Message5.SetNOC(EFP1Input[LeftFencerNation].c_str());
 }

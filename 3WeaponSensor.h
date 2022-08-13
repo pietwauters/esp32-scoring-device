@@ -234,6 +234,7 @@ private:
     int TimeOfLock;
     bool LockStarted;
     int TimeToReset;
+    int LightsDuration = LIGHTS_DURATION_MS;
     int64_t TimetoNextPhase = 0;
     int CurrentPhaseDuration = FULLSCANDURATION_EPEE;
     SemaphoreHandle_t  SensorMutex;

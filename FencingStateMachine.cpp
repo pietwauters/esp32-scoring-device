@@ -61,6 +61,14 @@ void FencingStateMachine::update (MultiWeaponSensor *subject, uint32_t eventtype
     SetMachineWeapon(subject->GetActualWeapon());
 }
 
+void FencingStateMachine::update (CyranoHandler *subject, string eventtype)
+{
+  Serial.print("received message =");
+  Serial.println(eventtype.c_str());
+  EFP1Message input(eventtype);
+  ProcessDisplayMessage (input);
+}
+
 
 void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
 {
@@ -653,4 +661,206 @@ void FencingStateMachine::DoStateMachineTick()
 
   }
 
+}
+
+#define emptystring ""
+void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
+{
+
+  if(input[Start_time] != emptystring)
+  {
+  	//Do Something with input[Start_time];
+  }
+
+  if(input[StopWatch] != emptystring)
+  {
+  	//Do Something with input[StopWatch];
+  }
+
+  if(input[CompetitionType] != emptystring)
+  {
+  	//Do Something with input[CompetitionType];
+    if("T" == input[CompetitionType])
+    {
+      m_nrOfRounds = 9;
+    }
+  }
+
+  if(input[RoundNumber] != emptystring)
+  {
+  	//Do Something with input[RoundNumber];
+    sscanf(input[RoundNumber].c_str(),"%d",& m_currentRound);
+    StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
+  }
+
+  if(input[Weapon] != emptystring)
+  {
+  	//Do Something with input[Weapon];
+    m_TheSensor->Setweapon_detection_mode(MANUAL);
+    if("F" == input[Weapon])
+    {
+      m_MachineWeapon = FOIL;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_FOIL);
+      m_TheSensor->SetActualWeapon(FOIL);
+    }
+    if("E" == input[Weapon])
+    {
+      m_MachineWeapon = EPEE;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+      m_TheSensor->SetActualWeapon(EPEE);
+    }
+    if("S" == input[Weapon])
+    {
+      m_MachineWeapon = SABRE;
+      StateChanged(EVENT_WEAPON | WEAPON_MASK_SABRE);
+      m_TheSensor->SetActualWeapon(SABRE);
+    }
+
+  }
+
+  if(input[Priority] != emptystring)
+  {
+  	//Do Something with input[Priority];
+    if("L" == input[Priority])
+    {
+      m_Priority = PRIO_LEFT;
+      StateChanged(EVENT_PRIO | 1);
+    }
+    if("R" == input[Priority])
+    {
+      m_Priority = PRIO_RIGHT;
+      StateChanged(EVENT_PRIO | 2);
+    }
+    if("N" == input[Priority])
+    {
+      m_Priority = NO_PRIO;
+      StateChanged(EVENT_PRIO);
+    }
+  }
+
+  if(input[State] != emptystring)
+  {
+  	//Do Something with input[State];
+  }
+
+
+  if(input[RightFencerId] != emptystring)
+  {
+  	//Do Something with input[RightFencerId];
+  }
+
+  if(input[RightFencerName] != emptystring)
+  {
+  	//Do Something with input[RightFencerName];
+  }
+
+  if(input[RightFencerNation] != emptystring)
+  {
+  	//Do Something with input[RightFencerNation];
+  }
+
+  if(input[RightScore] != emptystring)
+  {
+  	//Do Something with input[RightScore];
+    sscanf(input[RightScore].c_str(),"%d",&m_ScoreRight);
+    StateChanged(EVENT_SCORE_LEFT | m_ScoreRight);
+  }
+
+  if(input[RightStatus] != emptystring)
+  {
+  	//Do Something with input[RightStatus];
+  }
+
+  if(input[RightYCard] != emptystring)
+  {
+  	//Do Something with input[RightYCard];
+    sscanf(input[RightYCard].c_str(),"%d",& m_YellowCardRight);
+    StateChanged(m_YellowCardRight | EVENT_YELLOW_CARD_RIGHT );
+  }
+
+  if(input[RightRCard] != emptystring)
+  {
+  	//Do Something with input[RightRCard];
+    sscanf(input[RightRCard].c_str(),"%d",& m_RedCardRight);
+    StateChanged(m_RedCardRight | EVENT_RED_CARD_RIGHT );
+  }
+
+
+  if(input[RightMedicalIntervention] != emptystring)
+  {
+  	//Do Something with input[RightMedicalIntervention];
+  }
+
+  if(input[RightReserveIntroduction] != emptystring)
+  {
+  	//Do Something with input[RightReserveIntroduction];
+  }
+
+  if(input[RightPCards] != emptystring)
+  {
+  	//Do Something with input[RightPCards];
+    sscanf(input[RightPCards].c_str(),"%d",& m_PCardRight);
+    StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+
+  }
+
+  if(input[LeftFencerId] != emptystring)
+  {
+  	//Do Something with input[LeftFencerId];
+  }
+
+  if(input[LeftFencerName] != emptystring)
+  {
+  	//Do Something with input[LeftFencerName];
+  }
+
+  if(input[LeftFencerNation] != emptystring)
+  {
+  	//Do Something with input[LeftFencerNation];
+  }
+
+  if(input[LeftScore] != emptystring)
+  {
+  	//Do Something with input[LeftScore];
+    sscanf(input[LeftScore].c_str(),"%d",& m_ScoreLeft);
+    StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
+  }
+
+  if(input[LeftStatus] != emptystring)
+  {
+  	//Do Something with input[LeftStatus];
+  }
+
+  if(input[LeftYCard] != emptystring)
+  {
+  	//Do Something with input[LeftYCard];
+    sscanf(input[LeftYCard].c_str(),"%d",& m_YellowCardLeft);
+    StateChanged(m_YellowCardLeft | EVENT_YELLOW_CARD_LEFT );
+
+  }
+
+  if(input[LeftRCard] != emptystring)
+  {
+  	//Do Something with input[LeftRCard];
+    sscanf(input[LeftRCard].c_str(),"%d",& m_RedCardLeft);
+    StateChanged(m_RedCardLeft | EVENT_RED_CARD_LEFT );
+  }
+
+
+  if(input[LeftMedicalIntervention] != emptystring)
+  {
+  	//Do Something with input[LeftMedicalIntervention];
+  }
+
+  if(input[LeftReserveIntroduction] != emptystring)
+  {
+  	//Do Something with input[LeftReserveIntroduction];
+  }
+
+  if(input[LeftPCards] != emptystring)
+  {
+  	//Do Something with input[LeftPCards];
+    sscanf(input[LeftPCards].c_str(),"%d",& m_PCardLeft);
+    StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+  }
 }

@@ -5,6 +5,7 @@
 #include "3WeaponSensor.h"
 #include "FencingTimer.h"
 #include "UW2FTimer.h"
+#include "EFP1Message.h"
 
 
 
@@ -15,7 +16,8 @@ enum TimerState_t{FIGHTING, BREAK, INJURY, ADDITIONAL_MINUTE, MATCH_ENDED,UNDEFI
 
 
 class UDPIOHandler;
-class FencingStateMachine : public Subject<FencingStateMachine> , public Observer<MultiWeaponSensor> ,  public Observer<UDPIOHandler>
+class CyranoHandler;
+class FencingStateMachine : public Subject<FencingStateMachine> , public Observer<MultiWeaponSensor> ,  public Observer<UDPIOHandler> ,  public Observer<CyranoHandler>
 {
     public:
         /** Default constructor */
@@ -29,7 +31,10 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         void update (MultiWeaponSensor *subject, uint32_t eventtype);
  //       void update (BlynkIOHandler *subject, uint32_t eventtype);
         void update (UDPIOHandler *subject, uint32_t eventtype);
+        void update (CyranoHandler *subject, uint32_t eventtype){};
+        void update (CyranoHandler *subject, string eventtype);
         void StateChanged (uint32_t eventtype) {notify(eventtype);}
+        void ProcessDisplayMessage (const EFP1Message &input);
 
         /** Access m_Red
          * \return The current value of m_Red
