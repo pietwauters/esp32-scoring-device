@@ -346,14 +346,14 @@ void CyranoHandler::CheckConnection()
   if(millis() < NextTimeToCheckConnection)
     return;
   NextTimeToCheckConnection = millis() + 2500;
-  Serial.println("Checking WiFi connection");
+  //Serial.println("Checking WiFi connection");
   if(WiFi.status() == WL_CONNECTED)
   {
     if(!bWifiConnected)
     {
       bWifiConnected = true;
     }
-    Serial.println("Wifi is connected");
+    //Serial.println("Wifi is connected");
     if(!bCyranoConnected)
     {// Somehow we should call this only once. It will keep on trying for ever.
 

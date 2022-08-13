@@ -345,11 +345,15 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
 
     case EVENT_SCORE_LEFT:
     Message3.SetScoreLeft(event_data);
+    BTTransmitMessage(3);
+    WifiTransmitMessage(3);
 
     break;
 
     case EVENT_SCORE_RIGHT:
       Message3.SetScoreRight(event_data);
+      BTTransmitMessage(3);
+      WifiTransmitMessage(3);
     break;
 
     case EVENT_TIMER_STATE:

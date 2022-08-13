@@ -22,6 +22,7 @@ TimeScoreDisplay MyTimeScoreDisplay;
 CyranoHandler MyCyranoHandler;
 
 TaskHandle_t CoreScoringMachineTask;
+long StopSearchingForWifi = 99999;
 void CoreScoringMachineHandler(void *parameter)
 {
   while(true)
@@ -253,6 +254,8 @@ void setup() {
   delay(100);
   MyStatemachine.ResetAll();
   MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+  StopSearchingForWifi = millis() + 30000;
+
 }
 
 
@@ -265,7 +268,9 @@ void loop() {
   delay(1);
   MyTimeScoreDisplay.ProcessEvents();
   delay(1);
-  MyCyranoHandler.CheckConnection();
+  // If there is no WiFi within 30 seconds after start, it will not come
+  if(millis() < StopSearchingForWifi)
+    MyCyranoHandler.CheckConnection();
   if(MyStatemachine.IsConnectedToRemote())
   {
     MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
