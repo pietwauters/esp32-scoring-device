@@ -46,6 +46,12 @@ FPA422Handler::FPA422Handler()
 {
     //ctor
     //
+    Message5.SetTypeToLeft();
+    Message5.SetName("Left fencer",11);
+    Message5.SetNOC("BEL");
+    Message6.SetTypeToRight();
+    Message6.SetName("Right fencer",12);
+    Message6.SetNOC("FRA");
 }
 
 FPA422Handler::~FPA422Handler()
@@ -498,4 +504,9 @@ void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
     Message5.SetName(EFP1Input[LeftFencerName].c_str(),EFP1Input[LeftFencerName].length());
   if(EFP1Input[LeftFencerNation] != "")
     Message5.SetNOC(EFP1Input[LeftFencerNation].c_str());
+  BTTransmitMessage(5);
+  WifiTransmitMessage(5);
+  BTTransmitMessage(6);
+  WifiTransmitMessage(6);
+
 }

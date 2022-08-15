@@ -14,7 +14,7 @@ class RS422_FPA_Type5_6_Message : public RS422_FPA_Message
         RS422_FPA_Type5_6_Message& operator=(const RS422_FPA_Type5_6_Message& other);
         void SetTypeToLeft(){m_message[3]= 'L';};
         void SetTypeToRight(){m_message[3]= 'R';};
-        void SetUID(const char* name, size_t len = 20);
+        void SetUID(const char* name, size_t len = 8);
         void SetName(const char* name, size_t len = 20);
         void SetNOC(const char* NOC);
 
