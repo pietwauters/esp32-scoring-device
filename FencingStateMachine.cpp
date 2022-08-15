@@ -43,6 +43,7 @@ FencingStateMachine::FencingStateMachine(int hw_timer_nr, int tickPeriod)
     ResetAll();
     m_Timer.SetTicksPeriod(tickPeriod);
     //m_Timer.SetDisplayResolution(100);
+
 }
 
 FencingStateMachine::~FencingStateMachine()
@@ -666,6 +667,9 @@ void FencingStateMachine::DoStateMachineTick()
 #define emptystring ""
 void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
 {
+  m_UW2FTimer.Reset();
+  StateChanged(EVENT_UW2F_TIMER);
+
 
   if(input[Start_time] != emptystring)
   {
@@ -675,6 +679,13 @@ void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
   if(input[StopWatch] != emptystring)
   {
   	//Do Something with input[StopWatch];
+    uint8_t minutes = 3;
+    uint8_t seconds = 0;
+    sscanf(input[StopWatch].c_str(),"%d:%d",& minutes, & seconds);
+    m_Timer.SetMinutes(minutes);
+    m_Timer.SetSeconds(seconds);
+    m_Timer.SetHundredths(0);
+    StateChanged(MakeTimerEvent());
   }
 
   if(input[CompetitionType] != emptystring)
@@ -763,7 +774,7 @@ void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
   {
   	//Do Something with input[RightScore];
     sscanf(input[RightScore].c_str(),"%d",&m_ScoreRight);
-    StateChanged(EVENT_SCORE_LEFT | m_ScoreRight);
+    StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
   }
 
   if(input[RightStatus] != emptystring)
