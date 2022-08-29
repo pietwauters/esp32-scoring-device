@@ -418,14 +418,6 @@ void MultiWeaponSensor::DoFullScan()
 
 weapon_t MultiWeaponSensor::GetWeapon()
 {
-  if(m_DectionMode == MANUAL)
-  {
-    bAutoDetect = 0;
-    return m_ActualWeapon;
-  }
-
-  m_DetectedWeapon = m_ActualWeapon;
-  bAutoDetect = 1;
 
   if (m_ActualWeapon != EPEE)
   {
@@ -446,10 +438,21 @@ weapon_t MultiWeaponSensor::GetWeapon()
     {
       LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
       bPreventBuzzer = false;
-      return EPEE;
+      if(m_DectionMode != MANUAL)
+      {
+        return EPEE;
+      }
     }
   }
 
+  if(m_DectionMode == MANUAL)
+  {
+    bAutoDetect = 0;
+    return m_ActualWeapon;
+  }
+
+  m_DetectedWeapon = m_ActualWeapon;
+  bAutoDetect = 1;
 
   switch (m_ActualWeapon)
   {
