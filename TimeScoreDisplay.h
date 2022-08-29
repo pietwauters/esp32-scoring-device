@@ -8,6 +8,11 @@
 #include <MD_MAX72xx.h>
 #include <SPI.h>
 
+#define BRIGHTNESS_LOW 1
+#define BRIGHTNESS_NORMAL 3
+#define BRIGHTNESS_HIGH 5
+#define BRIGHTNESS_ULTRAHIGH 7
+
 enum TimerStatus_t {NO_TIME, // No need to show the time, it's not available
                   TIMER_STOPPED, // Timer stopped, alternate between time and score
                   TIMER_RUNNING, // Timer is running during match, only show timer
@@ -38,6 +43,7 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>
         void CycleScoreMatchAndTimeWhenNotFighting();
         void ShowScoreForGivenDuration(uint32_t duration);
         void DisplayWeapon(weapon_t weapon);
+        void SetBrightness(int value);
 
     protected:
 
@@ -59,6 +65,7 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>
     long NextTimeToTogglecolon = 0;
     uint32_t m_LastEvent = 0;
     QueueHandle_t queue = NULL;
+    int m_Brightness = BRIGHTNESS_NORMAL;
 
 };
 

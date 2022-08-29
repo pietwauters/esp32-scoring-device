@@ -73,7 +73,7 @@ void FencingStateMachine::update (CyranoHandler *subject, string eventtype)
 
 void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
 {
-  uint32_t event_data = eventtype & SUB_TYPE_MASK;;
+  uint32_t event_data = eventtype & UI_SUB_TYPE_MASK;
   uint32_t maineventtype = eventtype & MAIN_TYPE_MASK ;
   uint32_t card_event;
   m_IsConnectedToRemote = true;
@@ -219,6 +219,13 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
 
     break;
 
+    case UI_NEXT_PERIOD:
+      SetNextTimerStateAndRoundAndNewTimeOnTimerZero();
+      StateChanged(EVENT_TIMER_STATE);
+      StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
+      StateChanged(MakeTimerEvent());
+    break;
+
     case UI_INPUT_YELLOW_CARD_LEFT:
       if(m_RedCardLeft == 0)
       {
@@ -279,6 +286,9 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
 
     break;
 
+    case UI_CYCLE_BRIGHTNESS:
+    StateChanged(eventtype);
+    break;
 
 
     case UI_INPUT_CYCLE_WEAPON:
@@ -544,6 +554,8 @@ void FencingStateMachine::SetNextTimerStateAndRoundAndNewTimeOnTimerZero()
   }
 
 }
+
+
 
 // As a minimum we should perform a timer tick
 char ChronoString[32];

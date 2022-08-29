@@ -22,7 +22,7 @@ TimeScoreDisplay MyTimeScoreDisplay;
 CyranoHandler MyCyranoHandler;
 
 TaskHandle_t CoreScoringMachineTask;
-long StopSearchingForWifi = 99999;
+long StopSearchingForWifi = 60000;
 void CoreScoringMachineHandler(void *parameter)
 {
   while(true)
