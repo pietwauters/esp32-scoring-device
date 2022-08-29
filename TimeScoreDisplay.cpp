@@ -60,6 +60,12 @@ uint8_t numbers[][9]= {{5,62,81,73,69,62,0,0,0},
 
 #define TIME_SCORE_PERIOD_INTERVAL_MS 2000
 
+
+void TimeScoreDisplay::SetBrightness(int value)
+{
+  m_Brightness = value; mx.control(MD_MAX72XX::INTENSITY, value);
+}
+
 TimeScoreDisplay::TimeScoreDisplay()
 {
     //ctor
@@ -77,6 +83,7 @@ void TimeScoreDisplay::begin()
     mx.begin();
     mx.clear();
     queue = xQueueCreate( 60, sizeof( int ) );
+    SetBrightness(BRIGHTNESS_NORMAL);
 }
 
 void TimeScoreDisplay::SetChar(uint8_t MostLeftPosition, uint8_t character)
@@ -220,6 +227,32 @@ void TimeScoreDisplay::ProcessEvents ()
       if(event_data && MASK_RED_OR_GREEN)
         ShowScoreForGivenDuration(5000);
     break;*/
+    case EVENT_UI_INPUT:
+    switch (event_data)
+    {
+      case UI_CYCLE_BRIGHTNESS:
+      switch(m_Brightness)
+      {
+        case BRIGHTNESS_LOW:
+        SetBrightness(BRIGHTNESS_NORMAL);
+        break;
+        case BRIGHTNESS_NORMAL:
+        SetBrightness(BRIGHTNESS_HIGH);
+        break;
+        case BRIGHTNESS_HIGH:
+        SetBrightness(BRIGHTNESS_ULTRAHIGH);
+        break;
+        case BRIGHTNESS_ULTRAHIGH:
+        SetBrightness(BRIGHTNESS_LOW);
+        break;
+
+        default:
+        SetBrightness(BRIGHTNESS_NORMAL);
+      }
+      break;
+    }
+
+    break;
 
     case EVENT_ROUND:
       m_round =  event_data & DATA_BYTE0_MASK;

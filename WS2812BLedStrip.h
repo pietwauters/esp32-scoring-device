@@ -32,6 +32,12 @@
 #define MASK_GREEN 0x04
 #define MASK_BUZZ 0x02
 
+#define BRIGHTNESS_LOW 15
+#define BRIGHTNESS_NORMAL 30
+#define BRIGHTNESS_HIGH 75
+#define BRIGHTNESS_ULTRAHIGH 125
+
+
 
 class WS2812B_LedStrip : public Observer<FencingStateMachine>
 {
@@ -59,7 +65,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         void setBuzz(bool Value);
         //void setBuzz(bool Value){return;};
         void myShow(){m_pixels->show();};
-        void SetBrightness(uint8_t val){m_Brightness = val; m_pixels->setBrightness(m_Brightness);};
+        void SetBrightness(uint8_t val);
         void update (FencingStateMachine *subject, uint32_t eventtype);
         void ProcessEvents ();
         void ProcessEventsBlocking ();
@@ -87,7 +93,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         void setUWFTime(uint8_t tens, uint8_t bottom);
         unsigned char m_LedStatus; //!< Member variable "m_LedStatus"
         Adafruit_NeoPixel *m_pixels;
-        uint8_t m_Brightness = 30;
+        uint8_t m_Brightness = BRIGHTNESS_NORMAL;
         bool m_Loudness = true;
         uint32_t   m_Red;
         uint32_t   m_Green;

@@ -17,16 +17,23 @@ WS2812B_LedStrip::WS2812B_LedStrip()
     pinMode(BUZZERPIN, OUTPUT);
     digitalWrite(BUZZERPIN, HIGH);
     m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-    m_pixels->setBrightness(m_Brightness);
-    m_Red = Adafruit_NeoPixel::Color(255, 0, 0, m_Brightness);
-    m_Green = Adafruit_NeoPixel::Color(0, 255, 0, m_Brightness);
-    m_White = Adafruit_NeoPixel::Color(255, 255, 255, m_Brightness);
-    m_Orange = Adafruit_NeoPixel::Color(160, 60, 0, m_Brightness);
-    m_Yellow = Adafruit_NeoPixel::Color(255, 210, 0, m_Brightness);
-    m_Blue = Adafruit_NeoPixel::Color(0, 0, 255, m_Brightness);
-    m_Off = Adafruit_NeoPixel::Color(0, 0, 0, m_Brightness);
+    SetBrightness(BRIGHTNESS_NORMAL);
     queue = xQueueCreate( 60, sizeof( int ) );
 }
+
+void WS2812B_LedStrip::SetBrightness(uint8_t val)
+{
+  m_Brightness = val;
+  m_pixels->setBrightness(m_Brightness);
+  m_Red = Adafruit_NeoPixel::Color(255, 0, 0, m_Brightness);
+  m_Green = Adafruit_NeoPixel::Color(0, 255, 0, m_Brightness);
+  m_White = Adafruit_NeoPixel::Color(200, 200, 200, m_Brightness);
+  m_Orange = Adafruit_NeoPixel::Color(160, 60, 0, m_Brightness);
+  m_Yellow = Adafruit_NeoPixel::Color(204, 168, 0, m_Brightness);
+  m_Blue = Adafruit_NeoPixel::Color(0, 0, 255, m_Brightness);
+  m_Off = Adafruit_NeoPixel::Color(0, 0, 0, m_Brightness);
+}
+
 
 WS2812B_LedStrip::~WS2812B_LedStrip()
 {
@@ -223,6 +230,33 @@ void WS2812B_LedStrip:: update (FencingStateMachine *subject, uint32_t eventtype
   }
   switch(maineventtype)
   {
+    case EVENT_UI_INPUT:
+    switch (event_data)
+    {
+      case UI_CYCLE_BRIGHTNESS:
+      switch(m_Brightness)
+      {
+        case BRIGHTNESS_LOW:
+        SetBrightness(BRIGHTNESS_NORMAL);
+        break;
+        case BRIGHTNESS_NORMAL:
+        SetBrightness(BRIGHTNESS_HIGH);
+        break;
+        case BRIGHTNESS_HIGH:
+        SetBrightness(BRIGHTNESS_ULTRAHIGH);
+        break;
+        case BRIGHTNESS_ULTRAHIGH:
+        SetBrightness(BRIGHTNESS_LOW);
+        break;
+
+        default:
+        SetBrightness(BRIGHTNESS_NORMAL);
+      }
+      break;
+    }
+
+    break;
+
     case EVENT_PRIO:
     StartPrioAnimation(event_data);
     break;
