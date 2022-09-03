@@ -260,22 +260,37 @@ void FPA422Handler::StartWiFi()
   password = preferences.getString("password", "");
 
   WiFi.mode(WIFI_MODE_APSTA);
-  WiFi.softAP(soft_ap_ssid, soft_ap_password);
 
-  int bestchannel = findBestWifiChannel() + 1;
-  Serial.print("current best channel = "); Serial.println(bestchannel);
-  esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
+  Serial.println("now looking to connect to global network");
 
-
+  bool bConnectedToExternalNetwork = false;
   WiFi.begin(ssid.c_str(), password.c_str());
-  for(int i =0; i<50;i++)
+  for(int i =0; i<10;i++)
   {
     if (WiFi.waitForConnectResult() != WL_CONNECTED)
     {
-          delay(200);
+          delay(500);
     }
     else
-     i = 1000;
+    {
+      bConnectedToExternalNetwork = true;
+      i = 1000;
+    }
+
+  }
+  if(bConnectedToExternalNetwork)
+  {
+    WiFi.softAP(soft_ap_ssid, soft_ap_password);
+    Serial.print("ESP32 IP on the WiFi network: ");
+    Serial.println(WiFi.localIP());
+  }
+  else
+  {
+    int bestchannel = findBestWifiChannel() + 1;
+    WiFi.mode(WIFI_MODE_AP);
+    WiFi.softAP(soft_ap_ssid, soft_ap_password);
+    esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
+    Serial.print("current best channel = "); Serial.println(bestchannel);
   }
 
 
@@ -285,8 +300,6 @@ void FPA422Handler::StartWiFi()
   Serial.print("ESP32 IP as soft AP: ");
   Serial.println(WiFi.softAPIP());
 
-  Serial.print("ESP32 IP on the WiFi network: ");
-  Serial.println(WiFi.localIP());
 
   m_WifiStarted = true;
   TimeForNext1_2s =millis() + 1200;
