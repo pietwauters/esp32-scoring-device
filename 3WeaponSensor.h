@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cinttypes>
 #include "weaponenum.h"
+#include "hardwaredefinition.h"
 
 // If you have different pins, change below defines
 /*#define cl_analog 36
@@ -21,6 +22,7 @@
 #define cr_analog 7
 #define br_analog 4
 
+#ifdef FIRST_PROTO
 #define al_driver 22
 #define bl_driver 21
 #define cl_driver 23
@@ -28,7 +30,17 @@
 #define br_driver 04
 #define cr_driver 18
 #define piste_driver 19
+#endif
 
+#ifdef SECOND_PROTO
+#define al_driver 33
+#define bl_driver 21
+#define cl_driver 23
+#define ar_driver 25
+#define br_driver 05
+#define cr_driver 18
+#define piste_driver 19
+#endif
 
 // below defines are generated with the excel tool
 

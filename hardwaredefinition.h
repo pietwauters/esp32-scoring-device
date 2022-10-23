@@ -1,0 +1,8 @@
+#ifndef HARDWAREDEFINITIONS_H
+#define HARDWAREDEFINITIONS_H
+
+
+//#define FIRST_PROTO 1
+#define SECOND_PROTO 1
+
+#endif
