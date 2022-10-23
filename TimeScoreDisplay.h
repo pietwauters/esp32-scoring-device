@@ -8,10 +8,10 @@
 #include <MD_MAX72xx.h>
 #include <SPI.h>
 
-#define BRIGHTNESS_LOW 1
-#define BRIGHTNESS_NORMAL 3
-#define BRIGHTNESS_HIGH 5
-#define BRIGHTNESS_ULTRAHIGH 7
+#define TEXT_BRIGHTNESS_LOW 1
+#define TEXT_BRIGHTNESS_NORMAL 3
+#define TEXT_BRIGHTNESS_HIGH 5
+#define TEXT_BRIGHTNESS_ULTRAHIGH 7
 
 enum TimerStatus_t {NO_TIME, // No need to show the time, it's not available
                   TIMER_STOPPED, // Timer stopped, alternate between time and score
@@ -65,7 +65,7 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>
     long NextTimeToTogglecolon = 0;
     uint32_t m_LastEvent = 0;
     QueueHandle_t queue = NULL;
-    int m_Brightness = BRIGHTNESS_NORMAL;
+    int m_Brightness = TEXT_BRIGHTNESS_NORMAL;
 
 };
 

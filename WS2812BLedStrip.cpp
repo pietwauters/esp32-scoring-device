@@ -15,7 +15,7 @@ WS2812B_LedStrip::WS2812B_LedStrip()
 {
     //ctor
     pinMode(BUZZERPIN, OUTPUT);
-    digitalWrite(BUZZERPIN, HIGH);
+    digitalWrite(BUZZERPIN, RELATIVE_LOW);
     m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
     SetBrightness(BRIGHTNESS_NORMAL);
     queue = xQueueCreate( 60, sizeof( int ) );
@@ -543,11 +543,11 @@ void WS2812B_LedStrip::setBuzz(bool Value)
     {
         if(Value)
         {
-            digitalWrite(BUZZERPIN, LOW);
+            digitalWrite(BUZZERPIN, RELATIVE_HIGH);
         }
         else
         {
-            digitalWrite(BUZZERPIN, HIGH);
+            digitalWrite(BUZZERPIN, RELATIVE_LOW);
         }
     }
 

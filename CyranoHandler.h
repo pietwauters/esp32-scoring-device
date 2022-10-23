@@ -7,6 +7,7 @@
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
 #include "EventDefinitions.h"
+#include <Preferences.h>
 
 
 #define CYRANO_PORT 50100
@@ -61,6 +62,7 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
 
         AsyncUDP CyranoHandlerudpRcv;
         bool bOKToSend = false;
+        Preferences networkpreferences;
 
 };
 

@@ -7,11 +7,17 @@ CyranoHandler::CyranoHandler()
     //ctor
     m_MachineStatus[PisteId]="1";
     m_MachineStatus[State] ="W";
+    networkpreferences.begin("credentials", true);
+    uint32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
+    char temp[8];
+    sprintf(temp,"%03d",PisteNr);
+    m_MachineStatus[PisteId]= (std::string)temp;
 }
 
 CyranoHandler::~CyranoHandler()
 {
     //dtor
+    networkpreferences.end();
 }
 
 

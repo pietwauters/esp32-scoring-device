@@ -1,12 +1,27 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #include "TimeScoreDisplay.h"
+#include "hardwaredefinition.h"
+
 #define HARDWARE_TYPE MD_MAX72XX::ICSTATION_HW
 #define MAX_DEVICES 4
+
+#ifdef FIRST_PROTO
 #define HSPI_MISO   12
 #define HSPI_MOSI   13
 #define HSPI_SCLK   14
 #define HSPI_SS     15
 #define CS_PIN    15  // or SS
+#endif
+
+#ifdef SECOND_PROTO
+#define HSPI_MISO   12
+#define HSPI_MOSI   13
+#define HSPI_SCLK   14
+#define HSPI_SS     27
+#define CS_PIN    27  // or SS
+#endif
+
+
 static const int spiClk = 1000000; // 1 MHz
 
 //uninitalised pointers to SPI objects
@@ -83,7 +98,7 @@ void TimeScoreDisplay::begin()
     mx.begin();
     mx.clear();
     queue = xQueueCreate( 60, sizeof( int ) );
-    SetBrightness(BRIGHTNESS_NORMAL);
+    SetBrightness(TEXT_BRIGHTNESS_NORMAL);
 }
 
 void TimeScoreDisplay::SetChar(uint8_t MostLeftPosition, uint8_t character)
@@ -233,21 +248,21 @@ void TimeScoreDisplay::ProcessEvents ()
       case UI_CYCLE_BRIGHTNESS:
       switch(m_Brightness)
       {
-        case BRIGHTNESS_LOW:
-        SetBrightness(BRIGHTNESS_NORMAL);
+        case TEXT_BRIGHTNESS_LOW:
+        SetBrightness(TEXT_BRIGHTNESS_NORMAL);
         break;
-        case BRIGHTNESS_NORMAL:
-        SetBrightness(BRIGHTNESS_HIGH);
+        case TEXT_BRIGHTNESS_NORMAL:
+        SetBrightness(TEXT_BRIGHTNESS_HIGH);
         break;
-        case BRIGHTNESS_HIGH:
-        SetBrightness(BRIGHTNESS_ULTRAHIGH);
+        case TEXT_BRIGHTNESS_HIGH:
+        SetBrightness(TEXT_BRIGHTNESS_ULTRAHIGH);
         break;
-        case BRIGHTNESS_ULTRAHIGH:
-        SetBrightness(BRIGHTNESS_LOW);
+        case TEXT_BRIGHTNESS_ULTRAHIGH:
+        SetBrightness(TEXT_BRIGHTNESS_LOW);
         break;
 
         default:
-        SetBrightness(BRIGHTNESS_NORMAL);
+        SetBrightness(TEXT_BRIGHTNESS_NORMAL);
       }
       break;
     }

@@ -266,6 +266,54 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
     break;
 
+    case UI_INPUT_YELLOW_CARD_LEFT_DECR:
+      if(m_YellowCardLeft == 1)
+      {
+        m_YellowCardLeft=0;
+        card_event = m_YellowCardLeft | EVENT_YELLOW_CARD_LEFT;
+        StateChanged(card_event );
+      }
+
+    break;
+
+    case UI_INPUT_YELLOW_CARD_RIGHT_DECR:
+      if(m_YellowCardRight == 1)
+      {
+        m_YellowCardRight = 0;
+        card_event = m_YellowCardRight | EVENT_YELLOW_CARD_RIGHT;
+        StateChanged(card_event );
+      }
+
+    break;
+
+    case UI_INPUT_RED_CARD_LEFT_DECR:
+      if(m_RedCardLeft)
+      {
+        m_RedCardLeft--;
+        card_event = m_RedCardLeft | EVENT_RED_CARD_LEFT;
+        StateChanged(card_event );
+        //m_UW2FTimer.Reset();
+        //StateChanged(EVENT_UW2F_TIMER);
+        m_ScoreRight--;
+        StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
+      }
+
+    break;
+
+    case UI_INPUT_RED_CARD_RIGHT_DECR:
+      if(m_RedCardRight)
+      {
+        m_RedCardRight--;
+        card_event = m_RedCardRight | EVENT_RED_CARD_RIGHT;
+        StateChanged(card_event );
+        //m_UW2FTimer.Reset();
+        //StateChanged(EVENT_UW2F_TIMER);
+        m_ScoreLeft--;
+        StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
+      }
+
+    break;
+
 
     case UI_INPUT_P_CARD:
     ProcessUW2F();

@@ -11,6 +11,8 @@
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
 #include "EventDefinitions.h"
+#include "network.h"
+
 
 #define MAX_MESSAGE_TYPE 9
 class CyranoHandler;

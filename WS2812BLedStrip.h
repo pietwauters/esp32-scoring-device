@@ -5,14 +5,26 @@
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
 #include "EventDefinitions.h"
-
+#include "hardwaredefinition.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Which pin on the Arduino is connected to the NeoPixels?
 
 //#define PIN 12 // On Trinket or Gemma, suggest changing this to 1
+#ifdef FIRST_PROTO
 #define PIN 2 // On Trinket or Gemma, suggest changing this to 1
 #define BUZZERPIN 0
+#define RELATIVE_HIGH LOW
+#define RELATIVE_LOW HIGH
+#endif
+
+#ifdef SECOND_PROTO
+#define PIN 26
+#define BUZZERPIN 22
+#define RELATIVE_HIGH HIGH
+#define RELATIVE_LOW LOW
+#endif
+
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS 128
