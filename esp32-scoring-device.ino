@@ -9,11 +9,13 @@
 #include "CyranoHandler.h"
 #include "driver/adc.h"
 #include "esp_task_wdt.h"
+#include "network.h"
 
 
 #define WELCOME_ANIMATION_SPEED 70
 
 MultiWeaponSensor MySensor(1);
+NetWork MyNetWork;
 WS2812B_LedStrip MyLedStrip;
 FencingStateMachine MyStatemachine(2,10);
 FPA422Handler MyFPA422Handler;
@@ -200,6 +202,7 @@ void setup() {
   MyTimeScoreDisplay.DisplayWeapon(EPEE);
   //PrintReasonForReset();    // This is only for debugging instabilities. Comment out when you think it works
   ShowWelcomeLights();
+  MyNetWork.GlobalStartWiFi();
   MyFPA422Handler.StartWiFi();
   Serial.println("Wifi started");
   Serial.println("by now the you should have seen all the lights one by one");
