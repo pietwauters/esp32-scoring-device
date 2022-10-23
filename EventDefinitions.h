@@ -58,7 +58,7 @@ union mix_t
 // These are subtypes, The MS Byte is always 0x06 for a UI event, the LSB determines the event SUB_TYPE_MASK
 // The 'middle' bytes can be used for data
 
-#define UI_SUB_TYPE_MASK  0x000000ff
+#define UI_SUB_TYPE_MASK  0x00ffffff
 #define UI_DATA_MASK  0x000000ff
 #define UI_INPUT_START_TIMER 0x00000001
 #define UI_INPUT_STOP_TIMER 0x00000002
