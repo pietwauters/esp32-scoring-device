@@ -1,6 +1,7 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #include "FencingStateMachine.h"
 #include <iostream>
+#include <Preferences.h>
 using namespace std;
 
 #define FIGHTING_MINUTES 3
@@ -71,13 +72,29 @@ void FencingStateMachine::update (CyranoHandler *subject, string eventtype)
 }
 
 
+void FencingStateMachine::ProcessSpecialSetting (uint32_t eventtype)
+{
+  uint32_t event_data = eventtype & SPECIAL_SETTING_DATA_MASK;
+  uint32_t eventsubtype = eventtype & SPECIAL_SETTING_SUBTYPE_MASK ;
+  if(UI_SET_PISTE_NR == eventsubtype)
+  {
+    Preferences networkpreferences;
+    networkpreferences.begin("credentials", false);
+    networkpreferences.putInt("pisteNr", event_data);
+    networkpreferences.end();
+  }
+
+
+}
+
 void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
 {
   uint32_t event_data = eventtype & UI_SUB_TYPE_MASK;
   uint32_t maineventtype = eventtype & MAIN_TYPE_MASK ;
   uint32_t card_event;
   m_IsConnectedToRemote = true;
-
+  if(EVENT_UI_INPUT_SPECIAL_SETTINGS == maineventtype)
+    ProcessSpecialSetting(eventtype);
   if(EVENT_UI_INPUT != maineventtype)
     return;
   if(m_Timer.IsRunning())

@@ -1,7 +1,11 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #ifndef NETWORK_H
 #define NETWORK_H
+#include "SubjectObserverTemplate.h"
+#include "UDPIOHandler.h"
+#include "EventDefinitions.h"
 #include <Preferences.h>
+#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
 
 // It seems we should not use channels above 11
 #define CHANNEL_COUNT  12
@@ -26,7 +30,7 @@ typedef struct {
 } interval_t;
 
 
-class NetWork
+class NetWork : public Observer<UDPIOHandler>
 {
     public:
         /** Default constructor */
@@ -35,12 +39,18 @@ class NetWork
         virtual ~NetWork();
         int findBestWifiChannel();
         void GlobalStartWiFi();
+        bool ConnectToExternalNetwork();
         void reset_channels();
         int32_t FindFirstFreePisteID(uint32_t RequestedPiste = 0);
+        void WaitForNewSettingsViaPortal();
+        void update (UDPIOHandler *subject, uint32_t eventtype);
+        bool IsExternalWifiAvailable(){return bConnectedToExternalNetwork;}
+
     protected:
 
     private:
     bool m_GlobalWifiStarted = false;
+    bool bConnectedToExternalNetwork = false;
     char LocalIPAddress[16] = "255.255.255.255";
     char SoftAPIPAddress[16] = "255.255.255.255";
     Preferences networkpreferences;

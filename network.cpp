@@ -5,7 +5,6 @@
 #include <WiFiAP.h>
 #include <Preferences.h>
 #include "AsyncUDP.h"
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
 
 
 /**
@@ -29,7 +28,7 @@ int32_t NetWork::FindFirstFreePisteID(uint32_t RequestedPiste)
   for (int i = 0; i < networks; ++i)
   {
     //WiFi.SSID(i);
-    Serial.println(WiFi.SSID(i));
+    //Serial.println(WiFi.SSID(i));
     if(sscanf(WiFi.SSID(i).c_str(),"%d",&TempPisteId))
     {
       if(RequestedPiste == TempPisteId)
@@ -181,18 +180,48 @@ long best_interference = -999999999;
 
 }
 
+WiFiManager wm;
+
+bool NetWork::ConnectToExternalNetwork()
+{
+  if(bConnectedToExternalNetwork)
+    return true;
+  WiFi.mode(WIFI_MODE_APSTA);
+  wm.setEnableConfigPortal(false);
+  wm.setConfigPortalBlocking(false);
+  wm.setConfigPortalTimeout(5);
+  //wm.setShowInfoUpdate(boolean enabled);
+  //reset settings - wipe credentials for testing
+  //wm.resetSettings();
+
+  //automatically connect using saved credentials if they exist
+  //If connection fails it starts an access point with the specified name
+  Serial.println("now looking to connect to global network");
+  if(wm.autoConnect(soft_ap_ssid.c_str(), soft_ap_password.c_str())){
+      Serial.println("connected...yeey :)");
+      bConnectedToExternalNetwork = true;
+  }
+  else {
+      Serial.println("Not connected to known network");
+  }
+
+  if(bConnectedToExternalNetwork)
+  {
+    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
+    Serial.print("ESP32 IP on the WiFi network: ");
+    Serial.println(WiFi.localIP());
+  }
+
+  return bConnectedToExternalNetwork;
+}
 
 void NetWork::GlobalStartWiFi()
 {
   if(m_GlobalWifiStarted)
     return;
 
-
   networkpreferences.begin("credentials", false);
-  ssid = networkpreferences.getString("ssid", "");
-  password = networkpreferences.getString("password", "");
   uint32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
-  //PisteNr = 2;
   if(-1 != PisteNr )
   {
     char temp[8];
@@ -207,49 +236,91 @@ void NetWork::GlobalStartWiFi()
   }
   networkpreferences.end();
 
-  WiFi.mode(WIFI_MODE_APSTA);
+  int bestchannel = findBestWifiChannel() + 1;
+  WiFi.mode(WIFI_MODE_AP);
 
-  Serial.println("now looking to connect to global network");
-
-  bool bConnectedToExternalNetwork = false;
-
-  if((ssid != "") && (password != ""))
-  {
-    WiFi.begin(ssid.c_str(), password.c_str());
-    for(int i =0; i<10;i++)
-    {
-      if (WiFi.waitForConnectResult() != WL_CONNECTED)
-      {
-            delay(500);
-      }
-      else
-      {
-        bConnectedToExternalNetwork = true;
-        i = 1000;
-      }
-
-    }
-  }
-
-  if(bConnectedToExternalNetwork)
-  {
-    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
-    Serial.print("ESP32 IP on the WiFi network: ");
-    Serial.println(WiFi.localIP());
-  }
-  else
-  {
-    int bestchannel = findBestWifiChannel() + 1;
-    WiFi.mode(WIFI_MODE_AP);
-
-    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
-    esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
-    Serial.print("current best channel = "); Serial.println(bestchannel);
-  }
-
+  WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
+  esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
+  Serial.print("current best channel = "); Serial.println(bestchannel);
+  //Serial.print("current password = "); Serial.println(soft_ap_password);
   m_GlobalWifiStarted = true;
 
 }
+
+void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
+{
+  uint32_t maineventtype = eventtype & MAIN_TYPE_MASK ;
+  uint32_t subtype = eventtype & UI_SUB_TYPE_MASK ;
+
+
+  if(UI_START_WIFI_PORTAL == subtype)
+    WaitForNewSettingsViaPortal();
+
+  switch(subtype)
+  {
+    case UI_SWAP_FENCERS:
+    case UI_RESERVE_LEFT :
+    case UI_RESERVE_RIGHT :
+    case UI_INPUT_CYRANO_NEXT :
+    case UI_INPUT_CYRANO_PREV :
+    case UI_INPUT_CYRANO_BEGIN :
+    case UI_INPUT_CYRANO_END :
+    ConnectToExternalNetwork();
+    break;
+
+  }
+}
+
+WiFiManagerParameter WiFiPistId("WiFiPisteId", "PisteNr","",16);
+
+void saveParamsCallback () {
+
+  int newPistId = -1;
+  sscanf(WiFiPistId.getValue(),"%d",&newPistId);
+  Preferences networkpreferences;
+  networkpreferences.begin("credentials", false);
+  networkpreferences.putInt("pisteNr", newPistId);
+  networkpreferences.end();
+  ESP.restart();
+}
+
+void ConfigPortalTimeoutCallback()
+{
+  ESP.restart();
+}
+void ConfigResetCallback()
+{
+  Serial.println("In ConfigResetCallback");
+}
+
+void NetWork::WaitForNewSettingsViaPortal()
+{
+  Serial.println("In WaitForNewSettingsViaPortal()");
+  Serial.println(soft_ap_ssid);
+  //Serial.println(soft_ap_password);
+  networkpreferences.begin("credentials", false);
+  uint32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
+  char temp[8];
+  sprintf(temp,"%d",PisteNr);
+  networkpreferences.end();
+  WiFiPistId.setValue(temp, 8);
+
+
+  wm.addParameter(&WiFiPistId);
+  wm.setEnableConfigPortal(true);
+  wm.setConfigPortalBlocking(true);
+  wm.setConfigPortalTimeout(120);
+  wm.setSaveParamsCallback(saveParamsCallback);
+  wm.setConfigPortalTimeoutCallback(ConfigPortalTimeoutCallback);
+  wm.setConfigResetCallback(ConfigResetCallback);
+  wm.setShowInfoUpdate(false);
+  wm.setParamsPage(true);
+  wm.startConfigPortal(soft_ap_ssid.c_str(), soft_ap_password.c_str());
+  //ESP.restart();
+  m_GlobalWifiStarted = false;
+  NetWork::GlobalStartWiFi();
+}
+
 
 
 NetWork::NetWork()
