@@ -162,6 +162,7 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         bool IsConnectedToRemote(){return m_IsConnectedToRemote;};
         void SetConnectedToRemote(bool value){m_IsConnectedToRemote = value;};
         void ClearAllCards();
+        void ProcessSpecialSetting (uint32_t eventtype);
 
     protected:
 

@@ -219,6 +219,7 @@ void setup() {
   MyUDPIOHandler.attach(MyCyranoHandler);
   MyCyranoHandler.attach(MyStatemachine);
   MyCyranoHandler.attach(MyFPA422Handler);
+  MyUDPIOHandler.attach(MyNetWork);
 
 
   esp_task_wdt_init(10, false);
@@ -257,7 +258,7 @@ void setup() {
   delay(100);
   MyStatemachine.ResetAll();
   MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
-  StopSearchingForWifi = millis() + 30000;
+  StopSearchingForWifi = millis() + 60000;
 
 }
 
@@ -272,7 +273,8 @@ void loop() {
   MyTimeScoreDisplay.ProcessEvents();
   delay(1);
   // If there is no WiFi within 30 seconds after start, it will not come
-  if(millis() < StopSearchingForWifi)
+  //if(millis() < StopSearchingForWifi)
+  if(MyNetWork.IsExternalWifiAvailable())
     MyCyranoHandler.CheckConnection();
   if(MyStatemachine.IsConnectedToRemote())
   {
