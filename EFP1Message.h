@@ -92,6 +92,8 @@ class EFP1Message
         void SetGreen(bool value){if(value){(*this)[RightLight]= '1';}else{(*this)[RightLight]= '0';}};
         void SetWhiteLeft(bool value){if(value){(*this)[LeftWhiteLight]= '1';}else{(*this)[LeftWhiteLight]= '0';}};
         void SetWhiteRight(bool value){if(value){(*this)[RightWhiteLight]= '1';}else{(*this)[RightWhiteLight]= '0';}};
+        
+        void SwapFencersInclScoreCardsEtc();
 
 
     protected:

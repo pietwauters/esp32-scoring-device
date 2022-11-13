@@ -142,6 +142,14 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         }
         break;
 
+        case  UI_SWAP_FENCERS :
+        m_MachineStatus.SwapFencersInclScoreCardsEtc();
+        string msg;
+        m_MachineStatus.ToString(msg);
+        StateChanged(msg);
+        SendInfoMessage();
+        break;
+
     }
 
 }
