@@ -203,6 +203,7 @@ void setup() {
   //PrintReasonForReset();    // This is only for debugging instabilities. Comment out when you think it works
   ShowWelcomeLights();
   MyNetWork.GlobalStartWiFi();
+  //MyNetWork.ConnectToExternalNetwork();
   MyFPA422Handler.StartWiFi();
   Serial.println("Wifi started");
   Serial.println("by now the you should have seen all the lights one by one");
@@ -259,6 +260,7 @@ void setup() {
   MyStatemachine.ResetAll();
   MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
   StopSearchingForWifi = millis() + 60000;
+  MyCyranoHandler.Begin();
 
 }
 
@@ -282,6 +284,7 @@ void loop() {
     delay(1);
     MyLedStrip.AnimatePrio();
   }
+
   esp_task_wdt_reset();
 
 }

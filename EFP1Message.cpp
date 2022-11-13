@@ -238,3 +238,11 @@ void EFP1Message::Prune(const EFP1Message &Source)
         }
     }
 }
+
+
+void EFP1Message::SwapFencersInclScoreCardsEtc()
+{
+  std::vector<std::string> temp = mRightFencerFields;
+  mRightFencerFields = mLeftFencerFields;
+  mLeftFencerFields = temp;
+}

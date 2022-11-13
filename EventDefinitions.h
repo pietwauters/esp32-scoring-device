@@ -96,6 +96,7 @@ union mix_t
 #define UI_INPUT_CYRANO_BEGIN 0x00000103
 #define UI_INPUT_CYRANO_END 0x00000104
 
+
 #define UI_CYCLE_BRIGHTNESS 0x00000030
 
 // Special settings like PisteId

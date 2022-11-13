@@ -11,6 +11,7 @@
 #include "FPA422Handler.h"
 #include <HardwareSerial.h>
 #include "BluetoothSerial.h"
+#include <Preferences.h>
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
@@ -68,6 +69,7 @@ void FPA422Handler::StartBluetooth()
   TimeForNext12s =millis() + 12500;
 }
 
+
 HardwareSerial MySerial(2);
 void FPA422Handler::StartHWSerial()
 {
@@ -96,8 +98,11 @@ void FPA422Handler::StartWiFi()
 
   sprintf(LocalIPAddress, "%d.%d.%d.%d", localip[0], localip[1], localip[2], localip[3]);
   sprintf(SoftAPIPAddress, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+  Preferences networkpreferences;
+  networkpreferences.begin("credentials", false);
+  PisteNr = networkpreferences.getInt("pisteNr", 500);
+  networkpreferences.end();
   AnnouncingPort = 65535 - (2* PisteNr) +1;
-
 
 }
 
@@ -145,7 +150,7 @@ void FPA422Handler::WifiPeriodicalUpdate()
         if(m_WifiStarted)
         {
           udp.broadcastTo(SoftAPIPAddress, AnnouncingPort,TCPIP_ADAPTER_IF_AP);
-          //udp.broadcastTo(LocalIPAddress, AnnouncingPort,TCPIP_ADAPTER_IF_STA);
+          udp.broadcastTo(LocalIPAddress, AnnouncingPort,TCPIP_ADAPTER_IF_STA);
 
         }
         TimeForNext12s = millis() + 12000;

@@ -46,8 +46,7 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         void StateChanged (string eventtype) {notify(eventtype);}
         void ProcessLightsChange(uint32_t eventtype);
         void CheckConnection();
-
-
+        void Begin();
 
     protected:
 
@@ -63,6 +62,7 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         AsyncUDP CyranoHandlerudpRcv;
         bool bOKToSend = false;
         Preferences networkpreferences;
+        uint16_t CyranoPort = CYRANO_PORT;
 
 };
 

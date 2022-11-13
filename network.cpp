@@ -221,7 +221,7 @@ void NetWork::GlobalStartWiFi()
     return;
 
   networkpreferences.begin("credentials", false);
-  uint32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
+  int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
   if(-1 != PisteNr )
   {
     char temp[8];
@@ -235,14 +235,17 @@ void NetWork::GlobalStartWiFi()
     soft_ap_ssid = "Piste_" + (String)temp;
   }
   networkpreferences.end();
+  if(!ConnectToExternalNetwork())
+  {
+    int bestchannel = findBestWifiChannel() + 1;
+    WiFi.mode(WIFI_MODE_AP);
 
-  int bestchannel = findBestWifiChannel() + 1;
-  WiFi.mode(WIFI_MODE_AP);
+    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
+    esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
+    Serial.print("current best channel = "); Serial.println(bestchannel);
+    //Serial.print("current password = "); Serial.println(soft_ap_password);
+  }
 
-  WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
-  esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
-  Serial.print("current best channel = "); Serial.println(bestchannel);
-  //Serial.print("current password = "); Serial.println(soft_ap_password);
   m_GlobalWifiStarted = true;
 
 }
@@ -272,6 +275,7 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
 }
 
 WiFiManagerParameter WiFiPistId("WiFiPisteId", "PisteNr","",16);
+WiFiManagerParameter CyranoPort("CyranoPort", "Cyrano Port","50100",16);
 
 void saveParamsCallback () {
 
@@ -280,6 +284,9 @@ void saveParamsCallback () {
   Preferences networkpreferences;
   networkpreferences.begin("credentials", false);
   networkpreferences.putInt("pisteNr", newPistId);
+  uint16_t ThePort = 50100;
+  sscanf(CyranoPort.getValue(),"%d",&ThePort);
+  networkpreferences.putUShort("CyranoPort", ThePort);
   networkpreferences.end();
   ESP.restart();
 }
@@ -299,14 +306,19 @@ void NetWork::WaitForNewSettingsViaPortal()
   Serial.println(soft_ap_ssid);
   //Serial.println(soft_ap_password);
   networkpreferences.begin("credentials", false);
-  uint32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
+  int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
   char temp[8];
   sprintf(temp,"%d",PisteNr);
-  networkpreferences.end();
+
   WiFiPistId.setValue(temp, 8);
+  uint16_t CyranoPortNr = networkpreferences.getUShort("CyranoPort", 50100);
+  sprintf(temp,"%d",CyranoPortNr);
+  CyranoPort.setValue(temp,8);
+  networkpreferences.end();
 
 
   wm.addParameter(&WiFiPistId);
+  wm.addParameter(&CyranoPort);
   wm.setEnableConfigPortal(true);
   wm.setConfigPortalBlocking(true);
   wm.setConfigPortalTimeout(120);

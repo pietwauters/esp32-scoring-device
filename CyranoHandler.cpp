@@ -7,17 +7,26 @@ CyranoHandler::CyranoHandler()
     //ctor
     m_MachineStatus[PisteId]="1";
     m_MachineStatus[State] ="W";
-    networkpreferences.begin("credentials", true);
-    uint32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
+
+}
+
+void CyranoHandler::Begin()
+{
+
+    networkpreferences.begin("credentials", false);
+    uint32_t PisteNr = networkpreferences.getInt("pisteNr", 304);
+    CyranoPort = networkpreferences.getUShort("CyranoPort", CYRANO_PORT);
+    networkpreferences.end();
     char temp[8];
-    sprintf(temp,"%03d",PisteNr);
+    sprintf(temp,"%d",PisteNr);
+    //cout << "PisteNr" << PisteNr << endl;
     m_MachineStatus[PisteId]= (std::string)temp;
 }
 
 CyranoHandler::~CyranoHandler()
 {
     //dtor
-    networkpreferences.end();
+
 }
 
 
@@ -29,10 +38,10 @@ void CyranoHandler::SendInfoMessage()
   string TheMessage;
   m_MachineStatus[Command] = "INFO";
   TheMessage = m_MachineStatus.ToString(TheMessage);
-  CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
+  CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
   //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
 
-  cout << "Sending info message: " << TheMessage << endl;
+  //cout << "Sending info message: " << TheMessage << endl;
 
   return;
 }
@@ -41,6 +50,7 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
 {
     if(input[PisteId] != m_MachineStatus[PisteId])
         return; // wrong Piste
+
     switch(input.GetType())
     {
         case HELLO :
@@ -99,8 +109,8 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         {
             string TheMessage = m_MachineStatus.MakeNextMessageString();
             //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
-            CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
-            cout << "Sending NEXT message: " << TheMessage << endl;
+            CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
+            //cout << "Sending NEXT message: " << TheMessage << endl;
         }
         break;
 
@@ -109,8 +119,8 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         {
           string TheMessage = m_MachineStatus.MakePrevMessageString();
           //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
-          CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
-          cout << "Sending PREV message: " << TheMessage << endl;
+          CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
+          //cout << "Sending PREV message: " << TheMessage << endl;
         }
         break;
 
@@ -130,6 +140,14 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
           m_MachineStatus[State] = "E";
           SendInfoMessage();
         }
+        break;
+
+        case  UI_SWAP_FENCERS :
+        m_MachineStatus.SwapFencersInclScoreCardsEtc();
+        string msg;
+        m_MachineStatus.ToString(msg);
+        StateChanged(msg);
+        SendInfoMessage();
         break;
 
     }
@@ -212,22 +230,23 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
     }
 
     break;
-/*
-    case EVENT_TIMER_STATE:
 
+    case EVENT_TIMER_STATE:
+    if((m_MachineStatus[State] == "E") || (m_MachineStatus[State] == "W"))
+      break;
       if(eventtype & DATA_24BIT_MASK)
       {
-        Message2.SetTimerStatus('R');
-        BTTransmitMessage(2);
-        WifiTransmitMessage(2);
+        //Message2.SetTimerStatus('R');
+        m_MachineStatus[State] = "F";
+
       }
       else
       {
-        Message2.SetTimerStatus('N');
-        BTTransmitMessage(2);
-        WifiTransmitMessage(2);
+        //Message2.SetTimerStatus('N');
+        m_MachineStatus[State] = "H";
+
       }
-    break;*/
+    break;
     case EVENT_TIMER:
     temp = millis();
     if( temp < m_timeToShowTimer)
@@ -340,8 +359,8 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
 
 void ProcessCyranoPacket (AsyncUDPPacket packet)
 {
-  Serial.println("received some data from the server");
-  Serial.println((char*)packet.data());
+  //Serial.println("received some data from the server");
+  //Serial.println((char*)packet.data());
   MyCyranoHandler.ProcessMessageFromSoftware((EFP1Message((char*)packet.data())));
 }
 
@@ -349,9 +368,9 @@ void CyranoHandler::CheckConnection()
 {
   if(bCyranoConnected)
     return;
-  if(millis() < NextTimeToCheckConnection)
+  /*if(millis() < NextTimeToCheckConnection)
     return;
-  NextTimeToCheckConnection = millis() + 2500;
+  NextTimeToCheckConnection = millis() + 2500;*/
   //Serial.println("Checking WiFi connection");
   if(WiFi.status() == WL_CONNECTED)
   {
@@ -363,7 +382,7 @@ void CyranoHandler::CheckConnection()
     if(!bCyranoConnected)
     {// Somehow we should call this only once. It will keep on trying for ever.
 
-      if(CyranoHandlerudpRcv.listen(CYRANO_PORT))
+      if(CyranoHandlerudpRcv.listen(CyranoPort))
       {
         Serial.print("Cyrano Listening on IP: ");
         Serial.println(WiFi.localIP());
