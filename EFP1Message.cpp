@@ -246,3 +246,32 @@ void EFP1Message::SwapFencersInclScoreCardsEtc()
   mRightFencerFields = mLeftFencerFields;
   mLeftFencerFields = temp;
 }
+
+void EFP1Message::HandleTeamReserve(bool left, bool value)
+{
+
+  if(left)
+  {
+    if(value)
+    {
+      (*this)[LeftReserveIntroduction] = "R";
+    }
+    else
+    {
+      (*this)[LeftReserveIntroduction] = "N";
+    }
+
+  }
+  else
+  {
+    if(value)
+    {
+      (*this)[RightReserveIntroduction] = "R";
+    }
+    else
+    {
+      (*this)[RightReserveIntroduction] = "N";
+    }
+
+  }
+}
