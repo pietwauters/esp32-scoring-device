@@ -143,11 +143,39 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         break;
 
         case  UI_SWAP_FENCERS :
-        m_MachineStatus.SwapFencersInclScoreCardsEtc();
-        string msg;
-        m_MachineStatus.ToString(msg);
-        StateChanged(msg);
-        SendInfoMessage();
+        {
+          m_MachineStatus.SwapFencersInclScoreCardsEtc();
+          string msg;
+          m_MachineStatus.ToString(msg);
+          StateChanged(msg);
+          SendInfoMessage();
+        }
+
+        break;
+
+        case UI_RESERVE_LEFT:
+        {
+          if(m_MachineStatus[CompetitionType] == "T")
+          {
+            m_MachineStatus.HandleTeamReserve(true,true);
+            string msg;
+            m_MachineStatus.ToString(msg);
+            StateChanged(msg);
+            SendInfoMessage();
+          }
+        }
+        break;
+        case UI_RESERVE_RIGHT:
+        {
+          if(m_MachineStatus[CompetitionType] == "T")
+          {
+            m_MachineStatus.HandleTeamReserve(false,true);
+            string msg;
+            m_MachineStatus.ToString(msg);
+            StateChanged(msg);
+            SendInfoMessage();
+          }
+        }
         break;
 
     }

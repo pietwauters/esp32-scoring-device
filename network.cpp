@@ -186,10 +186,13 @@ bool NetWork::ConnectToExternalNetwork()
 {
   if(bConnectedToExternalNetwork)
     return true;
+
   WiFi.mode(WIFI_MODE_APSTA);
   wm.setEnableConfigPortal(false);
   wm.setConfigPortalBlocking(false);
   wm.setConfigPortalTimeout(5);
+  wm.setConnectTimeout(45);
+  //wm.setConnectRetries(5);
   //wm.setShowInfoUpdate(boolean enabled);
   //reset settings - wipe credentials for testing
   //wm.resetSettings();
@@ -197,7 +200,7 @@ bool NetWork::ConnectToExternalNetwork()
   //automatically connect using saved credentials if they exist
   //If connection fails it starts an access point with the specified name
   Serial.println("now looking to connect to global network");
-  if(wm.autoConnect(soft_ap_ssid.c_str(), soft_ap_password.c_str())){
+  if(wm.autoConnect(soft_ap_ssid.c_str(), soft_ap_password)){
       Serial.println("connected...yeey :)");
       bConnectedToExternalNetwork = true;
   }
@@ -205,9 +208,9 @@ bool NetWork::ConnectToExternalNetwork()
       Serial.println("Not connected to known network");
   }
 
-  if(bConnectedToExternalNetwork)
+  if(bConnectedToExternalNetwork)// if connected with saved credentials is successful we have to start the local AP ourselves
   {
-    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
+    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
     Serial.print("ESP32 IP on the WiFi network: ");
     Serial.println(WiFi.localIP());
   }
@@ -240,7 +243,7 @@ void NetWork::GlobalStartWiFi()
     int bestchannel = findBestWifiChannel() + 1;
     WiFi.mode(WIFI_MODE_AP);
 
-    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
+    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
     esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
     Serial.print("current best channel = "); Serial.println(bestchannel);
     //Serial.print("current password = "); Serial.println(soft_ap_password);
@@ -327,7 +330,7 @@ void NetWork::WaitForNewSettingsViaPortal()
   wm.setConfigResetCallback(ConfigResetCallback);
   wm.setShowInfoUpdate(false);
   wm.setParamsPage(true);
-  wm.startConfigPortal(soft_ap_ssid.c_str(), soft_ap_password.c_str());
+  wm.startConfigPortal(soft_ap_ssid.c_str(), soft_ap_password);
   //ESP.restart();
   m_GlobalWifiStarted = false;
   NetWork::GlobalStartWiFi();

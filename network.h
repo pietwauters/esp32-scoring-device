@@ -57,7 +57,7 @@ class NetWork : public Observer<UDPIOHandler>
     String ssid;
     String password;
     String soft_ap_ssid = "Piste_0";
-    String soft_ap_password = "01041967";
+    const char *soft_ap_password = "01041967";
     channel_t channels[CHANNEL_COUNT]; // Array with all the channels
 };
 #endif //NETWORK_H
