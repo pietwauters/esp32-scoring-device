@@ -99,6 +99,10 @@ void TimeScoreDisplay::begin()
     mx.clear();
     queue = xQueueCreate( 60, sizeof( int ) );
     SetBrightness(TEXT_BRIGHTNESS_NORMAL);
+    Preferences networkpreferences;
+    networkpreferences.begin("credentials", false);
+    PisteId = networkpreferences.getInt("pisteNr", 500);
+    networkpreferences.end();
 }
 
 void TimeScoreDisplay::SetChar(uint8_t MostLeftPosition, uint8_t character)
@@ -445,6 +449,30 @@ void TimeScoreDisplay::CycleScoreMatchAndTimeWhenNotFighting()
     }
 
   }
+}
+
+void TimeScoreDisplay::DisplayPisteId()
+{
+  mx.clear();
+  char text[6];
+  sprintf(text,"P-%03d",PisteId);
+  uint8_t digit0 = text[0] - 'A' + 15;
+  uint8_t digit1 = 11;
+  uint8_t digit2 = text[2] - '0' ;
+  uint8_t digit3 = text[3] - '0' ;
+  uint8_t digit4 = text[4] - '0' ;
+  uint8_t startpos = 2;
+  uint8_t w = numbers[digit0][0] + 1 + startpos;
+
+  SetChar(startpos,digit0);
+  SetChar(w,digit1);
+  w = w + numbers[digit1][0] + 1;
+  SetChar(w,digit2);
+  w = w + numbers[digit2][0] + 1;
+  SetChar(w,digit3);
+  w = w + numbers[digit3][0] + 1;
+  SetChar(w,digit4);
+
 }
 
 void TimeScoreDisplay::DisplayWeapon(weapon_t weapon)
