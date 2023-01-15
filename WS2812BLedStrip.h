@@ -69,10 +69,10 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         void ClearAll();
         void SetLedStatus(unsigned char val);
         void setRed(bool Value);
-        void setWhiteLeft(bool Value);
+        void setWhiteLeft(bool Value, bool inverse = false);
         void setOrangeLeft(bool Value);
         void setOrangeRight(bool Value);
-        void setWhiteRight(bool Value);
+        void setWhiteRight(bool Value, bool inverse = false);
         void setGreen(bool Value);
         void setBuzz(bool Value);
         //void setBuzz(bool Value){return;};

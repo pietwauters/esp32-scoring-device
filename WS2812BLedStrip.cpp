@@ -101,16 +101,25 @@ void WS2812B_LedStrip::setGreenPrio(bool Value)
     //m_pixels->show();   // Send the updated pixel colors to the hardware.
 }
 
-void WS2812B_LedStrip::setWhiteLeft(bool Value)
+void WS2812B_LedStrip::setWhiteLeft(bool Value, bool inverse)
 {
+    uint32_t theFillColor = m_White;
+    uint32_t theNotFillColor = m_Off;
+
     if(Value)
     {
+      if(inverse)
+      {
+        theFillColor = m_Off;
+        theNotFillColor = m_Blue;
+      }
+
         for(int i=0;i<64;i++)
         {
           if(Cross[i])
-            m_pixels->setPixelColor(i, m_White); // Moderately bright green color.
+            m_pixels->setPixelColor(i, theFillColor); // Moderately bright green color.
           else
-            m_pixels->setPixelColor(i, m_pixels->Color(0,0,0)); // Moderately bright green color.
+            m_pixels->setPixelColor(i, theNotFillColor); // Moderately bright green color.
         }
 
     }
@@ -121,16 +130,24 @@ void WS2812B_LedStrip::setWhiteLeft(bool Value)
     //m_pixels->show();   // Send the updated pixel colors to the hardware.
 }
 
-void WS2812B_LedStrip::setWhiteRight(bool Value)
+void WS2812B_LedStrip::setWhiteRight(bool Value, bool inverse)
 {
+  uint32_t theFillColor = m_White;
+  uint32_t theNotFillColor = m_Off;
+
     if(Value)
     {
+      if(inverse)
+      {
+        theFillColor = m_Off;
+        theNotFillColor = m_Blue;
+      }
         for(int i=64;i<128;i++)
         {
           if(Cross[i-64])
-            m_pixels->setPixelColor(i, m_White); // Moderately bright green color.
+            m_pixels->setPixelColor(i, theFillColor); // Moderately bright green color.
           else
-            m_pixels->setPixelColor(i, m_pixels->Color(0,0,0)); // Moderately bright green color.
+            m_pixels->setPixelColor(i, theNotFillColor); // Moderately bright green color.
         }
 
     }
@@ -620,8 +637,10 @@ void WS2812B_LedStrip::setRedPCardRight(uint8_t nr)
 
     if(nr == 2)
     {
-        theFillColor1 = m_Red;
-        theFillColor2 = m_Red;
+        //theFillColor1 = m_Red;
+        //theFillColor2 = m_Red;
+        setWhiteRight(true,true);
+        return;
     }
     if(nr == 1)
     {
@@ -644,8 +663,10 @@ void WS2812B_LedStrip::setRedPCardLeft(uint8_t nr)
 
     if(nr == 2)
     {
-        theFillColor1 = m_Red;
-        theFillColor2 = m_Red;
+        //theFillColor1 = m_Red;
+        //theFillColor2 = m_Red;
+        setWhiteLeft(true,true);
+        return;
     }
     if(nr == 1)
     {
