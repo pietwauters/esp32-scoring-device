@@ -125,7 +125,6 @@ EFP1Message::EFP1Message(const std::string &Buffer)
 {
 
     // Vector of string to save tokens
-
     char dummy;
     std::vector <std::string> main_areas;
     std::stringstream BufferStream(Buffer);
@@ -137,6 +136,7 @@ EFP1Message::EFP1Message(const std::string &Buffer)
     while(getline(BufferStream, intermediate, '%'))
     {
         main_areas.push_back(intermediate);
+
     }
 
 
@@ -144,7 +144,13 @@ EFP1Message::EFP1Message(const std::string &Buffer)
     while(getline(GeneralFields, intermediate, '|'))
     {
         mGeneralFields.push_back(intermediate);
+
     }
+    for(int i = mGeneralFields.size(); i < GetNrOfGeneralFields(); i++)
+    {
+      mGeneralFields.push_back("");
+    }
+    mGeneralFields[0] = "EFP1.1";
 
     if(main_areas.size() > 2)
     {
@@ -153,16 +159,23 @@ EFP1Message::EFP1Message(const std::string &Buffer)
         while(getline(LeftFencerFields, intermediate, '|'))
         {
             mLeftFencerFields.push_back(intermediate);
+
         }
+        if(mLeftFencerFields.size() != 12)
+          mLeftFencerFields.push_back("");
 
         std::stringstream RightFencerFields(main_areas[1]);
         RightFencerFields >> dummy; // used to ignore the initial '|' character
         while(getline(RightFencerFields, intermediate, '|'))
         {
             mRightFencerFields.push_back(intermediate);
+
         }
+        if(mRightFencerFields.size() != 12)
+          mRightFencerFields.push_back("");
 
     }
+
 
     //check here if the length is OK for this field
     /*for(int i=0; i < MAX_NR_FIELDS; i++)
@@ -226,16 +239,19 @@ void EFP1Message::CopyIfNotEmpty(const EFP1Message &Source)
 
 void EFP1Message::Prune(const EFP1Message &Source)
 {// we should check if the versions are equal
+
     for(int i=CompetitionId; i < MAX_NR_FIELDS; i++)
     {
         if((*this)[i] == Source[i])
         {
             (*this)[i] = "";
+
         }
         else
         {
           (*this)[i] = Source[i];
         }
+
     }
 }
 

@@ -5,7 +5,11 @@
 #include <WiFiAP.h>
 #include <Preferences.h>
 #include "AsyncUDP.h"
-
+// Below is for OTA updates using a webserver
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncElegantOTA.h>
+AsyncWebServer server(80);
 
 /**
    Sets all the channels back to 0.
@@ -18,10 +22,33 @@ void NetWork::reset_channels() {
   }
 }
 
-int32_t NetWork::FindFirstFreePisteID(uint32_t RequestedPiste)
+WiFiManager wm;
+
+int NetWork::begin()
 {
   WiFi.disconnect();
-  int networks = WiFi.scanNetworks();
+  networks = WiFi.scanNetworks();
+  if(wm.getWiFiIsSaved())
+  {
+    for (int i = 0; i < networks; ++i)
+    {
+      if(WiFi.SSID(i) == wm.getWiFiSSID(true))
+      {
+        SavedNetworkExists = true;
+        i = networks;
+      }
+    }
+  }
+}
+
+
+int32_t NetWork::FindFirstFreePisteID(uint32_t RequestedPiste)
+{
+  if(networks == -1)
+  {
+    WiFi.disconnect();
+    networks = WiFi.scanNetworks();
+  }
   int32_t TempPisteId = 0;
   int32_t LastPisteId = 0;
   bool RequestedPisteAlreadyInUse = false;
@@ -47,8 +74,11 @@ int32_t NetWork::FindFirstFreePisteID(uint32_t RequestedPiste)
 
 int NetWork::findBestWifiChannel()
 {
-  WiFi.disconnect();
-  int networks = WiFi.scanNetworks();
+  if(networks == -1)
+  {
+    WiFi.disconnect();
+    networks = WiFi.scanNetworks();
+  }
   if (networks == 0) {
     // it doesn't matter, we're on an island or a cage of Farady
     return 6;
@@ -180,18 +210,20 @@ long best_interference = -999999999;
 
 }
 
-WiFiManager wm;
 
-bool NetWork::ConnectToExternalNetwork()
+/*
+bool NetWork::ConnectToExternalNetwork(int ConnectTimeout)
 {
   if(bConnectedToExternalNetwork)
     return true;
-
+  if(! getWiFiIsSaved())
+    return false;
+WiFi.disconnect();
   WiFi.mode(WIFI_MODE_APSTA);
   wm.setEnableConfigPortal(false);
   wm.setConfigPortalBlocking(false);
   wm.setConfigPortalTimeout(5);
-  wm.setConnectTimeout(45);
+  wm.setConnectTimeout(ConnectTimeout);
   //wm.setConnectRetries(5);
   //wm.setShowInfoUpdate(boolean enabled);
   //reset settings - wipe credentials for testing
@@ -217,6 +249,46 @@ bool NetWork::ConnectToExternalNetwork()
 
   return bConnectedToExternalNetwork;
 }
+*/
+bool NetWork::ConnectToExternalNetwork(int ConnectTimeout)
+{
+  if(bConnectedToExternalNetwork)
+    return true;
+  if(! wm.getWiFiIsSaved())
+    return false;
+  if(!SavedNetworkExists)
+    return false;
+  WiFi.disconnect();
+  long Stop = millis() + ConnectTimeout * 1000;
+  
+
+  WiFi.mode(WIFI_MODE_APSTA);
+  WiFi.begin(wm.getWiFiSSID(true).c_str(), wm.getWiFiPass(true).c_str());
+  wm.setEnableConfigPortal(false);
+  wm.setConfigPortalBlocking(false);
+  wm.setConfigPortalTimeout(5);
+  wm.setConnectTimeout(ConnectTimeout);
+
+  while(millis() < Stop)
+  {
+    if(WiFi.status() == WL_CONNECTED)
+    {
+      Stop = 0;
+      bConnectedToExternalNetwork= true;
+    }
+    delay(100);
+    Serial.print(".");
+  }
+  if(bConnectedToExternalNetwork)// if connected with saved credentials is successful we have to start the local AP ourselves
+  {
+    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
+    Serial.print("ESP32 IP on the WiFi network: ");
+    Serial.println(WiFi.localIP());
+  }
+  return bConnectedToExternalNetwork;
+}
+
+
 
 void NetWork::GlobalStartWiFi()
 {
@@ -225,6 +297,7 @@ void NetWork::GlobalStartWiFi()
 
   networkpreferences.begin("credentials", false);
   int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
+  networkpreferences.end();
   if(-1 != PisteNr )
   {
     char temp[8];
@@ -237,8 +310,9 @@ void NetWork::GlobalStartWiFi()
     sprintf(temp,"%03d",FindFirstFreePisteID(500));
     soft_ap_ssid = "Piste_" + (String)temp;
   }
-  networkpreferences.end();
-  if(!ConnectToExternalNetwork())
+
+
+  if(!ConnectToExternalNetwork(15))
   {
     int bestchannel = findBestWifiChannel() + 1;
     WiFi.mode(WIFI_MODE_AP);
@@ -250,6 +324,10 @@ void NetWork::GlobalStartWiFi()
   }
 
   m_GlobalWifiStarted = true;
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Hi! I am ESP32.");
+  });
+
 
 }
 
@@ -259,8 +337,19 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
   uint32_t subtype = eventtype & UI_SUB_TYPE_MASK ;
 
 
+  if(UI_CONNECT_TO_WIFI == subtype)
+    ConnectToExternalNetwork(45);
+
   if(UI_START_WIFI_PORTAL == subtype)
     WaitForNewSettingsViaPortal();
+
+  if(UI_START_OTA_PORTAL == subtype)
+  {
+    AsyncElegantOTA.begin(&server);    // Start ElegantOTA
+    server.begin();
+    Serial.println("HTTP OTA Update server started");
+    return;
+  }
 
   switch(subtype)
   {
@@ -271,7 +360,7 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
     case UI_INPUT_CYRANO_PREV :
     case UI_INPUT_CYRANO_BEGIN :
     case UI_INPUT_CYRANO_END :
-    ConnectToExternalNetwork();
+    ConnectToExternalNetwork(45);
     break;
 
   }
@@ -279,6 +368,8 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
 
 WiFiManagerParameter WiFiPistId("WiFiPisteId", "PisteNr","",16);
 WiFiManagerParameter CyranoPort("CyranoPort", "Cyrano Port","50100",16);
+WiFiManagerParameter CyranoBroadcastPort("CyranoBroadcastPort", "Cyrano Broadcast Port","50101",16);
+
 
 void saveParamsCallback () {
 
@@ -317,11 +408,16 @@ void NetWork::WaitForNewSettingsViaPortal()
   uint16_t CyranoPortNr = networkpreferences.getUShort("CyranoPort", 50100);
   sprintf(temp,"%d",CyranoPortNr);
   CyranoPort.setValue(temp,8);
+  uint16_t CyranoBroadcastPortNr = networkpreferences.getUShort("CyranoBroadcastPort", 50101);
+  sprintf(temp,"%d",CyranoBroadcastPortNr);
+  CyranoBroadcastPort.setValue(temp,8);
   networkpreferences.end();
 
+  server.end();
 
   wm.addParameter(&WiFiPistId);
   wm.addParameter(&CyranoPort);
+  wm.addParameter(&CyranoBroadcastPort);
   wm.setEnableConfigPortal(true);
   wm.setConfigPortalBlocking(true);
   wm.setConfigPortalTimeout(120);
