@@ -80,7 +80,7 @@ void FencingStateMachine::ProcessSpecialSetting (uint32_t eventtype)
   {
     Preferences networkpreferences;
     networkpreferences.begin("credentials", false);
-    networkpreferences.putInt("pisteNr", event_data);
+    networkpreferences.putInt("U", event_data);
     networkpreferences.end();
   }
 
@@ -406,7 +406,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
   }
 
 }
-
+/*
 void FencingStateMachine::ProcessUW2F()
 {
     if(m_ScoreLeft != m_ScoreRight)
@@ -460,6 +460,30 @@ void FencingStateMachine::ProcessUW2F()
         }
       }
 
+    }
+}*/
+// New Rule after FIE Congress 26/11/2022
+void FencingStateMachine::ProcessUW2F()
+{
+  // I don't know how to deal with the black P-Card
+    if(m_PCardLeft < 3)
+    {
+      m_PCardLeft++;
+      if(m_PCardLeft == 2)
+      {
+        m_ScoreRight++;
+        StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
+      }
+    }
+
+    if(m_PCardRight < 3)
+    {
+      m_PCardRight++;
+      if(m_PCardRight == 2)
+      {
+        m_ScoreLeft++;
+        StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
+      }
     }
 }
 
