@@ -96,6 +96,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
 
         void setUWFTimeLeft(uint8_t tens);
         void setUWFTimeRight(uint8_t tens);
+        void begin();
 
 
     protected:

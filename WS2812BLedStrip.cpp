@@ -14,11 +14,20 @@ char Cross[] = {1,1,0,0,0,0,1,1,
 WS2812B_LedStrip::WS2812B_LedStrip()
 {
     //ctor
+    pinMode(PIN, OUTPUT);
+    digitalWrite(PIN, LOW);
     pinMode(BUZZERPIN, OUTPUT);
     digitalWrite(BUZZERPIN, RELATIVE_LOW);
     m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+    m_pixels->fill(m_pixels->Color(0, 0, 0),0,NUMPIXELS);
     SetBrightness(BRIGHTNESS_NORMAL);
+
     queue = xQueueCreate( 60, sizeof( int ) );
+}
+void WS2812B_LedStrip::begin()
+{
+  m_pixels->fill(m_pixels->Color(0, 0, 0),0,NUMPIXELS);
+  m_pixels->show();
 }
 
 void WS2812B_LedStrip::SetBrightness(uint8_t val)
