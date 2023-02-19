@@ -95,6 +95,7 @@ class EFP1Message
 
         void SwapFencersInclScoreCardsEtc();
         void HandleTeamReserve(bool left, bool value);
+        uint8_t EFP1StatusString2Type10MessageStatus();
 
 
     protected:

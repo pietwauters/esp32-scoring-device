@@ -47,12 +47,14 @@ FPA422Handler::FPA422Handler()
 {
     //ctor
     //
+
     Message5.SetTypeToLeft();
     Message5.SetName("Left fencer",11);
     Message5.SetNOC("BEL");
     Message6.SetTypeToRight();
     Message6.SetName("Right fencer",12);
     Message6.SetNOC("FRA");
+
 }
 
 FPA422Handler::~FPA422Handler()
@@ -102,6 +104,9 @@ void FPA422Handler::StartWiFi()
   networkpreferences.begin("credentials", false);
   PisteNr = networkpreferences.getInt("pisteNr", 500);
   networkpreferences.end();
+  Message10.SetPiste(PisteNr);
+  Message10.SetIPAddress((uint32_t)localip);
+  Message10.Print();
   AnnouncingPort = 65535 - (2* PisteNr) +1;
 
 }
@@ -147,6 +152,8 @@ void FPA422Handler::WifiPeriodicalUpdate()
         WifiTransmitMessage(6);
         WifiTransmitMessage(7);
         WifiTransmitMessage(8);
+        WifiTransmitMessage(10);
+
         if(m_WifiStarted)
         {
           udp.broadcastTo(SoftAPIPAddress, AnnouncingPort,TCPIP_ADAPTER_IF_AP);
@@ -265,6 +272,11 @@ void FPA422Handler::WifiTransmitMessage(int Type)
 
       case 9:
       //udp.broadcastTo(Message9.GetBuffer(),Message9.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
+      //udp.broadcastTo(Message9.GetBuffer(),Message9.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+      break;
+
+      case 10:
+      udp.broadcastTo(Message10.GetBuffer(),Message10.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message9.GetBuffer(),Message9.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
       break;
 
@@ -479,21 +491,43 @@ void SetNOC(const char* NOC);*/
 void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
 {
   EFP1Message EFP1Input(strEFP1Message);
-  if(EFP1Input[RightFencerId] != "")
-    Message6.SetUID(EFP1Input[RightFencerId].c_str(),EFP1Input[RightFencerId].length());
-  if(EFP1Input[RightFencerName] != "")
-    Message6.SetName(EFP1Input[RightFencerName].c_str(),EFP1Input[RightFencerName].length());
-  if(EFP1Input[RightFencerNation] != "")
-    Message6.SetNOC(EFP1Input[RightFencerNation].c_str());
-  if(EFP1Input[LeftFencerId] != "")
-    Message5.SetUID(EFP1Input[LeftFencerId].c_str(),EFP1Input[LeftFencerId].length());
-  if(EFP1Input[LeftFencerName] != "")
-    Message5.SetName(EFP1Input[LeftFencerName].c_str(),EFP1Input[LeftFencerName].length());
-  if(EFP1Input[LeftFencerNation] != "")
-    Message5.SetNOC(EFP1Input[LeftFencerNation].c_str());
-  BTTransmitMessage(5);
-  WifiTransmitMessage(5);
-  BTTransmitMessage(6);
-  WifiTransmitMessage(6);
+  if(EFP1Input[Command] == "NAK")
+  {
+    Message10.SetMachineStatus('5');
+    BTTransmitMessage(10);
+    WifiTransmitMessage(10);
+    return;
+  }
+  if(EFP1Input[Command] == "ACK")
+  {
+    // Ignore for now
+    return;
+  }
+  if(EFP1Input[Command] == "INFO")
+  {
+    if(EFP1Input[RightFencerId] != "")
+      Message6.SetUID(EFP1Input[RightFencerId].c_str(),EFP1Input[RightFencerId].length());
+    if(EFP1Input[RightFencerName] != "")
+      Message6.SetName(EFP1Input[RightFencerName].c_str(),EFP1Input[RightFencerName].length());
+    if(EFP1Input[RightFencerNation] != "")
+      Message6.SetNOC(EFP1Input[RightFencerNation].c_str());
+    if(EFP1Input[LeftFencerId] != "")
+      Message5.SetUID(EFP1Input[LeftFencerId].c_str(),EFP1Input[LeftFencerId].length());
+    if(EFP1Input[LeftFencerName] != "")
+      Message5.SetName(EFP1Input[LeftFencerName].c_str(),EFP1Input[LeftFencerName].length());
+    if(EFP1Input[LeftFencerNation] != "")
+      Message5.SetNOC(EFP1Input[LeftFencerNation].c_str());
+    BTTransmitMessage(5);
+    WifiTransmitMessage(5);
+    BTTransmitMessage(6);
+    WifiTransmitMessage(6);
+    if(EFP1Input.EFP1StatusString2Type10MessageStatus() != Message10.GetMachineStatus())
+    {
+
+      Message10.SetMachineStatus(EFP1Input.EFP1StatusString2Type10MessageStatus());
+      BTTransmitMessage(10);
+      WifiTransmitMessage(10);
+    }
+  }
 
 }

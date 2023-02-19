@@ -289,6 +289,8 @@ void loop() {
   {
     MyCyranoHandler.PeriodicallyBroadcastStatus();
     MyCyranoHandler.CheckConnection();
+    MyFPA422Handler.WifiPeriodicalUpdate();
+
   }
 
   if(MyStatemachine.IsConnectedToRemote())
