@@ -26,6 +26,8 @@ WS2812B_LedStrip::WS2812B_LedStrip()
 }
 void WS2812B_LedStrip::begin()
 {
+  pinMode(PIN, OUTPUT);
+  digitalWrite(PIN, LOW);
   m_pixels->fill(m_pixels->Color(0, 0, 0),0,NUMPIXELS);
   m_pixels->show();
 }
