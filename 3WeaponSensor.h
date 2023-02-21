@@ -112,6 +112,7 @@ class MultiWeaponSensor  : public Subject<MultiWeaponSensor>
 public:
     /** Default constructor */
     MultiWeaponSensor(int hw_timer);
+    void begin();
     /** Default destructor */
     virtual ~MultiWeaponSensor();
 

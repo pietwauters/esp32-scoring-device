@@ -10,7 +10,9 @@
 #include <Preferences.h>
 
 
-#define CYRANO_PORT 50100
+#define CYRANO_PORT 50101
+#define CYRANO_BROADCAST_PORT 50100
+
 enum CyranoState
 {
     FENCING,
@@ -46,6 +48,7 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         void StateChanged (string eventtype) {notify(eventtype);}
         void ProcessLightsChange(uint32_t eventtype);
         void CheckConnection();
+        void PeriodicallyBroadcastStatus();
         void Begin();
 
     protected:
@@ -60,9 +63,12 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         bool bCyranoConnected = false;
 
         AsyncUDP CyranoHandlerudpRcv;
+        AsyncUDP CyranoHandlerudpBroadcast;
         bool bOKToSend = false;
         Preferences networkpreferences;
         uint16_t CyranoPort = CYRANO_PORT;
+        uint16_t CyranoBroadcastPort = CYRANO_BROADCAST_PORT;
+        long NextPeriodicalUpdate;
 
 };
 

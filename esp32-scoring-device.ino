@@ -14,13 +14,13 @@
 
 #define WELCOME_ANIMATION_SPEED 70
 
+WS2812B_LedStrip MyLedStrip;
+TimeScoreDisplay MyTimeScoreDisplay;
 MultiWeaponSensor MySensor(1);
 NetWork MyNetWork;
-WS2812B_LedStrip MyLedStrip;
 FencingStateMachine MyStatemachine(2,10);
 FPA422Handler MyFPA422Handler;
 UDPIOHandler MyUDPIOHandler;
-TimeScoreDisplay MyTimeScoreDisplay;
 CyranoHandler MyCyranoHandler;
 
 TaskHandle_t CoreScoringMachineTask;
@@ -171,36 +171,45 @@ void ShowWelcomeLights()
   delay(5 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.ClearAll();
   MyLedStrip.setUWFTimeLeft(1);
+  MyLedStrip.setUWFTimeRight(1);
   MyLedStrip.myShow();
   delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(2);
+  MyLedStrip.setUWFTimeRight(2);
   MyLedStrip.myShow();
   delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(3);
+  MyLedStrip.setUWFTimeRight(3);
   MyLedStrip.myShow();
   delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(4);
+  MyLedStrip.setUWFTimeRight(4);
   MyLedStrip.myShow();
   delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(5);
+  MyLedStrip.setUWFTimeRight(5);
   MyLedStrip.myShow();
   delay(2 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(6);
+  MyLedStrip.setUWFTimeRight(6);
   MyLedStrip.myShow();
   delay(4 * WELCOME_ANIMATION_SPEED);
   MyLedStrip.setUWFTimeLeft(0);
+  MyLedStrip.setUWFTimeRight(0);
   MyLedStrip.myShow();
 }
 
 void setup() {
 
-
+  MyLedStrip.begin();
   // put your setup code here, to run once:
   Serial.begin(115200);
 
   MyTimeScoreDisplay.begin();
-  MyTimeScoreDisplay.DisplayWeapon(EPEE);
+  //MyTimeScoreDisplay.DisplayWeapon(EPEE);
+  MyTimeScoreDisplay.DisplayPisteId();
   //PrintReasonForReset();    // This is only for debugging instabilities. Comment out when you think it works
+  MyNetWork.begin();
   ShowWelcomeLights();
   MyNetWork.GlobalStartWiFi();
   //MyNetWork.ConnectToExternalNetwork();
@@ -240,7 +249,7 @@ void setup() {
   xTaskCreatePinnedToCore(
             StateMachineHandler,        /* Task function. */
             "StateMachineHandlerMyLedStrip",      /* String with name of task. */
-            32768,                            /* Stack size in words. */
+            16384,                            /* Stack size in words. 65535*/
             NULL,                             /* Parameter passed as input of the task */
             0,                                /* Priority of the task. */
             &StateMachineTask,           /* Task handle. */
@@ -256,9 +265,22 @@ void setup() {
             &LedStripTask,           /* Task handle. */
             1);
   esp_task_wdt_add(LedStripTask);
+  MySensor.begin();
   delay(100);
   MyStatemachine.ResetAll();
-  MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+  MyStatemachine.SetMachineWeapon(MySensor.GetActualWeapon());
+  switch (MySensor.GetActualWeapon()) {
+    case FOIL:
+    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_FOIL);
+    break;
+    case EPEE:
+    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+    break;
+    case SABRE:
+    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_SABRE);
+    break;
+  }
+
   StopSearchingForWifi = millis() + 60000;
   MyCyranoHandler.Begin();
 
@@ -277,7 +299,13 @@ void loop() {
   // If there is no WiFi within 30 seconds after start, it will not come
   //if(millis() < StopSearchingForWifi)
   if(MyNetWork.IsExternalWifiAvailable())
+  {
+    MyCyranoHandler.PeriodicallyBroadcastStatus();
     MyCyranoHandler.CheckConnection();
+    MyFPA422Handler.WifiPeriodicalUpdate();
+
+  }
+
   if(MyStatemachine.IsConnectedToRemote())
   {
     MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();

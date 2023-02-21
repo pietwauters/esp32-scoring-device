@@ -7,6 +7,7 @@
 #include "EventDefinitions.h"
 #include <MD_MAX72xx.h>
 #include <SPI.h>
+#include <Preferences.h>
 
 #define TEXT_BRIGHTNESS_LOW 1
 #define TEXT_BRIGHTNESS_NORMAL 3
@@ -43,6 +44,7 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>
         void CycleScoreMatchAndTimeWhenNotFighting();
         void ShowScoreForGivenDuration(uint32_t duration);
         void DisplayWeapon(weapon_t weapon);
+        void DisplayPisteId();
         void SetBrightness(int value);
 
     protected:
@@ -66,6 +68,7 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>
     uint32_t m_LastEvent = 0;
     QueueHandle_t queue = NULL;
     int m_Brightness = TEXT_BRIGHTNESS_NORMAL;
+    int PisteId = -1;
 
 };
 

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <Preferences.h>
 
-Preferences mypreferences;
+
 using namespace std;
 
 // I have 7 Output /Tristate pins (3 per weapon + piste)
@@ -68,19 +68,46 @@ MultiWeaponSensor::MultiWeaponSensor(int hw_timer_nr)
   LongCounter_c2 = LONG_COUNT_C_INIT_FOIL;
   LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
 
-  mypreferences.begin("scoringdevice", false);
-  LightsDuration = mypreferences.getInt("LIGHTS_DURATION_MS",0);
-  if(!LightsDuration)
-  {
-    mypreferences.putInt("LIGHTS_DURATION_MS", LIGHTS_DURATION_MS);
-    LightsDuration = LIGHTS_DURATION_MS;
-  }
-
-  DoReset();
-  //m_ActualWeapon = FOIL;
   SensorMutex = xSemaphoreCreateBinary();
 }
 
+void MultiWeaponSensor:: begin()
+{
+  Preferences mypreferences;
+  mypreferences.begin("scoringdevice", false);
+  LightsDuration = mypreferences.getInt("LIGHTS_MS",0);
+  cout << "LIGHTS_MS: " <<  LightsDuration << endl;
+  if(!LightsDuration)
+  {
+    mypreferences.putInt("LIGHTS_MS", LIGHTS_DURATION_MS);
+    LightsDuration = LIGHTS_DURATION_MS;
+  }
+  uint8_t storedweapon = mypreferences.getUChar("START_WEAPON",99);
+  cout << "START_WEAPON: " <<  storedweapon << endl;
+  if(99 == storedweapon)
+  {
+    mypreferences.putUChar("START_WEAPON",0);
+    storedweapon = 0;
+  }
+  switch (storedweapon) {
+    case 0:
+    m_ActualWeapon = FOIL;
+    break;
+
+    case 1:
+    m_ActualWeapon = EPEE;
+    break;
+
+    case 2:
+    m_ActualWeapon = SABRE;
+    break;
+    defaut:
+    m_ActualWeapon = EPEE;
+
+  }
+  mypreferences.end();
+  DoReset();
+}
 
 
 
@@ -350,8 +377,9 @@ void MultiWeaponSensor::DoFullScan()
     weapon_t temp = GetWeapon();
 
     if (m_ActualWeapon != temp)
-    {
+    { cout << "Detected a weapon change" << endl;
         m_ActualWeapon = temp;
+        bPreventBuzzer = false;
         SensorStateChanged(EVENT_WEAPON | temp);
         DoReset();
     }
@@ -420,7 +448,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
 {
 
   if (m_ActualWeapon != EPEE)
-  {
+  {// In foil or sabre: check if both sides are disconnected
     if (NotConnectedRight && NotConnectedLeft)
     {
       LongCounter_NotConnected--;
@@ -434,12 +462,15 @@ weapon_t MultiWeaponSensor::GetWeapon()
       LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
       bPreventBuzzer = false;
     }
-    if (!LongCounter_NotConnected)
+    if (!LongCounter_NotConnected) // We've reached zero, so we switch back to default Epee
     {
       LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
       bPreventBuzzer = false;
+      cout << "Maybe Manual:Aha, it seems both sides are disconnected for a long time so we must be on EPEE" << endl;
       if(m_DectionMode != MANUAL)
       {
+        m_DetectedWeapon =  EPEE;
+        cout << "Not Manual:Aha, it seems both sides are disconnected for a long time so we must be on EPEE" << endl;
         return EPEE;
       }
     }
@@ -465,6 +496,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
         if ((Counter_b1) && (Counter_b2))
         {
           m_DetectedWeapon =  EPEE;
+          bPreventBuzzer = false;
           LongCounter_c1 = LONG_COUNT_C_INIT_EPEE;
           LongCounter_c2 = LONG_COUNT_C_INIT_EPEE;
 
@@ -478,6 +510,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
           if ((Counter_b1) && (Counter_b2))
           {
             m_DetectedWeapon =  SABRE;
+            bPreventBuzzer = false;
             LongCounter_b1 = LONG_COUNT_B_INIT_SABRE;
             LongCounter_b2 = LONG_COUNT_B_INIT_SABRE;
             LongCounter_c1 = LONG_COUNT_C_INIT_SABRE;
@@ -499,6 +532,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
         if ((OrangeR) && (OrangeL))
         {
           m_DetectedWeapon =  SABRE;
+          bPreventBuzzer = false;
           LongCounter_b1 = LONG_COUNT_B_INIT_SABRE;
           LongCounter_b2 = LONG_COUNT_B_INIT_SABRE;
           LongCounter_c1 = LONG_COUNT_C_INIT_SABRE;
@@ -507,6 +541,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
         else
         {
           m_DetectedWeapon = FOIL;
+          bPreventBuzzer = false;
           LongCounter_b1 = LONG_COUNT_B_INIT_FOIL;
           LongCounter_b2 = LONG_COUNT_B_INIT_FOIL;
           LongCounter_c1 = LONG_COUNT_C_INIT_FOIL;
@@ -532,6 +567,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
         if ((!LongCounter_b1) && (!LongCounter_b2))
         {
           m_DetectedWeapon =  FOIL;
+          bPreventBuzzer = false;
           LongCounter_b1 = LONG_COUNT_B_INIT_FOIL;
           LongCounter_b2 = LONG_COUNT_B_INIT_FOIL;
           LongCounter_c1 = LONG_COUNT_C_INIT_FOIL;
@@ -540,6 +576,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
         if ((!LongCounter_c1) && (!LongCounter_c2))
         {
           m_DetectedWeapon =  EPEE;
+          bPreventBuzzer = false;
           LongCounter_c1 = LONG_COUNT_C_INIT_EPEE;
           LongCounter_c2 = LONG_COUNT_C_INIT_EPEE;
         }

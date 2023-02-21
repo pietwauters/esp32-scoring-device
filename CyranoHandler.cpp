@@ -16,11 +16,13 @@ void CyranoHandler::Begin()
     networkpreferences.begin("credentials", false);
     uint32_t PisteNr = networkpreferences.getInt("pisteNr", 304);
     CyranoPort = networkpreferences.getUShort("CyranoPort", CYRANO_PORT);
+    CyranoBroadcastPort = networkpreferences.getUShort("CyranoBroadcastPort", CYRANO_BROADCAST_PORT);
     networkpreferences.end();
     char temp[8];
     sprintf(temp,"%d",PisteNr);
     //cout << "PisteNr" << PisteNr << endl;
     m_MachineStatus[PisteId]= (std::string)temp;
+    NextPeriodicalUpdate = millis() + 10000;
 }
 
 CyranoHandler::~CyranoHandler()
@@ -38,7 +40,8 @@ void CyranoHandler::SendInfoMessage()
   string TheMessage;
   m_MachineStatus[Command] = "INFO";
   TheMessage = m_MachineStatus.ToString(TheMessage);
-  CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
+  //CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
+  CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
   //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
 
   //cout << "Sending info message: " << TheMessage << endl;
@@ -62,23 +65,32 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
         bOKToSend = true;
         //m_MachineStatus[CompetitionId] = input[CompetitionId];
         SendInfoMessage();
+        //cout << "received HELLO" << endl;
         break;
 
         case DISP :
+        //cout << "received DISP" << endl;
         if(WAITING == m_State)
         {
             // Initialize with the received values
+
           EFP1Message  temp;
+
           temp = m_MachineStatus;
+
           temp.Prune(input);
+
           string msg;
           temp.ToString(msg);
+
           StateChanged(msg);
 
           m_MachineStatus.CopyIfNotEmpty(input);
+
           m_MachineStatus[Command] = "INFO";
 
         }
+
         break;
 
         case ACK :
@@ -89,11 +101,13 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
             m_MachineStatus[State] = "W";
             SendInfoMessage();
         }
+
         break;
 
         case NAK :
         // The software doesn't accept the "END" message
         break;
+        cout << "Interesting, I should never ever get here" << endl;
 
     }
 
@@ -102,29 +116,33 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
 void CyranoHandler::ProcessUIEvents(uint32_t const event)
 {
     uint32_t event_data = event & SUB_TYPE_MASK;
+
     switch(event_data)
     {
         case UI_INPUT_CYRANO_NEXT :
+        bOKToSend = true;
         if(WAITING == m_State)
         {
             string TheMessage = m_MachineStatus.MakeNextMessageString();
             //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
-            CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
-            //cout << "Sending NEXT message: " << TheMessage << endl;
+            CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+
         }
         break;
 
         case UI_INPUT_CYRANO_PREV :
+        bOKToSend = true;
         if(WAITING == m_State)
         {
           string TheMessage = m_MachineStatus.MakePrevMessageString();
           //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
-          CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
+          CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
           //cout << "Sending PREV message: " << TheMessage << endl;
         }
         break;
 
         case UI_INPUT_CYRANO_BEGIN :
+        bOKToSend = true;
         if(WAITING == m_State)
         {
           m_State = HALT;
@@ -134,6 +152,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         break;
 
         case UI_INPUT_CYRANO_END :
+        bOKToSend = true;
         if(WAITING != m_State)
         {
           m_State = ENDING;
@@ -143,6 +162,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         break;
 
         case  UI_SWAP_FENCERS :
+        bOKToSend = true;
         {
           m_MachineStatus.SwapFencersInclScoreCardsEtc();
           string msg;
@@ -154,6 +174,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         break;
 
         case UI_RESERVE_LEFT:
+        bOKToSend = true;
         {
           if(m_MachineStatus[CompetitionType] == "T")
           {
@@ -166,6 +187,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         }
         break;
         case UI_RESERVE_RIGHT:
+        bOKToSend = true;
         {
           if(m_MachineStatus[CompetitionType] == "T")
           {
@@ -422,4 +444,15 @@ void CyranoHandler::CheckConnection()
     }
 
   }
+}
+void CyranoHandler::PeriodicallyBroadcastStatus()
+{
+  if(!bOKToSend)
+    return;
+  if(NextPeriodicalUpdate > millis())
+    return;
+  NextPeriodicalUpdate = millis() + 10000;
+  SendInfoMessage();
+  return;
+
 }

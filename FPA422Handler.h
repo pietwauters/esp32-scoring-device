@@ -8,13 +8,14 @@
 #include "RS422_FPA_Type1_Message.h"
 #include "RS422_FPA_Type5_Message.h"
 #include "RS422_FPA_Type8_Message.h"
+#include "RS422_FPA_Type10_Message.h"
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
 #include "EventDefinitions.h"
 #include "network.h"
 
 
-#define MAX_MESSAGE_TYPE 9
+#define MAX_MESSAGE_TYPE 10
 class CyranoHandler;
 class FencingStateMachine;
 
@@ -36,6 +37,7 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
         void WifiTransmitMessage(int Type);
         void BTTPeriodicalUpdate();
         void WifiPeriodicalUpdate();
+        void SetCyranoStatus();
 
     protected:
 
@@ -48,6 +50,8 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
     RS422_FPA_Type5_6_Message Message6;
     //RS422_FPA_Type7_Message Message7;
     RS422_FPA_Type8_Message Message8;
+    RS422_FPA_Type10_Message Message10;
+
 
 
     uint8_t m_minutes;

@@ -104,6 +104,8 @@ union mix_t
 #define SPECIAL_SETTING_DATA_MASK  0x0000ffff
 #define UI_SET_PISTE_NR 0x00010000
 #define UI_START_WIFI_PORTAL 0x00020000
+#define UI_START_OTA_PORTAL 0x00030000
+#define UI_CONNECT_TO_WIFI 0x00040000
 
 // Below are the subtype definitions for P-Card related events
 #define EVENT_NO_P_CARD 0x00000000

@@ -39,12 +39,13 @@ class NetWork : public Observer<UDPIOHandler>
         virtual ~NetWork();
         int findBestWifiChannel();
         void GlobalStartWiFi();
-        bool ConnectToExternalNetwork();
+        bool ConnectToExternalNetwork(int ConnectTimeout = 5);
         void reset_channels();
         int32_t FindFirstFreePisteID(uint32_t RequestedPiste = 0);
         void WaitForNewSettingsViaPortal();
         void update (UDPIOHandler *subject, uint32_t eventtype);
         bool IsExternalWifiAvailable(){return bConnectedToExternalNetwork;}
+        int begin();
 
     protected:
 
@@ -59,5 +60,7 @@ class NetWork : public Observer<UDPIOHandler>
     String soft_ap_ssid = "Piste_0";
     const char *soft_ap_password = "01041967";
     channel_t channels[CHANNEL_COUNT]; // Array with all the channels
+    int networks = -1;
+    bool SavedNetworkExists = false;
 };
 #endif //NETWORK_H
