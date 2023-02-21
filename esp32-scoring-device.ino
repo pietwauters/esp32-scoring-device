@@ -265,9 +265,22 @@ void setup() {
             &LedStripTask,           /* Task handle. */
             1);
   esp_task_wdt_add(LedStripTask);
+  MySensor.begin();
   delay(100);
   MyStatemachine.ResetAll();
-  MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+  MyStatemachine.SetMachineWeapon(MySensor.GetActualWeapon());
+  switch (MySensor.GetActualWeapon()) {
+    case FOIL:
+    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_FOIL);
+    break;
+    case EPEE:
+    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+    break;
+    case SABRE:
+    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_SABRE);
+    break;
+  }
+
   StopSearchingForWifi = millis() + 60000;
   MyCyranoHandler.Begin();
 
