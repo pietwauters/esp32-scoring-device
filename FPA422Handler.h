@@ -28,7 +28,7 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
         virtual ~FPA422Handler();
         void update (FencingStateMachine *subject, uint32_t eventtype);
         void update (CyranoHandler *subject, string strEFP1Message);
-        void update (CyranoHandler *subject, uint32_t eventtype){};
+        void update (CyranoHandler *subject, uint32_t eventtype);
         void ProcessLightsChange(uint32_t eventtype);
         void StartBluetooth();
         void StartWiFi();

@@ -521,13 +521,26 @@ void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
     WifiTransmitMessage(5);
     BTTransmitMessage(6);
     WifiTransmitMessage(6);
-    if(EFP1Input.EFP1StatusString2Type10MessageStatus() != Message10.GetMachineStatus())
+    /*if(EFP1Input.EFP1StatusString2Type10MessageStatus() != Message10.GetMachineStatus())
     {
 
       Message10.SetMachineStatus(EFP1Input.EFP1StatusString2Type10MessageStatus());
       BTTransmitMessage(10);
       WifiTransmitMessage(10);
-    }
+    }*/
+  }
+
+}
+
+void FPA422Handler::update (CyranoHandler *subject, uint32_t eventtype)
+{
+  if(EVENT_CYRANO_STATE == (eventtype & MAIN_TYPE_MASK))
+  {
+    mix_t thestatus;
+    thestatus.theDWord = eventtype & DATA_24BIT_MASK;
+    Message10.SetMachineStatus(thestatus.theBytes[0]);
+    BTTransmitMessage(10);
+    WifiTransmitMessage(10);
   }
 
 }

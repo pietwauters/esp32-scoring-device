@@ -76,14 +76,12 @@ void MultiWeaponSensor:: begin()
   Preferences mypreferences;
   mypreferences.begin("scoringdevice", false);
   LightsDuration = mypreferences.getInt("LIGHTS_MS",0);
-  cout << "LIGHTS_MS: " <<  LightsDuration << endl;
   if(!LightsDuration)
   {
     mypreferences.putInt("LIGHTS_MS", LIGHTS_DURATION_MS);
     LightsDuration = LIGHTS_DURATION_MS;
   }
   uint8_t storedweapon = mypreferences.getUChar("START_WEAPON",99);
-  cout << "START_WEAPON: " <<  storedweapon << endl;
   if(99 == storedweapon)
   {
     mypreferences.putUChar("START_WEAPON",0);
@@ -377,7 +375,7 @@ void MultiWeaponSensor::DoFullScan()
     weapon_t temp = GetWeapon();
 
     if (m_ActualWeapon != temp)
-    { cout << "Detected a weapon change" << endl;
+    {
         m_ActualWeapon = temp;
         bPreventBuzzer = false;
         SensorStateChanged(EVENT_WEAPON | temp);
@@ -466,11 +464,9 @@ weapon_t MultiWeaponSensor::GetWeapon()
     {
       LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
       bPreventBuzzer = false;
-      cout << "Maybe Manual:Aha, it seems both sides are disconnected for a long time so we must be on EPEE" << endl;
       if(m_DectionMode != MANUAL)
       {
         m_DetectedWeapon =  EPEE;
-        cout << "Not Manual:Aha, it seems both sides are disconnected for a long time so we must be on EPEE" << endl;
         return EPEE;
       }
     }

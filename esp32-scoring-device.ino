@@ -199,12 +199,12 @@ void ShowWelcomeLights()
   MyLedStrip.myShow();
 }
 
+
 void setup() {
 
   MyLedStrip.begin();
   // put your setup code here, to run once:
   Serial.begin(115200);
-
   MyTimeScoreDisplay.begin();
   //MyTimeScoreDisplay.DisplayWeapon(EPEE);
   MyTimeScoreDisplay.DisplayPisteId();

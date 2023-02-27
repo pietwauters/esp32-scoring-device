@@ -260,7 +260,7 @@ bool NetWork::ConnectToExternalNetwork(int ConnectTimeout)
     return false;
   WiFi.disconnect();
   long Stop = millis() + ConnectTimeout * 1000;
-  
+
 
   WiFi.mode(WIFI_MODE_APSTA);
   WiFi.begin(wm.getWiFiSSID(true).c_str(), wm.getWiFiPass(true).c_str());
@@ -369,7 +369,7 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
 WiFiManagerParameter WiFiPistId("WiFiPisteId", "PisteNr","",16);
 WiFiManagerParameter CyranoPort("CyranoPort", "Cyrano Port","50100",16);
 WiFiManagerParameter CyranoBroadcastPort("CyranoBroadcastPort", "Cyrano Broadcast Port","50101",16);
-
+WiFiManagerParameter StartUpWeapon("StartUpWeapon", "Default Weapon at start_upt","F",8);
 
 void saveParamsCallback () {
 
@@ -382,6 +382,26 @@ void saveParamsCallback () {
   sscanf(CyranoPort.getValue(),"%d",&ThePort);
   networkpreferences.putUShort("CyranoPort", ThePort);
   networkpreferences.end();
+  Preferences mypreferences;
+  mypreferences.begin("scoringdevice", false);
+  uint8_t startweapon = 1;
+  char theweapon =StartUpWeapon.getValue()[0];
+  switch (theweapon) {
+    case 'F':
+    startweapon = 0;
+    break;
+
+    case 'E':
+    startweapon = 1;
+    break;
+
+    case 2:
+    startweapon = 2;
+    break;
+
+  }
+  mypreferences.putUChar("START_WEAPON",startweapon);
+  mypreferences.end();
   ESP.restart();
 }
 
@@ -413,11 +433,37 @@ void NetWork::WaitForNewSettingsViaPortal()
   CyranoBroadcastPort.setValue(temp,8);
   networkpreferences.end();
 
+  Preferences mypreferences;
+  mypreferences.begin("scoringdevice", false);
+
+  uint8_t storedweapon = mypreferences.getUChar("START_WEAPON",99);
+
+  switch (storedweapon) {
+    case 0:
+    sprintf(temp,"F");
+    break;
+
+    case 1:
+    sprintf(temp,"E");
+    break;
+
+    case 2:
+    sprintf(temp,"S");
+    break;
+    defaut:
+    sprintf(temp,"E");
+
+  }
+  StartUpWeapon.setValue(temp,1);
+  mypreferences.end();
+
   server.end();
 
   wm.addParameter(&WiFiPistId);
   wm.addParameter(&CyranoPort);
   wm.addParameter(&CyranoBroadcastPort);
+  wm.addParameter(&StartUpWeapon);
+
   wm.setEnableConfigPortal(true);
   wm.setConfigPortalBlocking(true);
   wm.setConfigPortalTimeout(120);

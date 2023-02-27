@@ -295,9 +295,10 @@ void EFP1Message::HandleTeamReserve(bool left, bool value)
 uint8_t EFP1Message::EFP1StatusString2Type10MessageStatus()
 {
   std::string EFP1Status = (*this)[State];
+  //cout << "EFP1Status: "<< EFP1Status<< endl;
   if("F" == EFP1Status)
-    return 'H';
-  if("F" == EFP1Status)
+    return 'F';
+  if("H" == EFP1Status)
     return 'H';
   if("P" == EFP1Status)
     return 'P';
