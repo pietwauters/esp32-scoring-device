@@ -15,20 +15,24 @@ WS2812B_LedStrip::WS2812B_LedStrip()
 {
     //ctor
     pinMode(PIN, OUTPUT);
-    digitalWrite(PIN, LOW);
+    digitalWrite(PIN, LOW);   // not sure if this should be high or low. Low for a long time will reset the leds causing the content
     pinMode(BUZZERPIN, OUTPUT);
     digitalWrite(BUZZERPIN, RELATIVE_LOW);
-    m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+    /*m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
     m_pixels->fill(m_pixels->Color(0, 0, 0),0,NUMPIXELS);
-    SetBrightness(BRIGHTNESS_NORMAL);
+    SetBrightness(BRIGHTNESS_NORMAL);*/
 
     queue = xQueueCreate( 60, sizeof( int ) );
 }
 void WS2812B_LedStrip::begin()
 {
-  pinMode(PIN, OUTPUT);
-  digitalWrite(PIN, LOW);
-  m_pixels->fill(m_pixels->Color(0, 0, 0),0,NUMPIXELS);
+  m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+  m_pixels->begin();
+  m_pixels->clear();
+  m_pixels->show();
+  //m_pixels->fill(m_pixels->Color(0, 0, 0),0,NUMPIXELS);
+  SetBrightness(BRIGHTNESS_NORMAL);
+  //m_pixels->fill(m_pixels->Color(0, 0, 0),0,NUMPIXELS);
   m_pixels->show();
 }
 
