@@ -45,7 +45,7 @@ void CyranoHandler::SendInfoMessage()
   //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
 
   //cout << "Sending info message: " << TheMessage << endl;
-
+  //StateChanged(TheMessage);
   return;
 }
 
@@ -61,6 +61,7 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
         {
           m_State = WAITING;
           m_MachineStatus[State] = "W";
+          StateChanged(EVENT_CYRANO_STATE_W);
         }
         bOKToSend = true;
         //m_MachineStatus[CompetitionId] = input[CompetitionId];
@@ -99,6 +100,7 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
             // Initialize with the received values
             m_State = WAITING;
             m_MachineStatus[State] = "W";
+            StateChanged(EVENT_CYRANO_STATE_W);
             SendInfoMessage();
         }
 
@@ -106,6 +108,7 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
 
         case NAK :
         // The software doesn't accept the "END" message
+        StateChanged(EVENT_CYRANO_STATE_NAK);
         break;
         cout << "Interesting, I should never ever get here" << endl;
 
@@ -147,6 +150,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         {
           m_State = HALT;
           m_MachineStatus[State] = "H";
+          StateChanged(EVENT_CYRANO_STATE_H);
           SendInfoMessage();
         }
         break;
@@ -288,12 +292,14 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
       {
         //Message2.SetTimerStatus('R');
         m_MachineStatus[State] = "F";
+        StateChanged(EVENT_CYRANO_STATE_F);
 
       }
       else
       {
         //Message2.SetTimerStatus('N');
         m_MachineStatus[State] = "H";
+        StateChanged(EVENT_CYRANO_STATE_H);
 
       }
     break;
