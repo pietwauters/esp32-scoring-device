@@ -11,7 +11,7 @@ class RS422_FPA_Type10_Message : public RS422_FPA_Message
         RS422_FPA_Type10_Message();
         virtual ~RS422_FPA_Type10_Message();
         RS422_FPA_Type10_Message(const RS422_FPA_Type10_Message& other);
-        void SetCyranoStatus(bool online);
+        void SetCyranoStatus(const uint8_t TheStatus);
         void SetMachineStatus( const char statevalue);
         uint8_t GetMachineStatus(){return m_message[7];};
         void SetPiste(int PisteNr);

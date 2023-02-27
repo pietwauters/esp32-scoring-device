@@ -66,16 +66,13 @@ RS422_FPA_Type10_Message::RS422_FPA_Type10_Message(const RS422_FPA_Type10_Messag
 }
 
 
-void RS422_FPA_Type10_Message::SetCyranoStatus(bool online)
+void RS422_FPA_Type10_Message::SetCyranoStatus(const uint8_t TheStatus)
 {
-    if(online)
-      m_message[5]= '1';
-    else
-      m_message[5]= '0';
+      m_message[9]= TheStatus;
 }
 
 void RS422_FPA_Type10_Message::SetMachineStatus( const char statevalue)
 {
-  m_message[7]= statevalue;
+  m_message[11]= statevalue;
 
 }
