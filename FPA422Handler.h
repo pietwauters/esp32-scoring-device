@@ -61,13 +61,16 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
     bool m_BlueToothStarted = false;
     bool m_WifiStarted = false;
     bool m_HWSerialStarted = false;
-    int TimeForNext1_2s = 0;
-    int TimeForNext12s = 0;
+    long TimeForNext1_2s = 0;
+    long TimeForNext12s = 0;
     int UDPPort = 50112;
     int PisteNr = 1;
     int AnnouncingPort = 65534;
     char LocalIPAddress[16] = "255.255.255.255";
     char SoftAPIPAddress[16] = "255.255.255.255";
+    int m_WifiPeriodicalUpdateCounter = 0;
+    int m_SlowWifiPeriodicalUpdateCounter = 0;
+
 };
 
 #endif // FPA422HANDLER_H

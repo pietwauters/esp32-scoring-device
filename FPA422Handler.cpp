@@ -139,21 +139,51 @@ void FPA422Handler::WifiPeriodicalUpdate()
 {
     if(millis() > TimeForNext1_2s)
     {
+      if(0 == m_WifiPeriodicalUpdateCounter)
+      {
         WifiTransmitMessage(1);
+      }
+      if(1 == m_WifiPeriodicalUpdateCounter)
+      {
         WifiTransmitMessage(2);
+      }
+      if(2 == m_WifiPeriodicalUpdateCounter)
+      {
         WifiTransmitMessage(3);
         TimeForNext1_2s = millis() + 1200;
+        m_WifiPeriodicalUpdateCounter = 0;
         return;
+      }
+      m_WifiPeriodicalUpdateCounter++;
+      return;
+
     }
+
     if(millis() > TimeForNext12s)
     {
+      if(0 == m_SlowWifiPeriodicalUpdateCounter)
+      {
         WifiTransmitMessage(4);
+      }
+      if(1 == m_SlowWifiPeriodicalUpdateCounter)
+      {
         WifiTransmitMessage(5);
-        WifiTransmitMessage(6);
+      }
+      if(2 == m_SlowWifiPeriodicalUpdateCounter)
+      {
+        WifiTransmitMessage(5);
+      }
+      if(3 == m_SlowWifiPeriodicalUpdateCounter)
+      {
         WifiTransmitMessage(7);
+      }
+      if(4 == m_SlowWifiPeriodicalUpdateCounter)
+      {
         WifiTransmitMessage(8);
+      }
+      if(5 == m_SlowWifiPeriodicalUpdateCounter)
+      {
         WifiTransmitMessage(10);
-
         if(m_WifiStarted)
         {
           udp.broadcastTo(SoftAPIPAddress, AnnouncingPort,TCPIP_ADAPTER_IF_AP);
@@ -161,7 +191,12 @@ void FPA422Handler::WifiPeriodicalUpdate()
 
         }
         TimeForNext12s = millis() + 12000;
+        m_SlowWifiPeriodicalUpdateCounter = 0;
         return;
+      }
+      m_SlowWifiPeriodicalUpdateCounter++;
+      return;  
+
     }
 
 }

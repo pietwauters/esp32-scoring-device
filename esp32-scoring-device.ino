@@ -1,4 +1,19 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
+
+/*! \mainpage ESP32 Scoring Machine for fencing
+ *
+ * \section intro_sec Introduction
+ *
+ * For more information about this project pls. go to https://github.com/pietwauters/esp32-scoring-device/wiki
+ *
+ * \section main_structure_sec Main structure
+ * The esp32 has 2 cores. One core is used for the physical scoring device sensor.
+ * The other core is used for everything else: State machine, timers, network, Cyrano, Configuration Portal, ...
+ *
+ * \subsection The sensor
+ *
+ *
+ */
 //#include "LedMatrix.h"
 #include "3WeaponSensor.h"
 #include "WS2812BLedStrip.h"
@@ -205,14 +220,19 @@ void setup() {
   MyLedStrip.begin();
   // put your setup code here, to run once:
   Serial.begin(115200);
+  MyLedStrip.ClearAll();
   MyTimeScoreDisplay.begin();
+  MyLedStrip.ClearAll();
   //MyTimeScoreDisplay.DisplayWeapon(EPEE);
   MyTimeScoreDisplay.DisplayPisteId();
+  MyLedStrip.ClearAll();
   //PrintReasonForReset();    // This is only for debugging instabilities. Comment out when you think it works
   MyNetWork.begin();
+  MyLedStrip.ClearAll();
   ShowWelcomeLights();
   MyNetWork.GlobalStartWiFi();
   //MyNetWork.ConnectToExternalNetwork();
+  MyLedStrip.ClearAll();
   MyFPA422Handler.StartWiFi();
   Serial.println("Wifi started");
   Serial.println("by now the you should have seen all the lights one by one");
@@ -230,7 +250,7 @@ void setup() {
   MyCyranoHandler.attach(MyStatemachine);
   MyCyranoHandler.attach(MyFPA422Handler);
   MyUDPIOHandler.attach(MyNetWork);
-
+  MyLedStrip.ClearAll();
 
   esp_task_wdt_init(10, false);
 
@@ -266,7 +286,9 @@ void setup() {
             1);
   esp_task_wdt_add(LedStripTask);
   MySensor.begin();
+  MyLedStrip.ClearAll();
   delay(100);
+  MyLedStrip.ClearAll();
   MyStatemachine.ResetAll();
   MyStatemachine.SetMachineWeapon(MySensor.GetActualWeapon());
   switch (MySensor.GetActualWeapon()) {
@@ -290,28 +312,35 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-
   delay(1); // without this it simply doesn't work
+
   MyFPA422Handler.WifiPeriodicalUpdate();
-  delay(1);
+  yield();
   MyTimeScoreDisplay.ProcessEvents();
-  delay(1);
+  yield();
+  MyFPA422Handler.WifiPeriodicalUpdate();
+  yield();
   // If there is no WiFi within 30 seconds after start, it will not come
-  //if(millis() < StopSearchingForWifi)
-  if(MyNetWork.IsExternalWifiAvailable())
+  if(millis() < StopSearchingForWifi)
   {
-    MyCyranoHandler.PeriodicallyBroadcastStatus();
-    MyCyranoHandler.CheckConnection();
-    MyFPA422Handler.WifiPeriodicalUpdate();
+    if(MyNetWork.IsExternalWifiAvailable())
+    {
+      MyCyranoHandler.PeriodicallyBroadcastStatus();
+      yield();
+      MyCyranoHandler.CheckConnection();
+      MyFPA422Handler.WifiPeriodicalUpdate();  // Not really needed because already done above
 
+    }
   }
-
+  yield();
   if(MyStatemachine.IsConnectedToRemote())
   {
     MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
-    delay(1);
+    MyFPA422Handler.WifiPeriodicalUpdate();
     MyLedStrip.AnimatePrio();
+    MyFPA422Handler.WifiPeriodicalUpdate();
   }
+
 
   esp_task_wdt_reset();
 

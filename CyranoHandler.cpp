@@ -64,6 +64,7 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
           StateChanged(EVENT_CYRANO_STATE_W);
         }
         bOKToSend = true;
+        bSoftwareIsLive = true;
         //m_MachineStatus[CompetitionId] = input[CompetitionId];
         SendInfoMessage();
         //cout << "received HELLO" << endl;
@@ -417,6 +418,22 @@ void ProcessCyranoPacket (AsyncUDPPacket packet)
 {
   //Serial.println("received some data from the server");
   //Serial.println((char*)packet.data());
+  // If Software is live, we know the IP address. If the received packet does
+  // come from the Software, we can ignore it.
+  if(MyCyranoHandler.SoftwareIsLive())
+  {
+    if(MyCyranoHandler.SoftwareIPAddress() != packet.remoteIP())
+      return;
+  }
+  else
+  {
+    if(!strncmp((char*)packet.data()+8,"HELLO",5))
+    {
+      MyCyranoHandler.SoftwareIPAddress(packet.remoteIP());
+    }
+    else
+      return;
+  }
   MyCyranoHandler.ProcessMessageFromSoftware((EFP1Message((char*)packet.data())));
 }
 
