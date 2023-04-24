@@ -250,7 +250,7 @@ WiFi.disconnect();
   return bConnectedToExternalNetwork;
 }
 */
-bool NetWork::ConnectToExternalNetwork(int ConnectTimeout)
+bool NetWork::ConnectToExternalNetwork(long ConnectTimeout)
 {
   if(bConnectedToExternalNetwork)
     return true;
@@ -259,9 +259,8 @@ bool NetWork::ConnectToExternalNetwork(int ConnectTimeout)
   if(!SavedNetworkExists)
     return false;
   WiFi.disconnect();
+
   long Stop = millis() + ConnectTimeout * 1000;
-
-
   WiFi.mode(WIFI_MODE_APSTA);
   WiFi.begin(wm.getWiFiSSID(true).c_str(), wm.getWiFiPass(true).c_str());
   wm.setEnableConfigPortal(false);
@@ -276,8 +275,8 @@ bool NetWork::ConnectToExternalNetwork(int ConnectTimeout)
       Stop = 0;
       bConnectedToExternalNetwork= true;
     }
-    delay(100);
-    Serial.print(".");
+    delay(200);
+    Serial.print("x");
   }
   if(bConnectedToExternalNetwork)// if connected with saved credentials is successful we have to start the local AP ourselves
   {
@@ -289,12 +288,13 @@ bool NetWork::ConnectToExternalNetwork(int ConnectTimeout)
 }
 
 
-
+static int counter = 0;
 void NetWork::GlobalStartWiFi()
 {
   if(m_GlobalWifiStarted)
     return;
-
+counter++;
+cout << " We have now been " << counter << " times in GlobalStartWifi" << endl;
   networkpreferences.begin("credentials", false);
   int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
   networkpreferences.end();
@@ -314,12 +314,12 @@ void NetWork::GlobalStartWiFi()
 
   if(!ConnectToExternalNetwork(15))
   {
-    int bestchannel = findBestWifiChannel() + 1;
+    bestchannel = findBestWifiChannel() + 1;
     WiFi.mode(WIFI_MODE_AP);
 
     WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
     esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
-    Serial.print("current best channel = "); Serial.println(bestchannel);
+    //Serial.print("current best channel = "); Serial.println(bestchannel);
     //Serial.print("current password = "); Serial.println(soft_ap_password);
   }
 
@@ -360,7 +360,14 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
     case UI_INPUT_CYRANO_PREV :
     case UI_INPUT_CYRANO_BEGIN :
     case UI_INPUT_CYRANO_END :
-    ConnectToExternalNetwork(45);
+    if(!ConnectToExternalNetwork(45))
+    {
+      WiFi.disconnect();
+      WiFi.mode(WIFI_MODE_AP);
+      WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
+    }
+
+
     break;
 
   }
@@ -398,6 +405,7 @@ void saveParamsCallback () {
     case 2:
     startweapon = 2;
     break;
+
 
   }
   mypreferences.putUChar("START_WEAPON",startweapon);

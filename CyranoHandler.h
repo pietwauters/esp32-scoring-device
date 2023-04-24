@@ -50,11 +50,15 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         void CheckConnection();
         void PeriodicallyBroadcastStatus();
         void Begin();
+        bool SoftwareIsLive(){return bSoftwareIsLive;};
+        IPAddress SoftwareIPAddress() {return mSoftwareIPAddress;};
+        void SoftwareIPAddress(IPAddress theSoftwareIPAddress) {mSoftwareIPAddress = theSoftwareIPAddress;};
 
     protected:
 
     private:
         EFP1Message m_MachineStatus; //!< Member variable "m_Status"
+        EFP1Message m_IncompleteMessage;
         CyranoState m_State = WAITING;
         int previous_seconds =99;  // This will always result in setting a correct initial value
         uint32_t m_timeToShowTimer = 0;
@@ -69,6 +73,8 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         uint16_t CyranoPort = CYRANO_PORT;
         uint16_t CyranoBroadcastPort = CYRANO_BROADCAST_PORT;
         long NextPeriodicalUpdate;
+        bool bSoftwareIsLive = false;
+        IPAddress mSoftwareIPAddress;
 
 };
 
