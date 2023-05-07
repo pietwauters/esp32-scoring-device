@@ -320,28 +320,24 @@ void loop() {
   yield();
   MyFPA422Handler.WifiPeriodicalUpdate();
   yield();
-  // If there is no WiFi within 30 seconds after start, it will not come
-  if(millis() < StopSearchingForWifi)
+  if(MyNetWork.IsExternalWifiAvailable())
   {
-    if(MyNetWork.IsExternalWifiAvailable())
-    {
-      MyCyranoHandler.PeriodicallyBroadcastStatus();
-      yield();
-      MyCyranoHandler.CheckConnection();
-      MyFPA422Handler.WifiPeriodicalUpdate();  // Not really needed because already done above
-
-    }
+    MyCyranoHandler.PeriodicallyBroadcastStatus();
+    yield();
+    MyCyranoHandler.CheckConnection();
+    MyFPA422Handler.WifiPeriodicalUpdate();  // Not really needed because already done above
   }
   yield();
+
+
   if(MyStatemachine.IsConnectedToRemote())
   {
     MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
+    yield();
     MyFPA422Handler.WifiPeriodicalUpdate();
     MyLedStrip.AnimatePrio();
     MyFPA422Handler.WifiPeriodicalUpdate();
   }
-
-
   esp_task_wdt_reset();
 
 }
