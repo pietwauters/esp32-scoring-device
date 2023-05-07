@@ -288,13 +288,12 @@ bool NetWork::ConnectToExternalNetwork(long ConnectTimeout)
 }
 
 
-static int counter = 0;
+
 void NetWork::GlobalStartWiFi()
 {
   if(m_GlobalWifiStarted)
     return;
-counter++;
-cout << " We have now been " << counter << " times in GlobalStartWifi" << endl;
+
   networkpreferences.begin("credentials", false);
   int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
   networkpreferences.end();
