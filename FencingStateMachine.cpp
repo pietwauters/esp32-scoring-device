@@ -465,8 +465,23 @@ void FencingStateMachine::ProcessUW2F()
 // New Rule after FIE Congress 26/11/2022
 void FencingStateMachine::ProcessUW2F()
 {
-  // I don't know how to deal with the black P-Card
-    if(m_PCardLeft < 3)
+
+  if(m_PCardLeft == 2)
+  {
+    if(m_ScoreLeft > m_ScoreRight)
+    {
+      m_PCardRight++;
+      return;
+    }
+    if(m_ScoreLeft < m_ScoreRight)
+    {
+      m_PCardLeft++;
+      return;
+    }
+    // I don't know how to deal with the black P-Card in case of equal score
+    return;
+  }
+    if(m_PCardLeft < 2)
     {
       m_PCardLeft++;
       if(m_PCardLeft == 2)
@@ -476,7 +491,7 @@ void FencingStateMachine::ProcessUW2F()
       }
     }
 
-    if(m_PCardRight < 3)
+    if(m_PCardRight < 2)
     {
       m_PCardRight++;
       if(m_PCardRight == 2)
@@ -485,6 +500,7 @@ void FencingStateMachine::ProcessUW2F()
         StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
       }
     }
+
 }
 
 uint32_t FencingStateMachine::MakeTimerEvent()
