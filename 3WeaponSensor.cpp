@@ -440,7 +440,7 @@ void MultiWeaponSensor::DoFullScan()
     else
       FullScanCounter = 3;
 
-}
+} 
 
 weapon_t MultiWeaponSensor::GetWeapon()
 {
@@ -470,6 +470,12 @@ weapon_t MultiWeaponSensor::GetWeapon()
         return EPEE;
       }
     }
+  }
+  else
+  {
+    NotConnectedRight = false;
+    NotConnectedLeft = false;
+    bPreventBuzzer = false;
   }
 
   if(m_DectionMode == MANUAL)
