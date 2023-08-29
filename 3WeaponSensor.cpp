@@ -440,7 +440,7 @@ void MultiWeaponSensor::DoFullScan()
     else
       FullScanCounter = 3;
 
-}
+} 
 
 weapon_t MultiWeaponSensor::GetWeapon()
 {
