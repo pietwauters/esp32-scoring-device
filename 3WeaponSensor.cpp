@@ -471,6 +471,12 @@ weapon_t MultiWeaponSensor::GetWeapon()
       }
     }
   }
+  else
+  {
+    NotConnectedRight = false;
+    NotConnectedLeft = false;
+    bPreventBuzzer = false;
+  }
 
   if(m_DectionMode == MANUAL)
   {
