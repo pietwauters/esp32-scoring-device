@@ -368,6 +368,10 @@ void WS2812B_LedStrip:: update (FencingStateMachine *subject, uint32_t eventtype
     SetLedStatus(0xff);
     break;
 
+    case EVENT_TIMER:
+      if(!event_data)
+        StartWarning(11);
+    break;
 
     case EVENT_P_CARD:
         //StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
@@ -568,6 +572,41 @@ void WS2812B_LedStrip::StartPrioAnimation(uint8_t prio)
   m_NextTimeToTogglePrioLights = millis() + 100 + m_counter * 15;
   m_Animating = true;
 }
+#define WARNING_TIME_ON 150
+#define WARNING_TIME_Off 40
+
+void WS2812B_LedStrip::AnimateWarning()
+{
+  if(!m_WarningOngoing)
+    return;
+  if(millis() < m_NextTimeToToggleBuzzer)
+    return;
+
+  if(m_warningcounter & 1)
+  {
+    m_NextTimeToToggleBuzzer = millis() + WARNING_TIME_Off;
+    setBuzz(false);
+  }
+  else
+  {
+    m_NextTimeToToggleBuzzer = millis() + WARNING_TIME_ON;
+    setBuzz(true);
+  }
+  m_warningcounter--;
+  if(!m_warningcounter)
+  {
+    setBuzz(false);
+    m_WarningOngoing = false;
+  }
+
+}
+void WS2812B_LedStrip::StartWarning(uint8_t nr_beeps)
+{
+  m_warningcounter = (nr_beeps * 2) + 1 ;
+  m_NextTimeToToggleBuzzer = millis() + WARNING_TIME_ON;
+  m_WarningOngoing = true;
+}
+
 
 void WS2812B_LedStrip::setBuzz(bool Value)
 {

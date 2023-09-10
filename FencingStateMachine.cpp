@@ -698,6 +698,7 @@ void FencingStateMachine::DoStateMachineTick()
             // we should do something to send only an event on change;
             m_Timer.StopTimer();
             StateChanged(EVENT_TIMER_STATE);
+            StateChanged(MakeTimerEvent());
             SetNextTimerStateAndRoundAndNewTimeOnTimerZero();
             StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
         }

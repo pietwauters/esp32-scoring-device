@@ -305,7 +305,6 @@ void setup() {
 
   StopSearchingForWifi = millis() + 60000;
   MyCyranoHandler.Begin();
-
 }
 
 
@@ -337,7 +336,9 @@ void loop() {
     MyFPA422Handler.WifiPeriodicalUpdate();
     MyLedStrip.AnimatePrio();
     MyFPA422Handler.WifiPeriodicalUpdate();
+    
   }
+  MyLedStrip.AnimateWarning();
   esp_task_wdt_reset();
 
 }
