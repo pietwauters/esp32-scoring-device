@@ -163,6 +163,8 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         void SetConnectedToRemote(bool value){m_IsConnectedToRemote = value;};
         void ClearAllCards();
         void ProcessSpecialSetting (uint32_t eventtype);
+        bool incrementScoreAndCheckForMinuteBreak(bool bLeftFencer);
+        uint32_t get_max_score();
 
     protected:
 

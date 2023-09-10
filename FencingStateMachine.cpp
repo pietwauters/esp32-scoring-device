@@ -161,12 +161,14 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     break;
 
     case UI_INPUT_INCR_SCORE_LEFT:
-    m_ScoreLeft++;
+    //m_ScoreLeft++;
+    incrementScoreAndCheckForMinuteBreak(true);
     StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
     break;
 
     case UI_INPUT_INCR_SCORE_RIGHT:
-    m_ScoreRight++;
+    //m_ScoreRight++;
+    incrementScoreAndCheckForMinuteBreak(false);
     StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
     break;
 
@@ -269,7 +271,8 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       StateChanged(card_event );
       m_UW2FTimer.Reset();
       StateChanged(EVENT_UW2F_TIMER);
-      m_ScoreRight++;
+      //m_ScoreRight++;
+      incrementScoreAndCheckForMinuteBreak(false);
       StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
     break;
 
@@ -279,7 +282,8 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       StateChanged(card_event );
       m_UW2FTimer.Reset();
       StateChanged(EVENT_UW2F_TIMER);
-      m_ScoreLeft++;
+      //m_ScoreLeft++;
+      incrementScoreAndCheckForMinuteBreak(true);;
       StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
     break;
 
@@ -486,7 +490,8 @@ void FencingStateMachine::ProcessUW2F()
       m_PCardLeft++;
       if(m_PCardLeft == 2)
       {
-        m_ScoreRight++;
+        //m_ScoreRight++; 
+        incrementScoreAndCheckForMinuteBreak(false);
         StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
       }
     }
@@ -496,7 +501,8 @@ void FencingStateMachine::ProcessUW2F()
       m_PCardRight++;
       if(m_PCardRight == 2)
       {
-        m_ScoreLeft++;
+        //m_ScoreLeft++;
+        incrementScoreAndCheckForMinuteBreak(true);;
         StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
       }
     }
@@ -992,4 +998,51 @@ void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
     sscanf(input[LeftPCards].c_str(),"%d",& m_PCardLeft);
     StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
   }
+}
+
+uint32_t FencingStateMachine::get_max_score()
+{
+  switch(m_nrOfRounds)
+    {
+      case 1:
+      return 5;
+      break;
+
+      case 3:
+      return 15;
+      break;
+
+      case 9:
+      return m_currentRound * 5;
+      break;
+    }
+    return 5;
+}
+
+bool FencingStateMachine::incrementScoreAndCheckForMinuteBreak(bool bLeftFencer)
+{
+  // I should check what the current max score is
+  if(bLeftFencer)
+  {
+    if(m_ScoreLeft < get_max_score())
+      m_ScoreLeft++;
+  }
+  else
+  {
+    if( m_ScoreRight < get_max_score())
+      m_ScoreRight++;
+  }
+  if((m_MachineWeapon == SABRE) && (1== m_currentRound))
+  {
+      if((8 == m_ScoreRight) || (8 == m_ScoreLeft))
+      {
+        StateChanged(EVENT_TIMER);
+        SetNextTimerStateAndRoundAndNewTimeOnTimerZero();
+        StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
+        StateChanged(MakeTimerEvent());
+        return true;
+      }
+  }
+  return false;
+
 }
