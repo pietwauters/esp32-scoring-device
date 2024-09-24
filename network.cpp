@@ -264,6 +264,8 @@ bool NetWork::ConnectToExternalNetwork(long ConnectTimeout)
     return false;
   if(!SavedNetworkExists)
     return false;
+  if(!LookForExternalWiFi)
+    return false;
   WiFi.disconnect();
 
   long Stop = millis() + ConnectTimeout * 1000;

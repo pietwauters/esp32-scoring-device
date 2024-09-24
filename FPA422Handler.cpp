@@ -195,7 +195,7 @@ void FPA422Handler::WifiPeriodicalUpdate()
         return;
       }
       m_SlowWifiPeriodicalUpdateCounter++;
-      return;  
+      return;
 
     }
 
@@ -336,7 +336,7 @@ void FPA422Handler::ProcessLightsChange(uint32_t eventtype)
   Message1.SetWhiteRight(event_data & MASK_WHITE_R );
   BTTransmitMessage(1);
   WifiTransmitMessage(1);
-  Message1.Print();
+  //Message1.Print();
 }
 
 void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
