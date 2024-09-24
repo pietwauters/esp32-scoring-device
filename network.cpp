@@ -5,6 +5,7 @@
 #include <WiFiAP.h>
 #include <Preferences.h>
 #include "AsyncUDP.h"
+#include <esp_now.h>
 // Below is for OTA updates using a webserver
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -27,6 +28,11 @@ WiFiManager wm;
 int NetWork::begin()
 {
   WiFi.disconnect();
+  networkpreferences.begin("credentials", false);
+  LookForExternalWiFi=networkpreferences.getBool("TryGlobalWiFi",false);
+  networkpreferences.end();
+  /*if(!LookForExternalWiFi)
+    return 0;*/
   networks = WiFi.scanNetworks();
   if(wm.getWiFiIsSaved())
   {
@@ -297,6 +303,9 @@ void NetWork::GlobalStartWiFi()
   networkpreferences.begin("credentials", false);
   int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
   networkpreferences.end();
+  networkpreferences.begin("scoringdevice", false);
+  bool bIsrepeater = networkpreferences.getBool("RepeaterMode", false);
+  networkpreferences.end();
   if(-1 != PisteNr )
   {
     char temp[8];
@@ -310,16 +319,25 @@ void NetWork::GlobalStartWiFi()
     soft_ap_ssid = "Piste_" + (String)temp;
   }
 
+  // In repeater mode this part is not needed, because we have to use the same channel as the master
+  if(!bIsrepeater){
+    if(!ConnectToExternalNetwork(15))
+    {
+      bestchannel = findBestWifiChannel() + 1;
+      WiFi.mode(WIFI_MODE_AP);
 
-  if(!ConnectToExternalNetwork(15))
-  {
-    bestchannel = findBestWifiChannel() + 1;
+      WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
+      esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
+
+      //Serial.print("current best channel = "); Serial.println(bestchannel);
+      //Serial.print("current password = "); Serial.println(soft_ap_password);
+    }
+  }
+  else{
+    FindAndSetMasterChannel();
     WiFi.mode(WIFI_MODE_AP);
-
     WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
     esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
-    //Serial.print("current best channel = "); Serial.println(bestchannel);
-    //Serial.print("current password = "); Serial.println(soft_ap_password);
   }
 
   m_GlobalWifiStarted = true;
@@ -328,6 +346,47 @@ void NetWork::GlobalStartWiFi()
   });
 
 
+}
+
+void NetWork::FindAndSetMasterChannel(int soft_retries, bool restart_on_timeout)
+{
+  WiFi.disconnect();
+  String MasterSSID;
+  Preferences networkpreferences;
+  networkpreferences.begin("scoringdevice", false);
+  int32_t PisteNr = networkpreferences.getInt("MasterPiste", -1);
+
+  networkpreferences.end();
+  int tempchannel = -1;
+  if(-1 != PisteNr )
+  {
+    char temp[8];
+    sprintf(temp,"%03d",PisteNr);
+    MasterSSID = "Piste_" + (String)temp;
+    for(int j=soft_retries; j > 0; j--){
+      int networks = WiFi.scanNetworks();
+      for (int i = 0; i < networks; ++i)
+      {
+        if(WiFi.SSID(i) == MasterSSID)
+        {
+          tempchannel = WiFi.channel(i);
+          i = networks;
+        }
+      }
+      if(tempchannel != -1)
+        j = 0;
+      yield();
+    }
+
+  }
+  if(tempchannel != -1)
+  {
+    bestchannel = tempchannel;
+    ESP_ERROR_CHECK(esp_wifi_set_channel(bestchannel ,WIFI_SECOND_CHAN_NONE));
+  }
+  else
+    if(restart_on_timeout)
+      esp_restart() ;
 }
 
 void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
@@ -373,9 +432,16 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
 }
 
 WiFiManagerParameter WiFiPistId("WiFiPisteId", "PisteNr","",16);
+WiFiManagerParameter TryGlobalWiFi("TryGlobalWiFi", "Look for external network","N",1);
+
 WiFiManagerParameter CyranoPort("CyranoPort", "Cyrano Port","50100",16);
 WiFiManagerParameter CyranoBroadcastPort("CyranoBroadcastPort", "Cyrano Broadcast Port","50101",16);
 WiFiManagerParameter StartUpWeapon("StartUpWeapon", "Default Weapon at start_upt","F",8);
+
+WiFiManagerParameter RepeaterMode("RepeaterMode", "Is this a repeater?(Y/N)","N",1);
+WiFiManagerParameter MasterPisteId("MasterPiste", "Piste to repeat","500",3);
+
+
 
 void saveParamsCallback () {
 
@@ -387,6 +453,18 @@ void saveParamsCallback () {
   uint16_t ThePort = 50100;
   sscanf(CyranoPort.getValue(),"%d",&ThePort);
   networkpreferences.putUShort("CyranoPort", ThePort);
+  char theWiFiMode = TryGlobalWiFi.getValue()[0];
+
+  bool bTryGlobalWiFi = false;
+    switch(theWiFiMode)
+    {
+      case 'Y':
+      case 'y':
+      case '1':
+        bTryGlobalWiFi = true;
+      break;
+    }
+    networkpreferences.putBool("TryGlobalWiFi",bTryGlobalWiFi);
   networkpreferences.end();
   Preferences mypreferences;
   mypreferences.begin("scoringdevice", false);
@@ -401,13 +479,30 @@ void saveParamsCallback () {
     startweapon = 1;
     break;
 
-    case 2:
+    case 'S':
     startweapon = 2;
     break;
-
-
   }
   mypreferences.putUChar("START_WEAPON",startweapon);
+
+// Code related to repeater / master mode
+char theMode = RepeaterMode.getValue()[0];
+
+bool bMode = false;
+  switch(theMode)
+  {
+    case 'Y':
+    case 'y':
+    case '1':
+      bMode = true;
+    break;
+  }
+  mypreferences.putBool("RepeaterMode",bMode);
+
+  int MasterId = -1;
+  sscanf(MasterPisteId.getValue(),"%d",&MasterId);
+  mypreferences.putInt("MasterPiste",MasterId);
+
   mypreferences.end();
   ESP.restart();
 }
@@ -438,6 +533,13 @@ void NetWork::WaitForNewSettingsViaPortal()
   uint16_t CyranoBroadcastPortNr = networkpreferences.getUShort("CyranoBroadcastPort", 50101);
   sprintf(temp,"%d",CyranoBroadcastPortNr);
   CyranoBroadcastPort.setValue(temp,8);
+
+  bool bTryGlobalWiFi = networkpreferences.getBool("TryGlobalWiFi",false);
+  sprintf(temp,"N");
+  if(bTryGlobalWiFi)
+    sprintf(temp,"Y");
+  TryGlobalWiFi.setValue(temp,1);
+
   networkpreferences.end();
 
   Preferences mypreferences;
@@ -462,14 +564,31 @@ void NetWork::WaitForNewSettingsViaPortal()
 
   }
   StartUpWeapon.setValue(temp,1);
+
+  bool Mode = false;
+
+  Mode = mypreferences.getBool("RepeaterMode",true);
+  sprintf(temp,"N");
+  if(Mode)
+    sprintf(temp,"Y");
+  RepeaterMode.setValue(temp,1);
+
+  int32_t MasterNr = mypreferences.getInt("MasterPiste", -1);
+  sprintf(temp,"%d",MasterNr);
+  MasterPisteId.setValue(temp, 8);
   mypreferences.end();
 
   server.end();
 
   wm.addParameter(&WiFiPistId);
+
+  wm.addParameter(&TryGlobalWiFi);
   wm.addParameter(&CyranoPort);
   wm.addParameter(&CyranoBroadcastPort);
   wm.addParameter(&StartUpWeapon);
+
+  wm.addParameter(&RepeaterMode);
+  wm.addParameter(&MasterPisteId);
 
   wm.setEnableConfigPortal(true);
   wm.setConfigPortalBlocking(true);

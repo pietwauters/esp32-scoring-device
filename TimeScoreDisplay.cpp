@@ -220,6 +220,11 @@ void TimeScoreDisplay::update (FencingStateMachine *subject, uint32_t eventtype)
   xQueueSend(queue, &eventtype, portMAX_DELAY);
 }
 
+void TimeScoreDisplay::update (RepeaterReceiver *subject, uint32_t eventtype)
+{
+  xQueueSend(queue, &eventtype, portMAX_DELAY);
+}
+
 #define MASK_RED_OR_GREEN 0x84
 
 void TimeScoreDisplay::ProcessEvents ()

@@ -44,6 +44,7 @@ FencingStateMachine::FencingStateMachine(int hw_timer_nr, int tickPeriod)
     ResetAll();
     m_Timer.SetTicksPeriod(tickPeriod);
     //m_Timer.SetDisplayResolution(100);
+    m_low_prio_divider = m_low_prio_divider_init;
 
 }
 
@@ -85,6 +86,43 @@ void FencingStateMachine::ProcessSpecialSetting (uint32_t eventtype)
   }
 
 
+}
+
+void FencingStateMachine::TransmitFullStateToDisplay (RepeaterSender *TheRepeater){
+
+  StateChanged(EVENT_LIGHTS | m_Lights);
+  m_low_prio_divider--;
+  if(!m_low_prio_divider){
+    m_low_prio_divider = m_low_prio_divider_init;
+
+  }
+  else
+    return;
+  yield();
+  if(m_Timer.IsRunning())
+    return;
+
+  TheRepeater->update(this,EVENT_SCORE_LEFT | m_ScoreLeft);
+
+  TheRepeater->update(this,m_YellowCardLeft | EVENT_YELLOW_CARD_LEFT );
+
+  TheRepeater->update(this,m_RedCardLeft | EVENT_RED_CARD_LEFT );
+
+  TheRepeater->update(this,EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+  yield();
+
+  TheRepeater->update(this,EVENT_SCORE_RIGHT | m_ScoreRight);
+
+  TheRepeater->update(this,m_YellowCardRight | EVENT_YELLOW_CARD_RIGHT );
+
+  TheRepeater->update(this,m_RedCardRight | EVENT_RED_CARD_RIGHT );
+  yield();
+
+  TheRepeater->update(this,EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
+
+  TheRepeater->update(this,MakeTimerEvent());
+
+  TheRepeater->update(this,EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
 }
 
 void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
@@ -490,7 +528,7 @@ void FencingStateMachine::ProcessUW2F()
       m_PCardLeft++;
       if(m_PCardLeft == 2)
       {
-        //m_ScoreRight++; 
+        //m_ScoreRight++;
         incrementScoreAndCheckForMinuteBreak(false);
         StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
       }
@@ -1045,4 +1083,12 @@ bool FencingStateMachine::incrementScoreAndCheckForMinuteBreak(bool bLeftFencer)
   }
   return false;
 
+}
+
+void FencingStateMachine::PeriodicallyBroadcastFullState(class RepeaterSender *TheRepeater,long Period){
+  if(millis() > m_TimeToBroadcastFullState)
+  {
+    m_TimeToBroadcastFullState = millis() + Period;
+    TransmitFullStateToDisplay(TheRepeater);
+  }
 }

@@ -12,6 +12,11 @@
 #define VERY_STRONG -51
 #define STRONG -61
 #define WEAK -71
+
+#define RW_MODE false
+#define RO_MODE true
+
+
 /*******************************************************************************
    TYPES
  ******************************************************************************/
@@ -45,6 +50,7 @@ class NetWork : public Observer<UDPIOHandler>
         void WaitForNewSettingsViaPortal();
         void update (UDPIOHandler *subject, uint32_t eventtype);
         bool IsExternalWifiAvailable(){return bConnectedToExternalNetwork;}
+        void FindAndSetMasterChannel(int soft_retries=5, bool restart_on_timeout=false);
         int begin();
 
     protected:
@@ -62,6 +68,7 @@ class NetWork : public Observer<UDPIOHandler>
     channel_t channels[CHANNEL_COUNT]; // Array with all the channels
     int networks = -1;
     bool SavedNetworkExists = false;
+    bool LookForExternalWiFi = false;
     int bestchannel = -1;
 };
 #endif //NETWORK_H

@@ -4,6 +4,7 @@
 #include <Adafruit_NeoPixel.h>
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
+#include "RepeaterReceiver.h"
 #include "EventDefinitions.h"
 #include "hardwaredefinition.h"
 
@@ -51,7 +52,7 @@
 
 
 
-class WS2812B_LedStrip : public Observer<FencingStateMachine>
+class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<RepeaterReceiver>
 {
     public:
         /** Default constructor */
@@ -79,6 +80,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
         void myShow(){m_pixels->show();};
         void SetBrightness(uint8_t val);
         void update (FencingStateMachine *subject, uint32_t eventtype);
+        void update (RepeaterReceiver *subject, uint32_t eventtype);
         void ProcessEvents ();
         void ProcessEventsBlocking ();
         void setGreenPrio(bool Value);
@@ -105,6 +107,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>
 
     private:
 
+        void updateHelper(uint32_t eventtype);
         void setUWFTime(uint8_t tens, uint8_t bottom);
         unsigned char m_LedStatus; //!< Member variable "m_LedStatus"
         Adafruit_NeoPixel *m_pixels;

@@ -14,8 +14,7 @@ char Cross[] = {1,1,0,0,0,0,1,1,
 WS2812B_LedStrip::WS2812B_LedStrip()
 {
     //ctor
-    pinMode(PIN, OUTPUT);
-    digitalWrite(PIN, LOW);   // not sure if this should be high or low. Low for a long time will reset the leds causing the content
+
     pinMode(BUZZERPIN, OUTPUT);
     digitalWrite(BUZZERPIN, RELATIVE_LOW);
     /*m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -252,6 +251,16 @@ void WS2812B_LedStrip::setRedCardLeft(bool Value)
 }
 
 void WS2812B_LedStrip:: update (FencingStateMachine *subject, uint32_t eventtype)
+{
+  updateHelper(eventtype);
+}
+
+void WS2812B_LedStrip:: update (RepeaterReceiver *subject, uint32_t eventtype)
+{
+  updateHelper(eventtype);
+}
+
+void WS2812B_LedStrip::updateHelper(uint32_t eventtype)
 {
   uint32_t event_data = eventtype & SUB_TYPE_MASK;
   uint32_t maineventtype = eventtype & MAIN_TYPE_MASK ;

@@ -4,6 +4,7 @@
 
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
+#include "RepeaterReceiver.h"
 #include "EventDefinitions.h"
 #include <MD_MAX72xx.h>
 #include <SPI.h>
@@ -21,7 +22,7 @@ enum TimerStatus_t {NO_TIME, // No need to show the time, it's not available
 };
 
 
-class TimeScoreDisplay : public Observer<FencingStateMachine>
+class TimeScoreDisplay : public Observer<FencingStateMachine>,public Observer<RepeaterReceiver>
 {
     public:
         /** Default constructor */
@@ -30,6 +31,7 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>
         virtual ~TimeScoreDisplay();
         void begin();
         void update (FencingStateMachine *subject, uint32_t eventtype);
+        void update (RepeaterReceiver *subject, uint32_t eventtype);
         void ProcessEvents ();
         void DisplayScore(uint8_t scoreLeft, uint8_t scoreRight);
         void DisplayTime(uint8_t minutes, uint8_t seconds, uint8_t hundreths, bool TenthsOnly = true);

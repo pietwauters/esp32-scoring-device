@@ -6,6 +6,7 @@
 #include "FencingTimer.h"
 #include "UW2FTimer.h"
 #include "EFP1Message.h"
+#include "RepeaterSender.h"
 
 
 
@@ -33,8 +34,10 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         void update (UDPIOHandler *subject, uint32_t eventtype);
         void update (CyranoHandler *subject, uint32_t eventtype){};
         void update (CyranoHandler *subject, string eventtype);
+        void TransmitFullStateToDisplay (class RepeaterSender *TheRepeater);
         void StateChanged (uint32_t eventtype) {notify(eventtype);}
         void ProcessDisplayMessage (const EFP1Message &input);
+        void PeriodicallyBroadcastFullState(class RepeaterSender *TheRepeater,long Period = 7919);
 
         /** Access m_Red
          * \return The current value of m_Red
@@ -216,6 +219,12 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         MultiWeaponSensor *m_TheSensor = NULL;
         long m_NextIdleTime = 0;
         bool m_IsConnectedToRemote = false;
+
+        long m_TimeToBroadcastFullState = 0;
+        int m_low_prio_divider = 5;
+        int m_low_prio_divider_init = 7;
+
+
 
 };
 
