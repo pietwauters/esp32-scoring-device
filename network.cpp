@@ -442,6 +442,7 @@ WiFiManagerParameter StartUpWeapon("StartUpWeapon", "Default Weapon at start_upt
 
 WiFiManagerParameter RepeaterMode("RepeaterMode", "Is this a repeater?(Y/N)","N",1);
 WiFiManagerParameter MasterPisteId("MasterPiste", "Piste to repeat","500",3);
+WiFiManagerParameter MirrorLights("MirrorLights", "Mirror lights?(Y/N)","N",1);
 
 
 
@@ -500,6 +501,18 @@ bool bMode = false;
     break;
   }
   mypreferences.putBool("RepeaterMode",bMode);
+
+  theMode = MirrorLights.getValue()[0];
+  bool bMirror = false;
+    switch(theMode)
+    {
+      case 'Y':
+      case 'y':
+      case '1':
+        bMirror = true;
+      break;
+    }
+    mypreferences.putBool("MirrorLights",bMirror);
 
   int MasterId = -1;
   sscanf(MasterPisteId.getValue(),"%d",&MasterId);
@@ -575,6 +588,14 @@ void NetWork::WaitForNewSettingsViaPortal()
     sprintf(temp,"Y");
   RepeaterMode.setValue(temp,1);
 
+  bool bMirror = false;
+
+  bMirror = mypreferences.getBool("MirrorLights",true);
+  sprintf(temp,"N");
+  if(bMirror)
+    sprintf(temp,"Y");
+  MirrorLights.setValue(temp,1);
+
   int32_t MasterNr = mypreferences.getInt("MasterPiste", -1);
   sprintf(temp,"%d",MasterNr);
   MasterPisteId.setValue(temp, 8);
@@ -591,6 +612,7 @@ void NetWork::WaitForNewSettingsViaPortal()
 
   wm.addParameter(&RepeaterMode);
   wm.addParameter(&MasterPisteId);
+  wm.addParameter(&MirrorLights);
 
   wm.setEnableConfigPortal(true);
   wm.setConfigPortalBlocking(true);

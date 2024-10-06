@@ -55,30 +55,39 @@ WS2812B_LedStrip::~WS2812B_LedStrip()
     delete m_pixels;
 }
 
-void WS2812B_LedStrip::setRed(bool Value)
+void WS2812B_LedStrip::setRed(bool Value, bool bReverse)
 {
-    if(Value)
-    {
-        //m_pixels->fill(m_pixels->Color(0, 120, 0),0,NUMPIXELS/3);
-        //m_pixels->fill(m_Red,0,NUMPIXELS/2);
-        for(int i=0;i<64;i++)
-        {
+  uint32_t FillColor = m_Red;
+  if(bReverse)
+    FillColor = m_Green;
 
-            m_pixels->setPixelColor(i, m_Red); // Moderately bright green color.
-        }
-    }
-    else
-    {
-        m_pixels->fill(m_pixels->Color(0, 0, 0),0,64);
-    }
-    //m_pixels->show();   // Send the updated pixel colors to the hardware.
+  if(Value)
+  {
+      //m_pixels->fill(m_pixels->Color(0, 120, 0),0,NUMPIXELS/3);
+      //m_pixels->fill(m_Red,0,NUMPIXELS/2);
+      for(int i=0;i<64;i++)
+      {
+
+          m_pixels->setPixelColor(i, FillColor); // Moderately bright green color.
+      }
+  }
+  else
+  {
+      m_pixels->fill(m_pixels->Color(0, 0, 0),0,64);
+  }
+  //m_pixels->show();   // Send the updated pixel colors to the hardware.
 }
 
-void WS2812B_LedStrip::setRedPrio(bool Value)
+void WS2812B_LedStrip::setRedPrio(bool Value, bool bReverse)
 {
+  uint32_t FillColor = m_Red;
+  if(bReverse){
+    FillColor = m_Green;
+  }
+
     if(Value)
     {
-         m_pixels->fill(m_Red,0,8);
+         m_pixels->fill(FillColor,0,8);
     }
     else
     {
@@ -87,11 +96,14 @@ void WS2812B_LedStrip::setRedPrio(bool Value)
     //m_pixels->show();   // Send the updated pixel colors to the hardware.
 }
 
-void WS2812B_LedStrip::setGreen(bool Value)
+void WS2812B_LedStrip::setGreen(bool Value, bool bReverse)
 {
+  uint32_t FillColor = m_Green;
+  if(bReverse)
+    FillColor = m_Red;
     if(Value)
     {
-        m_pixels->fill(m_Green,64,64);
+        m_pixels->fill(FillColor,64,64);
 
     }
     else
@@ -101,11 +113,15 @@ void WS2812B_LedStrip::setGreen(bool Value)
     //m_pixels->show();   // Send the updated pixel colors to the hardware.
 }
 
-void WS2812B_LedStrip::setGreenPrio(bool Value)
+void WS2812B_LedStrip::setGreenPrio(bool Value, bool bReverse)
 {
+  uint32_t FillColor = m_Green;
+  if(bReverse){
+    FillColor = m_Red;
+  }
     if(Value)
     {
-        m_pixels->fill(m_Green,64,8);
+        m_pixels->fill(FillColor,64,8);
 
     }
     else
@@ -473,14 +489,15 @@ void WS2812B_LedStrip::SetLedStatus(unsigned char val)
       m_LedStatus = val;
     }
     bool ColoredOn = m_LedStatus & MASK_RED;
-    setRed(ColoredOn);
+    bool ReverseColor = m_LedStatus & MASK_REVERSE_COLORS;
+    setRed(ColoredOn,ReverseColor);
     if(!ColoredOn)
     {
       setWhiteLeft(m_LedStatus & MASK_WHITE_L);
       if(!(m_LedStatus & MASK_WHITE_L) )             // This is needed because I'm re-using the "white part" to show orange
       {
           setOrangeLeft(m_LedStatus & MASK_ORANGE_L);
-          setRedPrio(m_PrioLeft);
+          setRedPrio(m_PrioLeft,ReverseColor);
           setYellowCardLeft(m_YellowCardLeft);
           setRedCardLeft(m_RedCardLeft);
           setUWFTimeLeft(m_UW2Ftens);
@@ -490,14 +507,15 @@ void WS2812B_LedStrip::SetLedStatus(unsigned char val)
     }
 
     ColoredOn = m_LedStatus & MASK_GREEN;
-    setGreen(ColoredOn);
+    setGreen(ColoredOn,ReverseColor);
+
     if(!ColoredOn)
     {
       setWhiteRight(m_LedStatus & MASK_WHITE_R);
       if(!(m_LedStatus & MASK_WHITE_R) )
       {
         setOrangeRight(m_LedStatus & MASK_ORANGE_R);
-        setGreenPrio(m_PrioRight);
+        setGreenPrio(m_PrioRight,ReverseColor);
         setYellowCardRight(m_YellowCardRight);
         setRedCardRight(m_RedCardRight);
         setUWFTimeRight(m_UW2Ftens);
@@ -527,19 +545,20 @@ void WS2812B_LedStrip::AnimatePrio()
 {
   if(!m_Animating)
     return;
+
   if(millis() < m_NextTimeToTogglePrioLights)
     return;
 
   m_NextTimeToTogglePrioLights = millis() + 60 + m_counter * 15;
   if(m_counter & 1)
   {
-    setGreenPrio(false);
-    setRedPrio(true);
+    setGreenPrio(!m_ReverseColors,m_ReverseColors);
+    setRedPrio(m_ReverseColors,m_ReverseColors);
   }
   else
   {
-    setGreenPrio(true);
-    setRedPrio(false);
+    setGreenPrio(m_ReverseColors,m_ReverseColors);
+    setRedPrio(!m_ReverseColors,m_ReverseColors);
   }
   m_pixels->show();
   m_counter--;
@@ -559,23 +578,25 @@ void WS2812B_LedStrip::StartPrioAnimation(uint8_t prio)
     case 0:
       setGreenPrio(false);
       setRedPrio(false);
-      m_pixels->show();
+      m_pixels->show();  // clear directly, no animation needed
       m_PrioLeft = false;
       m_PrioRight = false;
       return;
     break;
-    case 2:WS2812B_LedStrip::
+    case 2:
       m_PrioLeft = false;
       m_PrioRight = true;
+      m_targetprio = 1;
     break;
 
     case 1:
       m_PrioLeft = true;
       m_PrioRight = false;
+      m_targetprio = 2;
     break;
 
   }
-  m_targetprio = prio;
+  //_targetprio = prio;
 
   m_counter = 17 + prio;
   m_NextTimeToTogglePrioLights = millis() + 100 + m_counter * 15;

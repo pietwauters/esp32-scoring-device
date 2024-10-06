@@ -122,7 +122,9 @@ void FencingStateMachine::TransmitFullStateToDisplay (RepeaterSender *TheRepeate
 
   TheRepeater->update(this,MakeTimerEvent());
 
-  TheRepeater->update(this,EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
+
+
+  //TheRepeater->update(this,EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
 }
 
 void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
@@ -308,6 +310,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       card_event = m_RedCardLeft | EVENT_RED_CARD_LEFT;
       StateChanged(card_event );
       m_UW2FTimer.Reset();
+      m_UW2FSeconds = 0;
       StateChanged(EVENT_UW2F_TIMER);
       //m_ScoreRight++;
       incrementScoreAndCheckForMinuteBreak(false);
@@ -319,6 +322,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       card_event = m_RedCardRight | EVENT_RED_CARD_RIGHT;
       StateChanged(card_event );
       m_UW2FTimer.Reset();
+      m_UW2FSeconds = 0;
       StateChanged(EVENT_UW2F_TIMER);
       //m_ScoreLeft++;
       incrementScoreAndCheckForMinuteBreak(true);;

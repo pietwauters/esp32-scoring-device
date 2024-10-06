@@ -44,6 +44,7 @@
 #define MASK_WHITE_R 0x08
 #define MASK_GREEN 0x04
 #define MASK_BUZZ 0x02
+#define MASK_REVERSE_COLORS 0x01
 
 #define BRIGHTNESS_LOW 15
 #define BRIGHTNESS_NORMAL 30
@@ -69,12 +70,12 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
          */
         void ClearAll();
         void SetLedStatus(unsigned char val);
-        void setRed(bool Value);
+        void setRed(bool Value, bool bReverse = false);
         void setWhiteLeft(bool Value, bool inverse = false);
         void setOrangeLeft(bool Value);
         void setOrangeRight(bool Value);
         void setWhiteRight(bool Value, bool inverse = false);
-        void setGreen(bool Value);
+        void setGreen(bool Value, bool bReverse= false);
         void setBuzz(bool Value);
         //void setBuzz(bool Value){return;};
         void myShow(){m_pixels->show();};
@@ -83,8 +84,8 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         void update (RepeaterReceiver *subject, uint32_t eventtype);
         void ProcessEvents ();
         void ProcessEventsBlocking ();
-        void setGreenPrio(bool Value);
-        void setRedPrio(bool Value);
+        void setGreenPrio(bool Value, bool bReverse = false);
+        void setRedPrio(bool Value, bool bReverse = false);
         void AnimatePrio();
         void StartPrioAnimation(uint8_t prio);
         void AnimateWarning();
@@ -101,6 +102,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         void setUWFTimeLeft(uint8_t tens);
         void setUWFTimeRight(uint8_t tens);
         void begin();
+        void SetMirroring(bool value){m_ReverseColors = value;}
 
 
     protected:
@@ -121,6 +123,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         uint32_t   m_Blue;
         uint32_t   m_Off;
         uint32_t m_LastEvent = 0;
+        bool m_ReverseColors = false;
         bool m_PrioLeft = false;
         bool m_PrioRight = false;
         bool m_YellowCardLeft = false;

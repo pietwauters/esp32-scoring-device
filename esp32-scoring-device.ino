@@ -265,7 +265,7 @@ void setup() {
   MyNetWork.GlobalStartWiFi();
   Serial.println("Wifi started");
   Serial.println("by now the you should have seen all the lights one by one");
-
+  
   MyLedStrip.ClearAll();
 
 
@@ -352,6 +352,7 @@ else{
   MyRepeaterReiver.attach(MyLedStrip);
   MyRepeaterReiver.attach(MyTimeScoreDisplay);
   MyRepeaterReiver.StartWatchDog();
+  MyLedStrip.SetMirroring(MyRepeaterReiver.Mirror());
 }
 }
 

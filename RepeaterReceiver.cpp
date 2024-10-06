@@ -6,6 +6,7 @@
 #include <Preferences.h>
 #include "network.h"
 using namespace std;
+#define MASK_REVERSE_COLORS 0x00000001
 
 RepeaterReceiver::RepeaterReceiver()
 {
@@ -18,6 +19,91 @@ RepeaterReceiver::~RepeaterReceiver()
     //dtor
 }
 
+void changeEventMainType(uint32_t *event, uint32_t newType){
+  *event &=  SUB_TYPE_MASK;    // clear original type
+  *event |=  newType;  // set new type
+}
+
+uint32_t swapLights(const uint32_t &event) {
+  uint32_t result = EVENT_LIGHTS || MASK_REVERSE_COLORS;
+  if(event & MASK_RED)
+    result |= MASK_GREEN;
+
+  if(event & MASK_GREEN)
+    result |= MASK_RED;
+
+  if(event & MASK_WHITE_L)
+    result |= MASK_WHITE_R;
+
+  if(event & MASK_WHITE_R)
+        result |= MASK_WHITE_L;
+
+  if(event & MASK_ORANGE_L)
+    result |= MASK_ORANGE_R;
+
+  if(event & MASK_ORANGE_R)
+    result |= MASK_ORANGE_L;
+
+  return result;
+}
+void RepeaterReceiver::StateChanged (uint32_t event)
+{
+// we have to modify the event in case of mirroring
+if(!m_Mirror){
+  notify(event);
+  return;
+}
+uint32_t event_data = event & SUB_TYPE_MASK;
+uint32_t maineventtype = event & MAIN_TYPE_MASK ;
+uint32_t tempevent = event;
+  switch(maineventtype)
+  {
+    case EVENT_LIGHTS:
+    tempevent = swapLights(event);
+    break;
+    case EVENT_SCORE_LEFT:
+    changeEventMainType(&tempevent,EVENT_SCORE_RIGHT);
+    break;
+
+    case EVENT_SCORE_RIGHT:
+    changeEventMainType(&tempevent,EVENT_SCORE_LEFT);
+    break;
+
+    case EVENT_PRIO:
+
+    break;
+
+    case EVENT_YELLOW_CARD_LEFT:
+    changeEventMainType(&tempevent,EVENT_YELLOW_CARD_RIGHT);
+    break;
+
+    case EVENT_YELLOW_CARD_RIGHT:
+    changeEventMainType(&tempevent,EVENT_YELLOW_CARD_LEFT);
+    break;
+
+    case EVENT_RED_CARD_LEFT:
+    changeEventMainType(&tempevent,EVENT_RED_CARD_RIGHT);
+    break;
+
+    case EVENT_RED_CARD_RIGHT:
+    changeEventMainType(&tempevent,EVENT_RED_CARD_LEFT);
+    break;
+
+
+    case EVENT_P_CARD:
+        //StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+        mix_t PCardInfo;
+        PCardInfo.theDWord = event_data;
+        uint8_t temp = PCardInfo.theBytes[0];
+        PCardInfo.theBytes[0] = PCardInfo.theBytes[1];
+        PCardInfo.theBytes[1] = temp;
+        tempevent = PCardInfo.theDWord | EVENT_P_CARD;
+
+    break;
+
+  }
+  notify(tempevent);
+}
 
 
 void RepeaterReceiver::RegisterRepeater(uint8_t *broadcastAddress)
@@ -36,6 +122,7 @@ void RepeaterReceiver::begin(esp_now_recv_cb_t theCallBack)
   Preferences networkpreferences;
   networkpreferences.begin("scoringdevice", false);
   m_MasterPiste = networkpreferences.getInt("MasterPiste", -1);
+  m_Mirror = networkpreferences.getBool("MirrorLights", true);
 
   networkpreferences.end();
     // Init ESP-NOW
@@ -70,7 +157,7 @@ void RepeaterReceiver::begin(esp_now_recv_cb_t theCallBack)
   void RepeaterReceiver::ResetWatchDog(){
     m_WatchDogTriggerTime = millis() + m_WatchDogPeriod;
   }
-  
+
   bool RepeaterReceiver::IsWatchDogTriggered(){
     if(millis() > m_WatchDogTriggerTime)
     {
