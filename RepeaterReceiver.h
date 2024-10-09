@@ -38,7 +38,6 @@ class RepeaterReceiver : public Subject<RepeaterReceiver>
     long m_WatchDogTriggerTime = 999999;
     long m_WatchDogPeriod =  FULL_STATUS_REPETITION_PERIOD * 3;
 
-
     // private member variables
 
 

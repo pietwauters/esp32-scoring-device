@@ -6,7 +6,9 @@ typedef struct struct_message {
   MessageType_t type;
   uint32_t event;
   int piste_ID;
+  long messagenumber;
 } struct_message;
 #define FULL_STATUS_REPETITION_PERIOD 1021
+#define MESSAGE_REPETITION_FACTOR 4
 
 #endif // REPEATERDEFS_H

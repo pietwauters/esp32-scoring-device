@@ -44,22 +44,31 @@ RepeaterReceiver MyRepeaterReiver;
 RepeaterSender MyRepeaterSender;
 
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+static long LastNumber = 0;
+static long lossCounter = 0;
+static long MessageCounter = 0;
+
 struct_message m_message;
   memcpy(&m_message, incomingData, sizeof(m_message));
-  /*Serial.print("Bytes received: ");
-  Serial.println(len);
-  Serial.print("Event: ");
-  Serial.println(m_message.event);
-  Serial.print("piste_ID: ");
-  Serial.println(m_message.piste_ID);
 
-  Serial.println();*/
   if(m_message.piste_ID == MyRepeaterReiver.MasterPiste())
   {
-    MyRepeaterReiver.StateChanged(m_message.event);
     MyRepeaterReiver.ResetWatchDog();
+    long difference = m_message.messagenumber - LastNumber;
+    if(difference > 0){
+      MyRepeaterReiver.StateChanged(m_message.event);
+      MessageCounter++;
+      if(difference > 1){
+        lossCounter++;
+        Serial.print("Total Message count = ");Serial.println(MessageCounter);
+        Serial.print("Message lost; Total loss Count = ");
+        Serial.println(lossCounter);
+        Serial.print("Errorrate = ");
+        Serial.println((float)lossCounter*100/(float)MessageCounter);
+      }
+    }
+    LastNumber = m_message.messagenumber;
   }
-
 }
 
 TaskHandle_t CoreScoringMachineTask;
@@ -265,7 +274,7 @@ void setup() {
   MyNetWork.GlobalStartWiFi();
   Serial.println("Wifi started");
   Serial.println("by now the you should have seen all the lights one by one");
-  
+
   MyLedStrip.ClearAll();
 
 
@@ -388,8 +397,9 @@ void loop() {
     }
     MyLedStrip.AnimateWarning();
     MyStatemachine.PeriodicallyBroadcastFullState(&MyRepeaterSender,FULL_STATUS_REPETITION_PERIOD);
-
-
+    yield();
+    MyRepeaterSender.RepeatLastMessage();
+    yield();
     //MyRepeaterSender.BroadcastHeartBeat();
   }
   else{ // when in repeater mode

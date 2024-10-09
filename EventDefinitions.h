@@ -48,6 +48,8 @@ union mix_t
 #define EVENT_UW2F_TIMER 0x13000000
 #define EVENT_TOGGLE_BUZZER 0x14000000
 
+
+
 // Below are mask definitions to get the actual weapon from the weapon event
 #define WEAPON_MASK_FOIL 0x00000001
 #define WEAPON_MASK_EPEE 0x00000002

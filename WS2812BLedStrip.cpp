@@ -497,7 +497,7 @@ void WS2812B_LedStrip::SetLedStatus(unsigned char val)
       if(!(m_LedStatus & MASK_WHITE_L) )             // This is needed because I'm re-using the "white part" to show orange
       {
           setOrangeLeft(m_LedStatus & MASK_ORANGE_L);
-          setRedPrio(m_PrioLeft,ReverseColor);
+          setRedPrio(m_PrioLeft,m_ReverseColors);
           setYellowCardLeft(m_YellowCardLeft);
           setRedCardLeft(m_RedCardLeft);
           setUWFTimeLeft(m_UW2Ftens);
@@ -507,7 +507,7 @@ void WS2812B_LedStrip::SetLedStatus(unsigned char val)
     }
 
     ColoredOn = m_LedStatus & MASK_GREEN;
-    setGreen(ColoredOn,ReverseColor);
+    setGreen(ColoredOn,m_ReverseColors);
 
     if(!ColoredOn)
     {
@@ -515,7 +515,7 @@ void WS2812B_LedStrip::SetLedStatus(unsigned char val)
       if(!(m_LedStatus & MASK_WHITE_R) )
       {
         setOrangeRight(m_LedStatus & MASK_ORANGE_R);
-        setGreenPrio(m_PrioRight,ReverseColor);
+        setGreenPrio(m_PrioRight,m_ReverseColors);
         setYellowCardRight(m_YellowCardRight);
         setRedCardRight(m_RedCardRight);
         setUWFTimeRight(m_UW2Ftens);
@@ -552,13 +552,13 @@ void WS2812B_LedStrip::AnimatePrio()
   m_NextTimeToTogglePrioLights = millis() + 60 + m_counter * 15;
   if(m_counter & 1)
   {
-    setGreenPrio(!m_ReverseColors,m_ReverseColors);
-    setRedPrio(m_ReverseColors,m_ReverseColors);
+    setGreenPrio(true,m_ReverseColors);
+    setRedPrio(false,m_ReverseColors);
   }
   else
   {
-    setGreenPrio(m_ReverseColors,m_ReverseColors);
-    setRedPrio(!m_ReverseColors,m_ReverseColors);
+    setGreenPrio(false,m_ReverseColors);
+    setRedPrio(true,m_ReverseColors);
   }
   m_pixels->show();
   m_counter--;
@@ -576,8 +576,8 @@ void WS2812B_LedStrip::StartPrioAnimation(uint8_t prio)
   switch(prio)
   {
     case 0:
-      setGreenPrio(false);
-      setRedPrio(false);
+      setGreenPrio(false,m_ReverseColors);
+      setRedPrio(false,m_ReverseColors);
       m_pixels->show();  // clear directly, no animation needed
       m_PrioLeft = false;
       m_PrioRight = false;
@@ -599,6 +599,9 @@ void WS2812B_LedStrip::StartPrioAnimation(uint8_t prio)
   //_targetprio = prio;
 
   m_counter = 17 + prio;
+  /*if(m_ReverseColors)
+    m_counter;*/
+
   m_NextTimeToTogglePrioLights = millis() + 100 + m_counter * 15;
   m_Animating = true;
 }

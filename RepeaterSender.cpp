@@ -83,17 +83,29 @@ void RepeaterSender::BroadcastHeartBeat()
 void RepeaterSender::update (FencingStateMachine *subject, uint32_t eventtype)
 {
   // Send message via ESP-NOW
+  m_message.messagenumber = currentNewMessageCount++;
   m_message.event = eventtype;
   m_message.type = EVENT;
   //esp_err_t result = esp_now_send(m_receiverAddress, (uint8_t *) &m_message, sizeof(m_message));
   esp_err_t result = esp_now_send(m_broadcastAddress, (uint8_t *) &m_message, sizeof(m_message));
-  /*
-  if (result == ESP_OK) {
-    Serial.println("Sent with success");
+  m_nextResendTime = 0;
+  if(eventtype && MAIN_TYPE_MASK == EVENT_TIMER){
+    if(eventtype && DATA_BYTE0_MASK)  // don't resend hundreths
+      m_resendCount = 0;
+      return;
   }
-  else {
-    Serial.println(esp_err_to_name(result));
-  }
-  Serial.println(m_message.piste_ID);*/
+  if(eventtype && MAIN_TYPE_MASK == EVENT_LIGHTS)
+    m_resendCount = 7;
+  else
+    m_resendCount = MESSAGE_REPETITION_FACTOR;
+}
 
+void RepeaterSender::RepeatLastMessage(){
+  if(m_resendCount){
+    if(millis() > m_nextResendTime){
+      esp_err_t result = esp_now_send(m_broadcastAddress, (uint8_t *) &m_message, sizeof(m_message));
+      m_resendCount--;
+      m_nextResendTime = millis() + m_ResendDelta[m_resendCount];
+    }
+  }
 }

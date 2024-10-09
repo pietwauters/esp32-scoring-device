@@ -70,7 +70,12 @@ uint32_t tempevent = event;
     break;
 
     case EVENT_PRIO:
-
+    if(event_data == 1)
+      event_data = 2;
+    else
+      if(event_data == 2)
+        event_data = 1;
+    tempevent = event_data | EVENT_PRIO;
     break;
 
     case EVENT_YELLOW_CARD_LEFT:

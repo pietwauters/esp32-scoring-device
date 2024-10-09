@@ -18,7 +18,7 @@ class RepeaterSender : public Observer<FencingStateMachine>
         void update (FencingStateMachine *subject, uint32_t eventtype);
         void RegisterRepeater(uint8_t *broadcastAddress);
         void BroadcastHeartBeat();
-
+        void RepeatLastMessage();
         void begin();
 
     protected:
@@ -32,6 +32,10 @@ class RepeaterSender : public Observer<FencingStateMachine>
     uint32_t m_HeartbeatCounter = 0;
     long TimeToNextHeartbeat = 0;
     long HeartPeriod = 60000/HEART_RATE;
+    long currentNewMessageCount = 0;
+    int m_resendCount = MESSAGE_REPETITION_FACTOR;
+    long m_nextResendTime = 0;
+    uint8_t m_ResendDelta[7]={5,3,2,1,2,1,2};
 
 
 
