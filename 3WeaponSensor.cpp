@@ -440,14 +440,14 @@ void MultiWeaponSensor::DoFullScan()
     else
       FullScanCounter = 3;
 
-} 
+}
 
 weapon_t MultiWeaponSensor::GetWeapon()
 {
 
   if (m_ActualWeapon != EPEE)
   {// In foil or sabre: check if both sides are disconnected
-    if (NotConnectedRight && NotConnectedLeft)
+    if (NotConnectedRight || NotConnectedLeft)
     {
       LongCounter_NotConnected--;
       if(LongCounter_NotConnected < LONG_COUNT_NOTCONNECTED_STOP_BUZZING)
