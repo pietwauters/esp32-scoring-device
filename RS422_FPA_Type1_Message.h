@@ -6,8 +6,8 @@
 #define TYPE1MESSAGELENGTH 11
 #define IndexRed 3
 #define IndexGreen 5
-#define IndexWhiteLeft 7
-#define IndexWhiteRight 9
+#define IndexWhiteLeft 9
+#define IndexWhiteRight 7
 
 
 class RS422_FPA_Type1_Message : public RS422_FPA_Message
