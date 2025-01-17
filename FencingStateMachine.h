@@ -168,6 +168,7 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         void ProcessSpecialSetting (uint32_t eventtype);
         bool incrementScoreAndCheckForMinuteBreak(bool bLeftFencer);
         uint32_t get_max_score();
+        bool GoToSleep() {return m_GoToSleep;};
 
     protected:
 
@@ -223,6 +224,10 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         long m_TimeToBroadcastFullState = 0;
         int m_low_prio_divider = 5;
         int m_low_prio_divider_init = 7;
+
+        bool m_GlobalIdle = false;
+        long m_LastLightEventTime = 0;
+        bool m_GoToSleep = false;
 
 
 
