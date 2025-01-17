@@ -212,6 +212,7 @@ private:
     // counters introduced for automatic switch to epee if no foil or sabre connected
 
     int LongCounter_NotConnected;
+    int LongCounter_AtLeastOneNotConnected;
 
 
 
@@ -253,6 +254,9 @@ private:
     SemaphoreHandle_t  SensorMutex;
     uint32_t ShortIndicatorsDebouncer = 0;
 
+
 };
+
+extern void prepareforDeepSleep();
 
 #endif // WEAPONSENSOR_H
