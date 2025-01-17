@@ -10,6 +10,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncElegantOTA.h>
+
 AsyncWebServer server(80);
 
 /**
@@ -400,11 +401,14 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
   if(UI_CONNECT_TO_WIFI == subtype)
     ConnectToExternalNetwork(45);
 
-  if(UI_START_WIFI_PORTAL == subtype)
+  if(UI_START_WIFI_PORTAL == subtype){
+    
     WaitForNewSettingsViaPortal();
+  }
 
   if(UI_START_OTA_PORTAL == subtype)
   {
+    
     AsyncElegantOTA.begin(&server);    // Start ElegantOTA
     server.begin();
     Serial.println("HTTP OTA Update server started");
