@@ -14,6 +14,8 @@ using namespace std;
 #define ADDITIONAL_TIME_SECONDS 0
 
 #define TIME_TO_REARM 10000   //Time in milliseconds
+#define IDLE_TIME_MS 1000*60*3   // 3 minute in milliseconds
+#define TIME_TO_DEEP_SLEEP 1000*60*5   // 5 minutes in milliseconds
 
 volatile SemaphoreHandle_t timerSemaphore_FSMPeriod;
 void IRAM_ATTR onTimer_FSMPeriod()
@@ -732,6 +734,11 @@ void FencingStateMachine::DoStateMachineTick()
         // So something interesting because the timer changed
         m_Timer.GetFormattedStringTime(ChronoString, 1, 1);
         idle = false;
+        if(m_GlobalIdle){
+          StateChanged(EVENT_IDLE | EVENT_GO_OUT_OF_IDLE);
+          m_GlobalIdle = false;
+        }
+        m_LastLightEventTime = millis();
         if(m_Timer.ReachedZero())
         {
           if(m_TheSensor)
@@ -767,6 +774,11 @@ void FencingStateMachine::DoStateMachineTick()
   {
     m_LightsChanged = false;
     idle = false;
+    if(m_GlobalIdle){
+      StateChanged(EVENT_IDLE | EVENT_GO_OUT_OF_IDLE);
+      m_GlobalIdle = false;
+    }
+    m_LastLightEventTime = millis();
     if((FIGHTING == m_Timerstate) || (ADDITIONAL_MINUTE == m_Timerstate))
     {
       if(GetRed() || GetGreen())
@@ -800,6 +812,19 @@ void FencingStateMachine::DoStateMachineTick()
     }
     StateChanged(EVENT_LIGHTS | m_Lights);
 
+  }
+  else {
+    if(!m_GlobalIdle){
+      if(m_LastLightEventTime + IDLE_TIME_MS < millis()){
+        StateChanged(EVENT_IDLE | EVENT_GO_INTO_IDLE);
+        m_GlobalIdle = true;
+      }
+    }
+    else{
+      if(m_LastLightEventTime + IDLE_TIME_MS + TIME_TO_DEEP_SLEEP< millis()){
+          m_GoToSleep = true;
+        }
+    }
   }
 
 
