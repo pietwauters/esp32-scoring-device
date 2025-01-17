@@ -16,6 +16,10 @@
 
 
 #define MAX_MESSAGE_TYPE 10
+//#define ALLOW_BLE
+//#define ALLOW_BLUETOOTH
+//#define ALLOW_HARDWARESERIAL
+
 class CyranoHandler;
 class FencingStateMachine;
 
@@ -30,12 +34,20 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
         void update (CyranoHandler *subject, string strEFP1Message);
         void update (CyranoHandler *subject, uint32_t eventtype);
         void ProcessLightsChange(uint32_t eventtype);
+#ifdef ALLOW_BLUETOOTH
         void StartBluetooth();
-        void StartWiFi();
-        void StartHWSerial();
-        void BTTransmitMessage(int Type);
-        void WifiTransmitMessage(int Type);
         void BTTPeriodicalUpdate();
+        void BTTransmitMessage(int Type);
+#endif
+#ifdef ALLOW_BLE
+
+#endif
+        void StartWiFi();
+#ifdef ALLOW_HWSERIAL
+        void StartHWSerial();
+#endif
+        void WifiTransmitMessage(int Type);
+        void AllProtocolsTransmitMessage(int Type);
         void WifiPeriodicalUpdate();
         void SetCyranoStatus();
 
@@ -52,6 +64,7 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
     RS422_FPA_Type8_Message Message8;
     RS422_FPA_Type10_Message Message10;
 
+    RS422_FPA_Message *Meassages[10]={&Message1,&Message2,&Message3,&Message4,&Message5,&Message6,&Message1,&Message8,&Message1,&Message10};
 
 
     uint8_t m_minutes;
