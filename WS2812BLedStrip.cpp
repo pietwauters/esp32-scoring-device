@@ -1,6 +1,29 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #include "WS2812BLedStrip.h"
+#include "esp_task_wdt.h"
+WS2812B_LedStrip &MyLedStrip = WS2812B_LedStrip::getInstance();
+TaskHandle_t LedStripTask;
+void LedStripHandler(void *parameter)
+{
+  while(true)
+  {
+    MyLedStrip.ProcessEventsBlocking();
+    esp_task_wdt_reset();
+  }
+}
 
+TaskHandle_t LedStripAnimationTask;
+void WS2812B_LedStrip::LedStripAnimator(void *parameter)
+{
+  uint32_t LastEvent;
+  while(true){
+    if(xQueueReceive(MyLedStrip.Animationqueue, &LastEvent, 4 / portTICK_PERIOD_MS)== pdPASS)
+    {
+      uint32_t event_data = LastEvent;
+      MyLedStrip.DoAnimation(event_data);
+    }
+  }
+}
 
 char Cross[] = {1,1,0,0,0,0,1,1,
                 1,1,1,0,0,1,1,1,
@@ -14,7 +37,7 @@ char Cross[] = {1,1,0,0,0,0,1,1,
 WS2812B_LedStrip::WS2812B_LedStrip()
 {
     //ctor
-
+    gpio_hold_dis((gpio_num_t)PIN);
     pinMode(BUZZERPIN, OUTPUT);
     digitalWrite(BUZZERPIN, RELATIVE_LOW);
     /*m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -22,9 +45,14 @@ WS2812B_LedStrip::WS2812B_LedStrip()
     SetBrightness(BRIGHTNESS_NORMAL);*/
 
     queue = xQueueCreate( 60, sizeof( int ) );
+    Animationqueue = xQueueCreate( 30, sizeof( int ) );
+
 }
 void WS2812B_LedStrip::begin()
 {
+
+  if(m_HasBegun)
+    return;
   m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
   m_pixels->begin();
   m_pixels->clear();
@@ -33,6 +61,25 @@ void WS2812B_LedStrip::begin()
   SetBrightness(BRIGHTNESS_NORMAL);
   //m_pixels->fill(m_pixels->Color(0, 0, 0),0,NUMPIXELS);
   m_pixels->show();
+  xTaskCreatePinnedToCore(
+            LedStripAnimator,        /* Task function. */
+            "LedStripAnimator",      /* String with name of task. */
+            16384,                            /* Stack size in words. */
+            NULL,                            /* Parameter passed as input of the task */
+            0,                                /* Priority of the task. */
+            &LedStripAnimationTask,           /* Task handle. */
+            1);
+  xTaskCreatePinnedToCore(
+            LedStripHandler,        /* Task function. */
+            "LedStripHandler",      /* String with name of task. */
+            16384,                            /* Stack size in words. */
+            NULL,                            /* Parameter passed as input of the task */
+            6,                                /* Priority of the task. */
+            &LedStripTask,           /* Task handle. */
+            1);
+  esp_task_wdt_add(LedStripTask);
+  startAnimation(EVENT_WS2812_WELCOME);
+  m_HasBegun = true;
 }
 
 void WS2812B_LedStrip::SetBrightness(uint8_t val)
@@ -274,6 +321,10 @@ void WS2812B_LedStrip:: update (FencingStateMachine *subject, uint32_t eventtype
 void WS2812B_LedStrip:: update (RepeaterReceiver *subject, uint32_t eventtype)
 {
   updateHelper(eventtype);
+}
+
+void WS2812B_LedStrip::startAnimation(uint32_t eventtype){
+  xQueueSend(Animationqueue, &eventtype, portMAX_DELAY);
 }
 
 void WS2812B_LedStrip::updateHelper(uint32_t eventtype)
@@ -565,9 +616,7 @@ void WS2812B_LedStrip::AnimatePrio()
   if(m_counter < m_targetprio)
   {
     m_Animating = false;
-
   }
-
 
 }
 
@@ -764,4 +813,139 @@ void WS2812B_LedStrip::setRedPCardLeft(uint8_t nr)
     m_pixels->setPixelColor(61 - 1,theFillColor2);
     m_pixels->setPixelColor(61 - 1  - 8,theFillColor2);
 
+}
+#define WELCOME_ANIMATION_SPEED 70
+const TickType_t xDelay = 5 * WELCOME_ANIMATION_SPEED / portTICK_PERIOD_MS;
+
+
+void WS2812B_LedStrip::ShowWelcomeLights()
+{
+  for(int i = 0; i< 50; i++)
+  {
+    ClearAll();
+    vTaskDelay( 10 / portTICK_PERIOD_MS);
+  }
+
+  setWhiteLeft(true);
+  myShow();
+  esp_task_wdt_reset();
+  vTaskDelay( xDelay );
+  setWhiteLeft(false);
+  myShow();
+  setRed(true);
+  myShow();
+  esp_task_wdt_reset();
+  vTaskDelay( xDelay );
+  setRed(false);
+  myShow();
+  setWhiteRight(true);
+  myShow();
+  esp_task_wdt_reset();
+  vTaskDelay( xDelay );
+  setWhiteRight(false);
+  myShow();
+  setGreen(true);
+  myShow();
+  esp_task_wdt_reset();
+  vTaskDelay( xDelay );
+  ClearAll();
+  setUWFTimeLeft(1);
+  setUWFTimeRight(1);
+  myShow();
+  vTaskDelay( xDelay );
+  setUWFTimeLeft(2);
+  setUWFTimeRight(2);
+  myShow();
+  vTaskDelay( xDelay );
+  setUWFTimeLeft(3);
+  setUWFTimeRight(3);
+  myShow();
+  vTaskDelay( xDelay );
+  setUWFTimeLeft(4);
+  setUWFTimeRight(4);
+  myShow();
+  vTaskDelay( xDelay );
+  setUWFTimeLeft(5);
+  setUWFTimeRight(5);
+  myShow();
+  vTaskDelay( xDelay );
+  setUWFTimeLeft(6);
+  setUWFTimeRight(6);
+  myShow();
+  vTaskDelay( xDelay );
+  setUWFTimeLeft(7);
+  setUWFTimeRight(7);
+  myShow();
+  vTaskDelay( xDelay );
+  setUWFTimeLeft(8);
+  setUWFTimeRight(8);
+  myShow();
+  vTaskDelay( xDelay );
+  setUWFTimeLeft(0);
+  setUWFTimeRight(0);
+  myShow();
+  vTaskDelay( xDelay );
+  ClearAll();
+  for(int i = 0; i< 10; i++)
+  {
+    ClearAll();
+    vTaskDelay( 50 / portTICK_PERIOD_MS);
+  }
+
+}
+
+
+void WS2812B_LedStrip::DoAnimation(uint32_t type){
+
+  switch(type) {
+    case EVENT_WS2812_WELCOME:
+      ShowWelcomeLights();
+    break;
+
+    case EVENT_WS2812_PRIO_LEFT:
+
+    break;
+
+    case EVENT_WS2812_PRIO_RIGHT:
+
+    break;
+
+    case EVENT_WS2812_WARNING:
+
+    break;
+
+    case EVENT_WS2812_ENGARDE_PRETS_ALLEZ:
+
+    break;
+
+  }
+
+}
+
+
+void WS2812B_LedStrip::NewAnimatePrio()
+{
+  /*
+  long sleeptime;
+  vTaskDelay( (100 + m_counter * 15)) / portTICK_PERIOD_MS );
+  while(m_Animating){
+    if(m_counter & 1)
+    {
+      setGreenPrio(true,m_ReverseColors);
+      setRedPrio(false,m_ReverseColors);
+    }
+    else
+    {
+      setGreenPrio(false,m_ReverseColors);
+      setRedPrio(true,m_ReverseColors);
+    }
+    m_pixels->show();
+    m_counter--;
+    if(m_counter < m_targetprio)
+    {
+      m_Animating = false;
+    }
+    sleeptime = m_NextTimeToTogglePrioLights = 60 + m_counter * 15;
+    vTaskDelay( sleeptime / portTICK_PERIOD_MS );
+  }*/
 }
