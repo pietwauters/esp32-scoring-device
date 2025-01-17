@@ -3,6 +3,7 @@
 #define WS2812B_LEDSTRIP_H
 #include <Adafruit_NeoPixel.h>
 #include "SubjectObserverTemplate.h"
+#include "Singleton.h"
 #include "FencingStateMachine.h"
 #include "RepeaterReceiver.h"
 #include "EventDefinitions.h"
@@ -53,11 +54,12 @@
 
 
 
-class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<RepeaterReceiver>
+enum AnimationType_t {WELCOME, PRIO, ENGARED_PRETS_ALLEZ, WARNING};
+
+class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<RepeaterReceiver>, public SingletonMixin<WS2812B_LedStrip>
 {
     public:
-        /** Default constructor */
-        WS2812B_LedStrip();
+
         /** Default destructor */
         virtual ~WS2812B_LedStrip();
 
@@ -98,21 +100,32 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         void setYellowPCardRight(bool Value);
         void setRedPCardLeft(uint8_t nr);
         void setRedPCardRight(uint8_t nr);
-
+        void begin();
         void setUWFTimeLeft(uint8_t tens);
         void setUWFTimeRight(uint8_t tens);
-        void begin();
         void SetMirroring(bool value){m_ReverseColors = value;}
+        void ShowWelcomeLights();
+        void DoAnimation(uint32_t type);
+        /*void StartAsyncWelcomeAnimation();
+        bool DoAsyncWelcomeAnimation();*/
+        void static LedStripAnimator(void *parameter);
+        void startAnimation(uint32_t eventtype);
+        void NewAnimatePrio();
 
 
     protected:
 
     private:
+      /** Default constructor */
+      WS2812B_LedStrip();
+      friend class SingletonMixin<WS2812B_LedStrip>;
+
 
         void updateHelper(uint32_t eventtype);
         void setUWFTime(uint8_t tens, uint8_t bottom);
         unsigned char m_LedStatus; //!< Member variable "m_LedStatus"
         Adafruit_NeoPixel *m_pixels;
+        bool m_HasBegun = false;
         uint8_t m_Brightness = BRIGHTNESS_NORMAL;
         bool m_Loudness = true;
         uint32_t   m_Red;
@@ -137,6 +150,7 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         uint8_t m_RedPCardRight = 0;
 
         QueueHandle_t queue = NULL;
+        QueueHandle_t Animationqueue = NULL;
         uint32_t m_NextTimeToTogglePrioLights;
         bool m_Animating = false;
         uint32_t m_counter = 0;
@@ -145,6 +159,11 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         uint32_t m_NextTimeToToggleBuzzer;
         uint32_t m_warningcounter = 0;
 
-};
+        /*bool m_WelcomeAnimationStarted = false;
+        long m_WelcomeAnimationNextChange;
+        int m_WelcomeAnimationState = 0;*/
 
+
+};
+extern WS2812B_LedStrip &MyLedStrip;
 #endif // WS2812B_LedStrip_H
