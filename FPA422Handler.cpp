@@ -7,17 +7,22 @@
 #include "RS422_FPA_Type1_Message.h"
 #include "RS422_FPA_Type5_Message.h"
 #include "RS422_FPA_Type8_Message.h"
-
-#include "FPA422Handler.h"
-#include <HardwareSerial.h>
-#include "BluetoothSerial.h"
 #include <Preferences.h>
+#include "FPA422Handler.h"
 
+#ifdef ALLOW_HARDWARESERIAL
+#include <HardwareSerial.h>
+#endif
+
+#ifdef ALLOW_BLUETOOTH
+#include "BluetoothSerial.h"
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 
 BluetoothSerial SerialBT;
+#endif
+
 
 #include <esp_wifi.h>
 #include <WiFi.h>
@@ -25,7 +30,12 @@ BluetoothSerial SerialBT;
 #include <Preferences.h>
 #include "AsyncUDP.h"
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
-
+#ifdef ALLOW_BLE
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+#endif
 
 
 #ifdef HOMENETWORK
@@ -43,6 +53,67 @@ const char *soft_ap_ssid = "ESP32_01";
 const char *soft_ap_password = "010419671";
 AsyncUDP udp;
 
+#ifdef ALLOW_BLE
+BLEServer* pServer = NULL;
+BLECharacteristic* pCharacteristic = NULL;
+bool deviceConnected = false;
+bool oldDeviceConnected = false;
+#define SERVICE_UUID        "6f000000-b5a3-f393-e0a9-e50e24dcca9e"
+#define CHARACTERISTIC_UUID "6f000000-b5a3-f393-e0a9-e50e24dcca9e"
+
+
+class MyServerCallbacks: public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) {
+      deviceConnected = true;
+      BLEDevice::startAdvertising();
+      cout << "BLE Connected"  << endl;
+    };
+
+    void onDisconnect(BLEServer* pServer) {
+      deviceConnected = false;
+      cout << "BLE Disconnected"  << endl;
+    }
+};
+
+void StartBLE()
+{
+  BLEDevice::init("SFS-Link-FPA");
+
+  // Create the BLE Server
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+
+  // Create the BLE Service
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+
+  // Create a BLE Characteristic
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_READ   |
+                      BLECharacteristic::PROPERTY_NOTIFY
+                    );
+
+  // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
+  // Create a BLE Descriptor
+  pCharacteristic->addDescriptor(new BLE2902());
+
+  // Start the service
+  pService->start();
+
+  // Start advertising
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(false);
+  pAdvertising->setMinPreferred(0x06);  // set value to 0x00 to not advertise this parameter
+  pAdvertising->setMaxPreferred(0x12);  // set value to 0x00 to not advertise this parameter
+  BLEDevice::startAdvertising();
+}
+
+#endif
+
+
+
+
 FPA422Handler::FPA422Handler()
 {
     //ctor
@@ -55,6 +126,7 @@ FPA422Handler::FPA422Handler()
     Message6.SetName("Right fencer",12);
     Message6.SetNOC("FRA");
 
+
 }
 
 FPA422Handler::~FPA422Handler()
@@ -63,6 +135,7 @@ FPA422Handler::~FPA422Handler()
 
 }
 
+#ifdef ALLOW_BLUETOOTH
 void FPA422Handler::StartBluetooth()
 {
   SerialBT.begin("ESP32ScoringDevice1"); //Bluetooth device name
@@ -70,8 +143,9 @@ void FPA422Handler::StartBluetooth()
   TimeForNext1_2s =millis() + 1200;
   TimeForNext12s =millis() + 12500;
 }
+#endif
 
-
+#ifdef ALLOW_HWSERIAL
 HardwareSerial MySerial(2);
 void FPA422Handler::StartHWSerial()
 {
@@ -82,6 +156,9 @@ void FPA422Handler::StartHWSerial()
     }
 
 }
+#endif
+
+
 extern NetWork MyNetWork;
 
 void FPA422Handler::StartWiFi()
@@ -109,9 +186,12 @@ void FPA422Handler::StartWiFi()
   Message10.Print();
   AnnouncingPort = 65535 - (2* PisteNr) +1;
 
+#ifdef ALLOW_BLE
+  StartBLE();
+#endif
 }
 
-
+#ifdef ALLOW_BLUETOOTH
 void FPA422Handler::BTTPeriodicalUpdate()
 {
     if(millis() > TimeForNext1_2s)
@@ -134,27 +214,39 @@ void FPA422Handler::BTTPeriodicalUpdate()
     }
 
 }
-
+#endif
 void FPA422Handler::WifiPeriodicalUpdate()
 {
     if(millis() > TimeForNext1_2s)
     {
       if(0 == m_WifiPeriodicalUpdateCounter)
       {
-        WifiTransmitMessage(1);
+        AllProtocolsTransmitMessage(1);
       }
       if(1 == m_WifiPeriodicalUpdateCounter)
       {
-        WifiTransmitMessage(2);
+        AllProtocolsTransmitMessage(2);
       }
       if(2 == m_WifiPeriodicalUpdateCounter)
       {
-        WifiTransmitMessage(3);
+        AllProtocolsTransmitMessage(3);
         TimeForNext1_2s = millis() + 1200;
         m_WifiPeriodicalUpdateCounter = 0;
         return;
       }
       m_WifiPeriodicalUpdateCounter++;
+#ifdef ALLOW_BLE
+      if (!deviceConnected && oldDeviceConnected) {
+
+        pServer->startAdvertising(); // restart advertising
+        oldDeviceConnected = deviceConnected;
+    }
+    // connecting
+    if (deviceConnected && !oldDeviceConnected) {
+        // do stuff here on connecting
+        oldDeviceConnected = deviceConnected;
+    }
+#endif
       return;
 
     }
@@ -201,8 +293,11 @@ void FPA422Handler::WifiPeriodicalUpdate()
 
 }
 
-void FPA422Handler::BTTransmitMessage(int Type)
+
+/*void FPA422Handler::BTTransmitMessage(int Type)
 {
+  return;
+#ifdef ALLOW_BLUETOOTH
   if((Type < 1) || (Type > MAX_MESSAGE_TYPE))
     return;
   if(m_BlueToothStarted)
@@ -251,9 +346,12 @@ void FPA422Handler::BTTransmitMessage(int Type)
       ;
     }
   }
-
+#endif
 }
-void FPA422Handler::WifiTransmitMessage(int Type)
+*/
+
+
+/*void FPA422Handler::WifiTransmitMessage(int Type)
 {
   if((Type < 1) || (Type > MAX_MESSAGE_TYPE))
     return;
@@ -265,22 +363,24 @@ void FPA422Handler::WifiTransmitMessage(int Type)
       udp.broadcastTo(Message1.GetBuffer(),Message1.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message1.GetBuffer(),Message1.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
 
-
       break;
 
       case 2:
       udp.broadcastTo(Message2.GetBuffer(),Message2.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message2.GetBuffer(),Message2.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+
       break;
 
       case 3:
       udp.broadcastTo(Message3.GetBuffer(),Message3.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message3.GetBuffer(),Message3.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+
       break;
 
       case 4:
       udp.broadcastTo(Message4.GetBuffer(),Message4.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message4.GetBuffer(),Message4.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+
       break;
 
       case 5:
@@ -293,6 +393,7 @@ void FPA422Handler::WifiTransmitMessage(int Type)
 
       udp.broadcastTo(Message6.GetBuffer(),Message6.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message6.GetBuffer(),Message6.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+
       break;
 
       case 7:
@@ -303,6 +404,7 @@ void FPA422Handler::WifiTransmitMessage(int Type)
       case 8:
       udp.broadcastTo(Message8.GetBuffer(),Message8.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message8.GetBuffer(),Message8.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+
       break;
 
       case 9:
@@ -313,6 +415,7 @@ void FPA422Handler::WifiTransmitMessage(int Type)
       case 10:
       udp.broadcastTo(Message10.GetBuffer(),Message10.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
       //udp.broadcastTo(Message9.GetBuffer(),Message9.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+
       break;
 
       default:
@@ -321,7 +424,54 @@ void FPA422Handler::WifiTransmitMessage(int Type)
   }
 
 }
+*/
+void FPA422Handler::WifiTransmitMessage(int Type)
+{
+  if((Type < 1) || (Type > MAX_MESSAGE_TYPE))
+    return;
+  if(m_WifiStarted)
+  {
+      udp.broadcastTo(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
+      //udp.broadcastTo(Message1.GetBuffer(),Message1.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+  }
+}
 
+#ifdef ALLOW_BLUETOOTH
+void FPA422Handler::BTTransmitMessage(int Type)
+{
+  if((Type < 1) || (Type > MAX_MESSAGE_TYPE))
+    return;
+  if(m_BlueToothStarted)
+  {
+    SerialBT.write(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize());
+  }
+}
+#endif
+
+
+void FPA422Handler::AllProtocolsTransmitMessage(int Type)
+{
+  if((Type < 1) || (Type > MAX_MESSAGE_TYPE))
+    return;
+  if(m_WifiStarted)
+  {
+      udp.broadcastTo(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
+      //udp.broadcastTo(Message1.GetBuffer(),Message1.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+  }
+#ifdef ALLOW_BLUETOOTH
+  if(m_BlueToothStarted)
+  {
+    SerialBT.write(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize());
+  }
+#endif
+#ifdef ALLOW_BLE
+if (deviceConnected) {
+      pCharacteristic->setValue((uint8_t*)Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize());
+      pCharacteristic->notify();
+      //Meassages[Type-1]->Print();
+  }
+#endif
+}
 
 #define MASK_ANY_ORANGE (MASK_ORANGE_L | MASK_ORANGE_R)
 
@@ -334,8 +484,8 @@ void FPA422Handler::ProcessLightsChange(uint32_t eventtype)
   Message1.SetGreen(event_data & MASK_GREEN);
   Message1.SetWhiteLeft(event_data & MASK_WHITE_L);
   Message1.SetWhiteRight(event_data & MASK_WHITE_R );
-  BTTransmitMessage(1);
-  WifiTransmitMessage(1);
+
+  AllProtocolsTransmitMessage(1);
   //Message1.Print();
 }
 
@@ -378,22 +528,19 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
     }
 
     //Message4.Print();
-    BTTransmitMessage(4);
-    WifiTransmitMessage(4);
+    AllProtocolsTransmitMessage(4);
 
     break;
 
     case EVENT_SCORE_LEFT:
     Message3.SetScoreLeft(event_data);
-    BTTransmitMessage(3);
-    WifiTransmitMessage(3);
+    AllProtocolsTransmitMessage(3);
 
     break;
 
     case EVENT_SCORE_RIGHT:
       Message3.SetScoreRight(event_data);
-      BTTransmitMessage(3);
-      WifiTransmitMessage(3);
+      AllProtocolsTransmitMessage(3);
     break;
 
     case EVENT_TIMER_STATE:
@@ -403,16 +550,14 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
         //Blynk.setProperty(V0,"color",BLYNK_GREEN);
         //Blynk.virtualWrite(V1,1);
         Message2.SetTimerStatus('R');
-        BTTransmitMessage(2);
-        WifiTransmitMessage(2);
+        AllProtocolsTransmitMessage(2);
       }
       else
       {
         //Blynk.setProperty(V0,"color",BLYNK_RED);
         //Blynk.virtualWrite(V1,0);
         Message2.SetTimerStatus('N');
-        BTTransmitMessage(2);
-        WifiTransmitMessage(2);
+        AllProtocolsTransmitMessage(2);
       }
     break;
     case EVENT_TIMER:
@@ -428,8 +573,7 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
         //Blynk.virtualWrite(V0, chrono);
         Message2.SetTime(m_minutes,m_seconds,m_hundredths);
         //Message2.SetTime(2,37,99);
-        BTTransmitMessage(2);
-        WifiTransmitMessage(2);
+        AllProtocolsTransmitMessage(2);
         previous_seconds = newseconds;
       }
 
@@ -450,32 +594,27 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
         Message3.SetRound(-1);
       else
         Message3.SetRound(currentRound);
-      BTTransmitMessage(3);
-      WifiTransmitMessage(3);
+      AllProtocolsTransmitMessage(3);
     break;
 
     case EVENT_YELLOW_CARD_LEFT:
       Message3.SetYellowCardLeft(event_data);
-      BTTransmitMessage(3);
-      WifiTransmitMessage(3);
+      AllProtocolsTransmitMessage(3);
     break;
 
     case EVENT_YELLOW_CARD_RIGHT:
     Message3.SetYellowCardRight(event_data);
-    BTTransmitMessage(3);
-      WifiTransmitMessage(3);
+    AllProtocolsTransmitMessage(3);
     break;
 
     case EVENT_RED_CARD_LEFT:
     Message3.SetRedCardLeft(event_data);
-    BTTransmitMessage(3);
-      WifiTransmitMessage(3);
+    AllProtocolsTransmitMessage(3);
     break;
 
     case EVENT_RED_CARD_RIGHT:
     Message3.SetRedCardRight(event_data);
-    BTTransmitMessage(3);
-      WifiTransmitMessage(3);
+    AllProtocolsTransmitMessage(3);
     break;
 
     case EVENT_P_CARD:
@@ -483,8 +622,7 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
         PCardInfo.theDWord = eventtype & DATA_24BIT_MASK;
         Message8.SetPCardLeft(PCardInfo.theBytes[0]);
         Message8.SetPCardRight(PCardInfo.theBytes[1]);
-        BTTransmitMessage(8);
-        WifiTransmitMessage(8);
+        AllProtocolsTransmitMessage(8);
 
     break;
 
@@ -493,8 +631,7 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
         TimeInfo.theDWord = eventtype & DATA_24BIT_MASK;
         Message8.SetTime(TimeInfo.theBytes[2],TimeInfo.theBytes[1]);
 
-        BTTransmitMessage(8);
-        WifiTransmitMessage(8);
+        AllProtocolsTransmitMessage(8);
     break;
 
 
@@ -510,10 +647,8 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
       default:
         Message3.SetNoPrio();
     }
-    BTTransmitMessage(3);
-      WifiTransmitMessage(3);
+    AllProtocolsTransmitMessage(3);
     break;
-
 
   }
 
@@ -529,8 +664,7 @@ void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
   if(EFP1Input[Command] == "NAK")
   {
     Message10.SetMachineStatus('5');
-    BTTransmitMessage(10);
-    WifiTransmitMessage(10);
+    AllProtocolsTransmitMessage(10);
     return;
   }
   if(EFP1Input[Command] == "ACK")
@@ -552,10 +686,8 @@ void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
       Message5.SetName(EFP1Input[LeftFencerName].c_str(),EFP1Input[LeftFencerName].length());
     if(EFP1Input[LeftFencerNation] != "")
       Message5.SetNOC(EFP1Input[LeftFencerNation].c_str());
-    BTTransmitMessage(5);
-    WifiTransmitMessage(5);
-    BTTransmitMessage(6);
-    WifiTransmitMessage(6);
+    AllProtocolsTransmitMessage(5);
+    AllProtocolsTransmitMessage(6);
     /*if(EFP1Input.EFP1StatusString2Type10MessageStatus() != Message10.GetMachineStatus())
     {
 
@@ -574,8 +706,7 @@ void FPA422Handler::update (CyranoHandler *subject, uint32_t eventtype)
     mix_t thestatus;
     thestatus.theDWord = eventtype & DATA_24BIT_MASK;
     Message10.SetMachineStatus(thestatus.theBytes[0]);
-    BTTransmitMessage(10);
-    WifiTransmitMessage(10);
+    AllProtocolsTransmitMessage(10);
   }
 
 }
