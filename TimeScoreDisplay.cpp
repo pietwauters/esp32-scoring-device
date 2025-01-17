@@ -5,21 +5,7 @@
 #define HARDWARE_TYPE MD_MAX72XX::ICSTATION_HW
 #define MAX_DEVICES 4
 
-#ifdef FIRST_PROTO
-#define HSPI_MISO   12
-#define HSPI_MOSI   13
-#define HSPI_SCLK   14
-#define HSPI_SS     15
-#define CS_PIN    15  // or SS
-#endif
 
-#ifdef SECOND_PROTO
-#define HSPI_MISO   12
-#define HSPI_MOSI   13
-#define HSPI_SCLK   14
-#define HSPI_SS     27
-#define CS_PIN    27  // or SS
-#endif
 
 
 static const int spiClk = 1000000; // 1 MHz
@@ -93,6 +79,7 @@ TimeScoreDisplay::~TimeScoreDisplay()
 
 void TimeScoreDisplay::begin()
 {
+    gpio_hold_dis((gpio_num_t)HSPI_SS);
     hspi.begin();
     pinMode(HSPI_SS, OUTPUT); //HSPI SS
     mx.begin();
@@ -251,6 +238,22 @@ void TimeScoreDisplay::ProcessEvents ()
       if(event_data && MASK_RED_OR_GREEN)
         ShowScoreForGivenDuration(5000);
     break;*/
+    case EVENT_IDLE:
+    if(event_data == EVENT_GO_INTO_IDLE){
+      m_Idle = true;
+
+      mx.control(MD_MAX72XX::SHUTDOWN, MD_MAX72XX::ON);
+    }
+    else {
+      m_Idle = false;
+
+      mx.control(MD_MAX72XX::SHUTDOWN, MD_MAX72XX::OFF);
+
+    }
+
+
+
+    break;
     case EVENT_UI_INPUT:
     switch (event_data)
     {
