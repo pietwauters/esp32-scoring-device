@@ -5,6 +5,10 @@
 #include "esp_timer.h"
 #include <iostream>
 #include <Preferences.h>
+#include <driver/rtc_io.h>
+#include "WS2812BLedStrip.h"
+#include "TimeScoreDisplay.h"
+
 
 
 using namespace std;
@@ -104,6 +108,15 @@ void MultiWeaponSensor:: begin()
 
   }
   mypreferences.end();
+  gpio_deep_sleep_hold_dis();
+  gpio_hold_dis((gpio_num_t)al_driver);
+  gpio_hold_dis((gpio_num_t)bl_driver);
+  gpio_hold_dis((gpio_num_t)cl_driver);
+  gpio_hold_dis((gpio_num_t)ar_driver);
+  gpio_hold_dis((gpio_num_t)br_driver);
+  gpio_hold_dis((gpio_num_t)cr_driver);
+  gpio_hold_dis((gpio_num_t)PIN);
+
   DoReset();
 }
 
@@ -365,8 +378,10 @@ void MultiWeaponSensor::DoFullScan()
     /***************************************************************************************************/
 
 
+
     if(esp_timer_get_time() <  TimetoNextPhase)
       return;
+
     TimetoNextPhase = esp_timer_get_time() + CurrentPhaseDuration;
     /*while(esp_timer_get_time() <  TimetoNextPhase)
     {
@@ -447,18 +462,26 @@ weapon_t MultiWeaponSensor::GetWeapon()
 
   if (m_ActualWeapon != EPEE)
   {// In foil or sabre: check if both sides are disconnected
-    if (NotConnectedRight || NotConnectedLeft)
-    {
-      LongCounter_NotConnected--;
-      if(LongCounter_NotConnected < LONG_COUNT_NOTCONNECTED_STOP_BUZZING)
+    if(NotConnectedRight || NotConnectedLeft){
+      LongCounter_AtLeastOneNotConnected --;
+      if(!LongCounter_AtLeastOneNotConnected)
       {
         bPreventBuzzer = true;
       }
     }
+    else{
+        LongCounter_AtLeastOneNotConnected = LONG_COUNT_NOTCONNECTED_STOP_BUZZING;
+        bPreventBuzzer = false;
+    }
+    if (NotConnectedRight && NotConnectedLeft)
+    {
+      LongCounter_NotConnected--;
+
+    }
     else
     {
       LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
-      bPreventBuzzer = false;
+      //bPreventBuzzer = false;
     }
     if (!LongCounter_NotConnected) // We've reached zero, so we switch back to default Epee
     {
@@ -588,4 +611,61 @@ weapon_t MultiWeaponSensor::GetWeapon()
 
   }
   return	EPEE;
+}
+
+
+#define BUTTON_PIN_BITMASK(GPIO) (1ULL << GPIO)  // 2 ^ GPIO_NUMBER in hex
+#define WAKEUP_GPIO_32              GPIO_NUM_32     // Only RTC IO are allowed - ESP32 Pin example
+#define WAKEUP_GPIO_35              GPIO_NUM_35     // Only RTC IO are allowed - ESP32 Pin example
+#define WAKEUP_GPIO_36              GPIO_NUM_36     // Only RTC IO are allowed - ESP32 Pin example
+#define WAKEUP_GPIO_39              GPIO_NUM_39     // Only RTC IO are allowed - ESP32 Pin example
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  60*5       /* Time ESP32 will go to sleep (in seconds) */
+
+// Define bitmask for multiple GPIOs
+uint64_t bitmask = BUTTON_PIN_BITMASK(WAKEUP_GPIO_32) | BUTTON_PIN_BITMASK(WAKEUP_GPIO_35) | BUTTON_PIN_BITMASK(WAKEUP_GPIO_36) | BUTTON_PIN_BITMASK(WAKEUP_GPIO_39);
+
+void prepareforDeepSleep()
+{
+  //Use ext1 as a wake-up source
+  esp_sleep_enable_ext1_wakeup(bitmask, ESP_EXT1_WAKEUP_ANY_HIGH);
+  //esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+
+  //Waarschijnlijk moet ik van de ADC pinnen eerst nog gewone IO pinnen maken
+  pinMode(WAKEUP_GPIO_32, INPUT);
+  pinMode(WAKEUP_GPIO_35, INPUT);
+  pinMode(WAKEUP_GPIO_36, INPUT);
+  pinMode(WAKEUP_GPIO_39, INPUT);
+
+  pinMode(al_driver, OUTPUT);
+  pinMode(bl_driver, OUTPUT);
+  pinMode(cl_driver, OUTPUT);
+  pinMode(ar_driver, OUTPUT);
+  pinMode(br_driver, OUTPUT);
+  pinMode(cr_driver, OUTPUT);
+  pinMode(PIN, OUTPUT);
+  pinMode(HSPI_SS, OUTPUT);
+  digitalWrite(al_driver, 1);
+  digitalWrite(bl_driver, 0);
+  digitalWrite(cl_driver, 0);
+  digitalWrite(ar_driver, 1);
+  digitalWrite(br_driver, 0);
+  digitalWrite(cr_driver, 0);
+  digitalWrite(PIN, 0);
+  digitalWrite(HSPI_SS,1);
+
+
+  gpio_deep_sleep_hold_en();
+  gpio_hold_en((gpio_num_t)al_driver);
+  gpio_hold_en((gpio_num_t)bl_driver);
+  gpio_hold_en((gpio_num_t)cl_driver);
+  gpio_hold_en((gpio_num_t)ar_driver);
+  gpio_hold_en((gpio_num_t)br_driver);
+  gpio_hold_en((gpio_num_t)cr_driver);
+  gpio_hold_en((gpio_num_t)PIN);
+  gpio_hold_en((gpio_num_t)HSPI_SS);
+  Serial.println("Going to sleep now");
+  Serial.flush();
+  delay(300);
+  esp_deep_sleep_start();
 }
