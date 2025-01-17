@@ -10,6 +10,22 @@
 #include <SPI.h>
 #include <Preferences.h>
 
+#ifdef FIRST_PROTO
+#define HSPI_MISO   12
+#define HSPI_MOSI   13
+#define HSPI_SCLK   14
+#define HSPI_SS     15
+#define CS_PIN    15  // or SS
+#endif
+
+#ifdef SECOND_PROTO
+#define HSPI_MISO   12
+#define HSPI_MOSI   13
+#define HSPI_SCLK   14
+#define HSPI_SS     27
+#define CS_PIN    27  // or SS
+#endif
+
 #define TEXT_BRIGHTNESS_LOW 1
 #define TEXT_BRIGHTNESS_NORMAL 3
 #define TEXT_BRIGHTNESS_HIGH 5
@@ -71,6 +87,8 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>,public Observer<Re
     QueueHandle_t queue = NULL;
     int m_Brightness = TEXT_BRIGHTNESS_NORMAL;
     int PisteId = -1;
+    bool m_Idle = false;
+
 
 };
 
