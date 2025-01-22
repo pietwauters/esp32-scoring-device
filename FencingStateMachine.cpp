@@ -2,6 +2,7 @@
 #include "FencingStateMachine.h"
 #include <iostream>
 #include <Preferences.h>
+#include "esp_task_wdt.h"
 using namespace std;
 
 #define FIGHTING_MINUTES 3
@@ -17,11 +18,23 @@ using namespace std;
 #define IDLE_TIME_MS 1000*60*3   // 3 minute in milliseconds
 #define TIME_TO_DEEP_SLEEP 1000*60*5   // 5 minutes in milliseconds
 
+FencingStateMachine &MyLocalStatemachine= FencingStateMachine::getInstance();
 volatile SemaphoreHandle_t timerSemaphore_FSMPeriod;
 void IRAM_ATTR onTimer_FSMPeriod()
 {
   // Give a semaphore that we can check in the loop
   xSemaphoreGiveFromISR(timerSemaphore_FSMPeriod, NULL);
+}
+
+TaskHandle_t StateMachineTask;
+void StateMachineHandler(void *parameter)
+{
+  while(true)
+  {
+    MyLocalStatemachine.DoStateMachineTick();
+    esp_task_wdt_reset();
+
+  }
 }
 
 
@@ -48,8 +61,24 @@ FencingStateMachine::FencingStateMachine(int hw_timer_nr, int tickPeriod)
     //m_Timer.SetDisplayResolution(100);
     m_low_prio_divider = m_low_prio_divider_init;
 
+
 }
 
+void FencingStateMachine::begin()
+{
+  if(m_HasBegun)
+    return;
+    xTaskCreatePinnedToCore(
+              StateMachineHandler,        /* Task function. */
+              "StateMachineHandler",      /* String with name of task. */
+              24576,                            /* Stack size in words. 65535*/
+              NULL,                             /* Parameter passed as input of the task */
+              5,                                /* Priority of the task. */
+              &StateMachineTask,           /* Task handle. */
+              1);
+    esp_task_wdt_add(StateMachineTask);
+
+}
 FencingStateMachine::~FencingStateMachine()
 {
     //dtor

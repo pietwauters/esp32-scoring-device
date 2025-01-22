@@ -88,10 +88,8 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         void ProcessEventsBlocking ();
         void setGreenPrio(bool Value, bool bReverse = false);
         void setRedPrio(bool Value, bool bReverse = false);
-        void AnimatePrio();
-        void StartPrioAnimation(uint8_t prio);
         void AnimateWarning();
-        void StartWarning(uint8_t prio);
+        void StartWarning(uint32_t prio);
         void setYellowCardLeft(bool Value);
         void setYellowCardRight(bool Value);
         void setRedCardLeft(bool Value);
@@ -117,9 +115,9 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
 
     private:
       /** Default constructor */
-      WS2812B_LedStrip();
-      friend class SingletonMixin<WS2812B_LedStrip>;
 
+      friend class SingletonMixin<WS2812B_LedStrip>;
+        WS2812B_LedStrip();
 
         void updateHelper(uint32_t eventtype);
         void setUWFTime(uint8_t tens, uint8_t bottom);
@@ -165,5 +163,5 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
 
 
 };
-extern WS2812B_LedStrip &MyLedStrip;
+
 #endif // WS2812B_LedStrip_H

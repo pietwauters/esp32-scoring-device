@@ -2,6 +2,7 @@
 #ifndef WEAPONSENSOR_H
 #define WEAPONSENSOR_H
 #include "SubjectObserverTemplate.h"
+#include "Singleton.h"
 #include <Arduino.h>
 #include "TimingConstants.h"
 #include <cstdio>
@@ -107,11 +108,10 @@ typedef struct MeasurementCtlStruct
     int ADThreashold;
 } MeasurementCtl;
 
-class MultiWeaponSensor  : public Subject<MultiWeaponSensor>
+class MultiWeaponSensor  : public Subject<MultiWeaponSensor>, public SingletonMixin<MultiWeaponSensor>
 {
 public:
-    /** Default constructor */
-    MultiWeaponSensor(int hw_timer);
+
     void begin();
     /** Default destructor */
     virtual ~MultiWeaponSensor();
@@ -149,11 +149,12 @@ public:
     void AllowAllNewHits(){SignalLeft = false; SignalRight = false;};
     void Setweapon_detection_mode(weapon_detection_mode_t mode){m_DectionMode = mode;};
 
-
 protected:
 
 private:
-
+    friend class SingletonMixin<MultiWeaponSensor>;
+    /** Default constructor */
+    MultiWeaponSensor();
     bool Do_Common_Start();
     void Skip_phase();
     void HandleLights();

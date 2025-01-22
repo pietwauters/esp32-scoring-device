@@ -7,6 +7,35 @@
 #include "network.h"
 using namespace std;
 #define MASK_REVERSE_COLORS 0x00000001
+RepeaterReceiver &LocalRepeaterReiver = RepeaterReceiver::getInstance();
+
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+static long LastNumber = 0;
+static long lossCounter = 0;
+static long MessageCounter = 0;
+
+struct_message m_message;
+  memcpy(&m_message, incomingData, sizeof(m_message));
+
+  if(m_message.piste_ID == LocalRepeaterReiver.MasterPiste())
+  {
+    LocalRepeaterReiver.ResetWatchDog();
+    long difference = m_message.messagenumber - LastNumber;
+    if(difference > 0){
+      LocalRepeaterReiver.StateChanged(m_message.event);
+      MessageCounter++;
+      if(difference > 1){
+        lossCounter++;
+        /*Serial.print("Total Message count = ");Serial.println(MessageCounter);
+        Serial.print("Message lost; Total loss Count = ");
+        Serial.println(lossCounter);
+        Serial.print("Errorrate = ");
+        Serial.println((float)lossCounter*100/(float)MessageCounter);*/
+      }
+    }
+    LastNumber = m_message.messagenumber;
+  }
+}
 
 RepeaterReceiver::RepeaterReceiver()
 {
@@ -122,7 +151,7 @@ void RepeaterReceiver::RegisterRepeater(uint8_t *broadcastAddress)
     return;
   }
 }
-void RepeaterReceiver::begin(esp_now_recv_cb_t theCallBack)
+void RepeaterReceiver::begin()
 {
   Preferences networkpreferences;
   networkpreferences.begin("scoringdevice", false);
@@ -138,7 +167,8 @@ void RepeaterReceiver::begin(esp_now_recv_cb_t theCallBack)
 
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
-  esp_now_register_recv_cb(theCallBack);
+  esp_now_register_recv_cb(OnDataRecv);
+
 
   uint8_t primary;
   wifi_second_chan_t second;

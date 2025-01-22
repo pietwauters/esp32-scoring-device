@@ -29,81 +29,16 @@
 #include "network.h"
 
 
-
-
-//WS2812B_LedStrip &MyLedStrip = WS2812B_LedStrip::getInstance();
+WS2812B_LedStrip &MyLedStrip = WS2812B_LedStrip::getInstance();
 TimeScoreDisplay MyTimeScoreDisplay;
-MultiWeaponSensor MySensor(1);
+MultiWeaponSensor &MySensor = MultiWeaponSensor::getInstance();
 NetWork MyNetWork;
-FencingStateMachine MyStatemachine(2,10);
+FencingStateMachine &MyStatemachine= FencingStateMachine::getInstance();
 FPA422Handler MyFPA422Handler;
 UDPIOHandler MyUDPIOHandler;
 CyranoHandler MyCyranoHandler;
-RepeaterReceiver MyRepeaterReiver;
+RepeaterReceiver &MyRepeaterReiver=RepeaterReceiver::getInstance();;
 RepeaterSender MyRepeaterSender;
-
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-static long LastNumber = 0;
-static long lossCounter = 0;
-static long MessageCounter = 0;
-
-struct_message m_message;
-  memcpy(&m_message, incomingData, sizeof(m_message));
-
-  if(m_message.piste_ID == MyRepeaterReiver.MasterPiste())
-  {
-    MyRepeaterReiver.ResetWatchDog();
-    long difference = m_message.messagenumber - LastNumber;
-    if(difference > 0){
-      MyRepeaterReiver.StateChanged(m_message.event);
-      MessageCounter++;
-      if(difference > 1){
-        lossCounter++;
-        Serial.print("Total Message count = ");Serial.println(MessageCounter);
-        Serial.print("Message lost; Total loss Count = ");
-        Serial.println(lossCounter);
-        Serial.print("Errorrate = ");
-        Serial.println((float)lossCounter*100/(float)MessageCounter);
-      }
-    }
-    LastNumber = m_message.messagenumber;
-  }
-}
-
-TaskHandle_t CoreScoringMachineTask;
-long StopSearchingForWifi = 60000;
-void CoreScoringMachineHandler(void *parameter)
-{
-  while(true)
-  {
-    MySensor.DoFullScan();
-    esp_task_wdt_reset();
-  }
-}
-
-TaskHandle_t StateMachineTask;
-void StateMachineHandler(void *parameter)
-{
-  while(true)
-  {
-    MyStatemachine.DoStateMachineTick();
-    esp_task_wdt_reset();
-
-  }
-}
-
-
-
-
-
-void GoBackToSleepIfWokenByTimer(){
-  esp_sleep_wakeup_cause_t wakeup_reason;
-  wakeup_reason = esp_sleep_get_wakeup_cause();
-  if( ESP_SLEEP_WAKEUP_TIMER == wakeup_reason){
-    delay(300);
-    esp_deep_sleep_start();
-  }
-}
 
 bool bIsRepeater = false;
 void setup() {
@@ -113,7 +48,6 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   MyLedStrip.ClearAll();
-  //GoBackToSleepIfWokenByTimer();
   MyTimeScoreDisplay.begin();
   MyLedStrip.ClearAll();
   MyTimeScoreDisplay.DisplayPisteId();
@@ -136,9 +70,7 @@ void setup() {
 if(!bIsRepeater){
 Serial.println("Bwahahaaha I am the master!");
   MyStatemachine.ResetAll();
-
   MyFPA422Handler.StartWiFi();
-
   MyStatemachine.attach(MyFPA422Handler);
   MyStatemachine.attach(MyTimeScoreDisplay);
   MyUDPIOHandler.attach(MyStatemachine);
@@ -147,31 +79,10 @@ Serial.println("Bwahahaaha I am the master!");
   MyUDPIOHandler.attach(MyCyranoHandler);
   MyCyranoHandler.attach(MyStatemachine);
   MyCyranoHandler.attach(MyFPA422Handler);
-  xTaskCreatePinnedToCore(
-            CoreScoringMachineHandler,        /* Task function. */
-            "CoreScoringMachineHandler",      /* String with name of task. */
-            24576,                            /* Stack size in words. */
-            NULL,                             /* Parameter passed as input of the task */
-            0,                                /* Priority of the task. */
-            &CoreScoringMachineTask,           /* Task handle. */
-            0);
-  esp_task_wdt_add(CoreScoringMachineTask);
   MySensor.attach(MyStatemachine);
   MyStatemachine.RegisterMultiWeaponSensor(&MySensor);
-
-  xTaskCreatePinnedToCore(
-            StateMachineHandler,        /* Task function. */
-            "StateMachineHandler",      /* String with name of task. */
-            24576,                            /* Stack size in words. 65535*/
-            NULL,                             /* Parameter passed as input of the task */
-            5,                                /* Priority of the task. */
-            &StateMachineTask,           /* Task handle. */
-            1);
-  esp_task_wdt_add(StateMachineTask);
-
-
+  MyStatemachine.begin();
   MySensor.begin();
-  StopSearchingForWifi = millis() + 60000;
   MyCyranoHandler.Begin();
   MyRepeaterSender.begin();
   MyStatemachine.attach(MyRepeaterSender);
@@ -192,12 +103,13 @@ Serial.println("Bwahahaaha I am the master!");
 else{
   // When running in repeater mode
   Serial.println("Ouch! I am a repeater!");
-  MyRepeaterReiver.begin(OnDataRecv);
+  MyRepeaterReiver.begin();
   MyRepeaterReiver.attach(MyLedStrip);
   MyRepeaterReiver.attach(MyTimeScoreDisplay);
   MyRepeaterReiver.StartWatchDog();
   MyLedStrip.SetMirroring(MyRepeaterReiver.Mirror());
 }
+
 }
 
 
@@ -233,11 +145,10 @@ void loop() {
       esp_task_wdt_reset();
       vTaskDelay(1 / portTICK_PERIOD_MS);
       MyFPA422Handler.WifiPeriodicalUpdate();
-      MyLedStrip.AnimatePrio();
       MyFPA422Handler.WifiPeriodicalUpdate();
 
     }
-    MyLedStrip.AnimateWarning();
+
     MyStatemachine.PeriodicallyBroadcastFullState(&MyRepeaterSender,FULL_STATUS_REPETITION_PERIOD);
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -247,8 +158,6 @@ void loop() {
     //MyRepeaterSender.BroadcastHeartBeat();
     if(MyStatemachine.GoToSleep())
     {
-      vTaskSuspend(CoreScoringMachineTask);
-      delay(100);
       prepareforDeepSleep();
     }
   }
@@ -257,19 +166,14 @@ void loop() {
     MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
-    MyLedStrip.AnimatePrio();
-    MyLedStrip.AnimateWarning();
+
     if(MyRepeaterReiver.IsWatchDogTriggered())
     { // We lost connection with the master scoring device
       // clear displays and start looking for MasterId
       MyTimeScoreDisplay.DisplayPisteId();
       MyLedStrip.ClearAll();
       MyNetWork.FindAndSetMasterChannel(1,false);
-
     }
   }
   esp_task_wdt_reset();
-  //MyRepeaterReiver.StateChanged(fakelights);
-
-
 }

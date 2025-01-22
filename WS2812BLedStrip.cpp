@@ -1,13 +1,13 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #include "WS2812BLedStrip.h"
 #include "esp_task_wdt.h"
-WS2812B_LedStrip &MyLedStrip = WS2812B_LedStrip::getInstance();
+WS2812B_LedStrip &MyLocalLedStrip = WS2812B_LedStrip::getInstance();
 TaskHandle_t LedStripTask;
 void LedStripHandler(void *parameter)
 {
   while(true)
   {
-    MyLedStrip.ProcessEventsBlocking();
+    MyLocalLedStrip.ProcessEventsBlocking();
     esp_task_wdt_reset();
   }
 }
@@ -17,10 +17,10 @@ void WS2812B_LedStrip::LedStripAnimator(void *parameter)
 {
   uint32_t LastEvent;
   while(true){
-    if(xQueueReceive(MyLedStrip.Animationqueue, &LastEvent, 4 / portTICK_PERIOD_MS)== pdPASS)
+    if(xQueueReceive(MyLocalLedStrip.Animationqueue, &LastEvent, 4 / portTICK_PERIOD_MS)== pdPASS)
     {
       uint32_t event_data = LastEvent;
-      MyLedStrip.DoAnimation(event_data);
+      MyLocalLedStrip.DoAnimation(event_data);
     }
   }
 }
@@ -366,7 +366,21 @@ void WS2812B_LedStrip::updateHelper(uint32_t eventtype)
     break;
 
     case EVENT_PRIO:
-    StartPrioAnimation(event_data);
+    //StartPrioAnimation(event_data);
+    switch(event_data){
+      case 0:
+        startAnimation(EVENT_WS2812_PRIO_NONE);
+      break;
+
+      case 1:
+        startAnimation(EVENT_WS2812_PRIO_RIGHT);
+      break;
+
+      case 2:
+        startAnimation(EVENT_WS2812_PRIO_LEFT);
+      break;
+    }
+
     break;
 
     case EVENT_YELLOW_CARD_LEFT:
@@ -446,7 +460,8 @@ void WS2812B_LedStrip::updateHelper(uint32_t eventtype)
 
     case EVENT_TIMER:
       if(!event_data)
-        StartWarning(11);
+        //StartWarning(11);
+        startAnimation(EVENT_WS2812_WARNING | 0x0000000b);
     break;
 
     case EVENT_P_CARD:
@@ -592,100 +607,38 @@ void WS2812B_LedStrip::ClearAll()
    myShow();
 }
 
-void WS2812B_LedStrip::AnimatePrio()
-{
-  if(!m_Animating)
-    return;
 
-  if(millis() < m_NextTimeToTogglePrioLights)
-    return;
-
-  m_NextTimeToTogglePrioLights = millis() + 60 + m_counter * 15;
-  if(m_counter & 1)
-  {
-    setGreenPrio(true,m_ReverseColors);
-    setRedPrio(false,m_ReverseColors);
-  }
-  else
-  {
-    setGreenPrio(false,m_ReverseColors);
-    setRedPrio(true,m_ReverseColors);
-  }
-  m_pixels->show();
-  m_counter--;
-  if(m_counter < m_targetprio)
-  {
-    m_Animating = false;
-  }
-
-}
-
-void WS2812B_LedStrip::StartPrioAnimation(uint8_t prio)
-{
-  switch(prio)
-  {
-    case 0:
-      setGreenPrio(false,m_ReverseColors);
-      setRedPrio(false,m_ReverseColors);
-      m_pixels->show();  // clear directly, no animation needed
-      m_PrioLeft = false;
-      m_PrioRight = false;
-      return;
-    break;
-    case 2:
-      m_PrioLeft = false;
-      m_PrioRight = true;
-      m_targetprio = 1;
-    break;
-
-    case 1:
-      m_PrioLeft = true;
-      m_PrioRight = false;
-      m_targetprio = 2;
-    break;
-
-  }
-  //_targetprio = prio;
-
-  m_counter = 17 + prio;
-  /*if(m_ReverseColors)
-    m_counter;*/
-
-  m_NextTimeToTogglePrioLights = millis() + 100 + m_counter * 15;
-  m_Animating = true;
-}
 #define WARNING_TIME_ON 150
 #define WARNING_TIME_Off 40
 
 void WS2812B_LedStrip::AnimateWarning()
 {
-  if(!m_WarningOngoing)
-    return;
-  if(millis() < m_NextTimeToToggleBuzzer)
-    return;
+  while(m_WarningOngoing){
 
-  if(m_warningcounter & 1)
-  {
-    m_NextTimeToToggleBuzzer = millis() + WARNING_TIME_Off;
-    setBuzz(false);
+    if(m_warningcounter & 1)
+    {
+      m_NextTimeToToggleBuzzer =  WARNING_TIME_Off;
+      setBuzz(false);
+    }
+    else
+    {
+      m_NextTimeToToggleBuzzer =  WARNING_TIME_ON;
+      setBuzz(true);
+    }
+    m_warningcounter--;
+    if(!m_warningcounter)
+    {
+      setBuzz(false);
+      m_WarningOngoing = false;
+    }
+    
+    vTaskDelay( (m_NextTimeToToggleBuzzer) / portTICK_PERIOD_MS );
   }
-  else
-  {
-    m_NextTimeToToggleBuzzer = millis() + WARNING_TIME_ON;
-    setBuzz(true);
-  }
-  m_warningcounter--;
-  if(!m_warningcounter)
-  {
-    setBuzz(false);
-    m_WarningOngoing = false;
-  }
-
 }
-void WS2812B_LedStrip::StartWarning(uint8_t nr_beeps)
+void WS2812B_LedStrip::StartWarning(uint32_t nr_beeps)
 {
   m_warningcounter = (nr_beeps * 2) + 1 ;
-  m_NextTimeToToggleBuzzer = millis() + WARNING_TIME_ON;
+  m_NextTimeToToggleBuzzer =  WARNING_TIME_ON;
   m_WarningOngoing = true;
 }
 
@@ -897,20 +850,39 @@ void WS2812B_LedStrip::ShowWelcomeLights()
 
 void WS2812B_LedStrip::DoAnimation(uint32_t type){
 
-  switch(type) {
+  switch(type & 0xffff0000) {
     case EVENT_WS2812_WELCOME:
       ShowWelcomeLights();
     break;
 
-    case EVENT_WS2812_PRIO_LEFT:
+    case EVENT_WS2812_PRIO_NONE:
+    setGreenPrio(false,m_ReverseColors);
+    setRedPrio(false,m_ReverseColors);
+    m_pixels->show();  // clear directly, no animation needed
+    m_PrioLeft = false;
+    m_PrioRight = false;
 
+    break;
+
+    case EVENT_WS2812_PRIO_LEFT:
+    m_PrioLeft = false;
+    m_PrioRight = true;
+    m_targetprio = 1;
+    m_counter = 17 + 1;
+    NewAnimatePrio();
     break;
 
     case EVENT_WS2812_PRIO_RIGHT:
-
+    m_PrioLeft = true;
+    m_PrioRight = false;
+    m_targetprio = 2;
+    m_counter = 17 + 2;
+    NewAnimatePrio();
     break;
 
     case EVENT_WS2812_WARNING:
+    StartWarning(type & 0x0000ffff);
+    AnimateWarning();
 
     break;
 
@@ -922,12 +894,13 @@ void WS2812B_LedStrip::DoAnimation(uint32_t type){
 
 }
 
-
 void WS2812B_LedStrip::NewAnimatePrio()
 {
-  /*
   long sleeptime;
-  vTaskDelay( (100 + m_counter * 15)) / portTICK_PERIOD_MS );
+
+  m_NextTimeToTogglePrioLights = millis() + 100 + m_counter * 15;
+  m_Animating = true;
+  vTaskDelay( (100 + m_counter * 15) / portTICK_PERIOD_MS );
   while(m_Animating){
     if(m_counter & 1)
     {
@@ -947,5 +920,6 @@ void WS2812B_LedStrip::NewAnimatePrio()
     }
     sleeptime = m_NextTimeToTogglePrioLights = 60 + m_counter * 15;
     vTaskDelay( sleeptime / portTICK_PERIOD_MS );
-  }*/
+  }
+
 }

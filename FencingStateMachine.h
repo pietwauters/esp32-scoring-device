@@ -2,6 +2,7 @@
 #ifndef FENCINGSTATEMACHINE_H
 #define FENCINGSTATEMACHINE_H
 #include "SubjectObserverTemplate.h"
+#include "Singleton.h"
 #include "3WeaponSensor.h"
 #include "FencingTimer.h"
 #include "UW2FTimer.h"
@@ -18,11 +19,10 @@ enum TimerState_t{FIGHTING, BREAK, INJURY, ADDITIONAL_MINUTE, MATCH_ENDED,UNDEFI
 
 class UDPIOHandler;
 class CyranoHandler;
-class FencingStateMachine : public Subject<FencingStateMachine> , public Observer<MultiWeaponSensor> ,  public Observer<UDPIOHandler> ,  public Observer<CyranoHandler>
+class FencingStateMachine : public Subject<FencingStateMachine> , public Observer<MultiWeaponSensor> ,  public Observer<UDPIOHandler> ,  public Observer<CyranoHandler>, public SingletonMixin<FencingStateMachine>
 {
     public:
-        /** Default constructor */
-        FencingStateMachine(int hw_timer_nr, int tickPeriod);  // tickPeriod in miliseconds
+
         /** Default destructor */
         virtual ~FencingStateMachine();
 
@@ -169,11 +169,15 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         bool incrementScoreAndCheckForMinuteBreak(bool bLeftFencer);
         uint32_t get_max_score();
         bool GoToSleep() {return m_GoToSleep;};
+        void begin();
 
     protected:
 
     private:
     // private methods
+    /** Default constructor */
+    friend class SingletonMixin<FencingStateMachine>;
+      FencingStateMachine(int hw_timer_nr=2, int tickPeriod=10);  // tickPeriod in miliseconds
       bool ShouldBlockHitsOnTimerZero();
       void SetNextTimerStateAndRoundAndNewTimeOnTimerZero();
       void ProcessUW2F();
@@ -228,6 +232,7 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         bool m_GlobalIdle = false;
         long m_LastLightEventTime = 0;
         bool m_GoToSleep = false;
+        bool m_HasBegun = false;
 
 
 
