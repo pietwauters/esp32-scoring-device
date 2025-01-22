@@ -8,8 +8,19 @@
 #include <driver/rtc_io.h>
 #include "WS2812BLedStrip.h"
 #include "TimeScoreDisplay.h"
+#include "esp_task_wdt.h"
 
+MultiWeaponSensor &MyLocalSensor = MultiWeaponSensor::getInstance();
+TaskHandle_t CoreScoringMachineTask;
 
+void CoreScoringMachineHandler(void *parameter)
+{
+  while(true)
+  {
+    MyLocalSensor.DoFullScan();
+    esp_task_wdt_reset();
+  }
+}
 
 using namespace std;
 
@@ -29,9 +40,10 @@ void IRAM_ATTR onTimer()
 //0.05 milliseconds
 #define TimeInMicroSeconds 4800
 
-MultiWeaponSensor::MultiWeaponSensor(int hw_timer_nr)
+MultiWeaponSensor::MultiWeaponSensor()
 {
     //ctor
+    int hw_timer_nr = 1;
     adc_power_on();
     if(ESP_OK != adc_set_clk_div(1))
       cout << "I did not expect this!" << endl;
@@ -118,6 +130,15 @@ void MultiWeaponSensor:: begin()
   gpio_hold_dis((gpio_num_t)PIN);
 
   DoReset();
+  xTaskCreatePinnedToCore(
+            CoreScoringMachineHandler,        /* Task function. */
+            "CoreScoringMachineHandler",      /* String with name of task. */
+            24576,                            /* Stack size in words. */
+            NULL,                             /* Parameter passed as input of the task */
+            0,                                /* Priority of the task. */
+            &CoreScoringMachineTask,           /* Task handle. */
+            0);
+  esp_task_wdt_add(CoreScoringMachineTask);
 }
 
 
@@ -485,8 +506,9 @@ weapon_t MultiWeaponSensor::GetWeapon()
     }
     if (!LongCounter_NotConnected) // We've reached zero, so we switch back to default Epee
     {
-      LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
+
       bPreventBuzzer = false;
+      LongCounter_AtLeastOneNotConnected = LONG_COUNT_NOTCONNECTED_STOP_BUZZING;
       if(m_DectionMode != MANUAL)
       {
         m_DetectedWeapon =  EPEE;
@@ -562,6 +584,8 @@ weapon_t MultiWeaponSensor::GetWeapon()
           LongCounter_b2 = LONG_COUNT_B_INIT_SABRE;
           LongCounter_c1 = LONG_COUNT_C_INIT_SABRE;
           LongCounter_c2 = LONG_COUNT_C_INIT_SABRE;
+          LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
+          
         }
         else
         {
@@ -571,6 +595,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
           LongCounter_b2 = LONG_COUNT_B_INIT_FOIL;
           LongCounter_c1 = LONG_COUNT_C_INIT_FOIL;
           LongCounter_c2 = LONG_COUNT_C_INIT_FOIL;
+          LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
         }
 
         return m_DetectedWeapon;
@@ -627,6 +652,7 @@ uint64_t bitmask = BUTTON_PIN_BITMASK(WAKEUP_GPIO_32) | BUTTON_PIN_BITMASK(WAKEU
 
 void prepareforDeepSleep()
 {
+  vTaskSuspend(CoreScoringMachineTask);
   //Use ext1 as a wake-up source
   esp_sleep_enable_ext1_wakeup(bitmask, ESP_EXT1_WAKEUP_ANY_HIGH);
   //esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
