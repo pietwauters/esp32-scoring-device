@@ -159,10 +159,10 @@ void FPA422Handler::StartHWSerial()
 #endif
 
 
-extern NetWork MyNetWork;
 
 void FPA422Handler::StartWiFi()
 {
+  NetWork &MyNetWork = NetWork::getInstance();
   MyNetWork.GlobalStartWiFi();
   IPAddress localip = WiFi.localIP();
   IPAddress ip = WiFi.softAPIP();

@@ -6,7 +6,8 @@
 #include "EventDefinitions.h"
 #include <Preferences.h>
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
-
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 // It seems we should not use channels above 11
 #define CHANNEL_COUNT  12
 #define VERY_STRONG -51
@@ -35,11 +36,10 @@ typedef struct {
 } interval_t;
 
 
-class NetWork : public Observer<UDPIOHandler>
+class NetWork : public Observer<UDPIOHandler>, public SingletonMixin<NetWork>
 {
     public:
-        /** Default constructor */
-        NetWork();
+
         /** Default destructor */
         virtual ~NetWork();
         int findBestWifiChannel();
@@ -56,6 +56,9 @@ class NetWork : public Observer<UDPIOHandler>
     protected:
 
     private:
+      friend class SingletonMixin<NetWork>;
+      /** Default constructor */
+      NetWork();
     bool m_GlobalWifiStarted = false;
     bool bConnectedToExternalNetwork = false;
     char LocalIPAddress[16] = "255.255.255.255";
@@ -70,5 +73,7 @@ class NetWork : public Observer<UDPIOHandler>
     bool SavedNetworkExists = false;
     bool LookForExternalWiFi = false;
     int bestchannel = -1;
+    AsyncWebServer server={80};
+    WiFiManager wm;
 };
 #endif //NETWORK_H

@@ -420,6 +420,7 @@ void ProcessCyranoPacket (AsyncUDPPacket packet)
   //Serial.println((char*)packet.data());
   // If Software is live, we know the IP address. If the received packet does
   // come from the Software, we can ignore it.
+  CyranoHandler &MyCyranoHandler = CyranoHandler::getInstance();
   if(MyCyranoHandler.SoftwareIsLive())
   {
     if(MyCyranoHandler.SoftwareIPAddress() != packet.remoteIP())

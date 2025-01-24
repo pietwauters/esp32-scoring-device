@@ -31,11 +31,10 @@ enum CyranoState
 };*/
 
 class UDPIOHandler;
-class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDPIOHandler>, public Subject<CyranoHandler>
+class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDPIOHandler>, public Subject<CyranoHandler>, public SingletonMixin<CyranoHandler>
 {
     public:
-        /** Default constructor */
-        CyranoHandler();
+
         /** Default destructor */
         virtual ~CyranoHandler();
         void ProcessMessageFromSoftware(const EFP1Message &input);
@@ -57,6 +56,9 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
     protected:
 
     private:
+      friend class SingletonMixin<CyranoHandler>;
+      /** Default constructor */
+      CyranoHandler();
         EFP1Message m_MachineStatus; //!< Member variable "m_Status"
         EFP1Message m_IncompleteMessage;
         CyranoState m_State = WAITING;
@@ -78,5 +80,4 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
 
 };
 
-extern CyranoHandler MyCyranoHandler;
 #endif // CYRANOHANDLER_H

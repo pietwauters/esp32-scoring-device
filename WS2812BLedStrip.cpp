@@ -1,10 +1,10 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #include "WS2812BLedStrip.h"
 #include "esp_task_wdt.h"
-WS2812B_LedStrip &MyLocalLedStrip = WS2812B_LedStrip::getInstance();
 TaskHandle_t LedStripTask;
 void LedStripHandler(void *parameter)
 {
+  WS2812B_LedStrip &MyLocalLedStrip = WS2812B_LedStrip::getInstance();
   while(true)
   {
     MyLocalLedStrip.ProcessEventsBlocking();
@@ -15,6 +15,7 @@ void LedStripHandler(void *parameter)
 TaskHandle_t LedStripAnimationTask;
 void WS2812B_LedStrip::LedStripAnimator(void *parameter)
 {
+  WS2812B_LedStrip &MyLocalLedStrip = WS2812B_LedStrip::getInstance();
   uint32_t LastEvent;
   while(true){
     if(xQueueReceive(MyLocalLedStrip.Animationqueue, &LastEvent, 4 / portTICK_PERIOD_MS)== pdPASS)
@@ -631,7 +632,7 @@ void WS2812B_LedStrip::AnimateWarning()
       setBuzz(false);
       m_WarningOngoing = false;
     }
-    
+
     vTaskDelay( (m_NextTimeToToggleBuzzer) / portTICK_PERIOD_MS );
   }
 }

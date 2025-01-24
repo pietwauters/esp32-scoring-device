@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include "AsyncUDP.h"
 
-AsyncUDP Commandudp;
+
 
 
 static bool bWifiConnected = false;
@@ -12,6 +12,7 @@ static bool bUDPConnected = false;
 
 void ProcessUDPPacket (AsyncUDPPacket packet)
 {
+  UDPIOHandler &MyUDPIOHandler = UDPIOHandler::getInstance();
   mix_t Event;
   Event.theBytes[0] = packet.data()[0];
   Event.theBytes[1] = packet.data()[1];
@@ -20,10 +21,10 @@ void ProcessUDPPacket (AsyncUDPPacket packet)
   MyUDPIOHandler.InputChanged(Event.theDWord);
 }
 
-void UDPCheck()
+void UDPIOHandler::UDPCheck()
 {
 static long NextTimeToCheckUDP = millis() + 2500;
-
+UDPIOHandler &MyUDPIOHandler = UDPIOHandler::getInstance();
   /*if(millis() < NextTimeToCheckUDP)
     return;*/
   NextTimeToCheckUDP = millis() + 2500;
@@ -77,6 +78,7 @@ static long NextTimeToCheckUDP = millis() + 2500;
 
 void UDPIOHandler::ConnectToAP()
 {
+  UDPIOHandler &MyUDPIOHandler = UDPIOHandler::getInstance();
   if(!bUDPConnected)
   {// We should call this only once.
     bUDPConnected = true;

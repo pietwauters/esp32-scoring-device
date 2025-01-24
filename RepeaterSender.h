@@ -8,11 +8,10 @@
 
 #define HEART_RATE  61
 class FencingStateMachine;
-class RepeaterSender : public Observer<FencingStateMachine>
+class RepeaterSender : public Observer<FencingStateMachine>, public SingletonMixin<RepeaterSender>
 {
     public:
-        /** Default constructor */
-        RepeaterSender();  // tickPeriod in miliseconds
+
         /** Default destructor */
         virtual ~RepeaterSender();
         void update (FencingStateMachine *subject, uint32_t eventtype);
@@ -25,6 +24,9 @@ class RepeaterSender : public Observer<FencingStateMachine>
 
     private:
     // private methods
+    friend class SingletonMixin<RepeaterSender>;
+    /** Default constructor */
+    RepeaterSender();  // tickPeriod in miliseconds
     esp_now_peer_info_t peerInfo;
     struct_message m_message;
     uint8_t m_receiverAddress[6] = {0x24,0xDC,0xC3,0x45,0xCD,0xA0};
@@ -36,8 +38,6 @@ class RepeaterSender : public Observer<FencingStateMachine>
     int m_resendCount = MESSAGE_REPETITION_FACTOR;
     long m_nextResendTime = 0;
     uint8_t m_ResendDelta[7]={5,3,2,1,2,1,2};
-
-
 
     // private member variables
 

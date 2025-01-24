@@ -11,8 +11,8 @@
 #include <ESPAsyncWebServer.h>
 #include <AsyncElegantOTA.h>
 
-AsyncWebServer server(80);
-
+//AsyncWebServer server(80);
+//WiFiManager wm;
 /**
    Sets all the channels back to 0.
 */
@@ -24,7 +24,6 @@ void NetWork::reset_channels() {
   }
 }
 
-WiFiManager wm;
 
 int NetWork::begin()
 {
@@ -402,13 +401,13 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
     ConnectToExternalNetwork(45);
 
   if(UI_START_WIFI_PORTAL == subtype){
-    
+
     WaitForNewSettingsViaPortal();
   }
 
   if(UI_START_OTA_PORTAL == subtype)
   {
-    
+
     AsyncElegantOTA.begin(&server);    // Start ElegantOTA
     server.begin();
     Serial.println("HTTP OTA Update server started");

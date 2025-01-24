@@ -15,10 +15,10 @@ using namespace std;
 #define ADDITIONAL_TIME_SECONDS 0
 
 #define TIME_TO_REARM 10000   //Time in milliseconds
-#define IDLE_TIME_MS 1000*60*3   // 3 minute in milliseconds
-#define TIME_TO_DEEP_SLEEP 1000*60*5   // 5 minutes in milliseconds
+#define IDLE_TIME_MS 1000*66*3   // 3 minute in milliseconds
+#define TIME_TO_DEEP_SLEEP 1000*66*6   // 6 minutes in milliseconds
 
-FencingStateMachine &MyLocalStatemachine= FencingStateMachine::getInstance();
+
 volatile SemaphoreHandle_t timerSemaphore_FSMPeriod;
 void IRAM_ATTR onTimer_FSMPeriod()
 {
@@ -29,6 +29,7 @@ void IRAM_ATTR onTimer_FSMPeriod()
 TaskHandle_t StateMachineTask;
 void StateMachineHandler(void *parameter)
 {
+  FencingStateMachine &MyLocalStatemachine= FencingStateMachine::getInstance();
   while(true)
   {
     MyLocalStatemachine.DoStateMachineTick();

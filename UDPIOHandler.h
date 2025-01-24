@@ -7,6 +7,7 @@
 
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include "AsyncUDP.h"
 
 
 #define UDP_GREEN     "#23C48E"
@@ -20,11 +21,10 @@
 
 
 
-class UDPIOHandler : public Subject<UDPIOHandler> , public Observer<FencingStateMachine>
+class UDPIOHandler : public Subject<UDPIOHandler> , public Observer<FencingStateMachine>, public SingletonMixin<UDPIOHandler>
 {
     public:
-        /** Default constructor */
-        UDPIOHandler();
+
         /** Default destructor */
         virtual ~UDPIOHandler();
 
@@ -35,20 +35,23 @@ class UDPIOHandler : public Subject<UDPIOHandler> , public Observer<FencingState
         void ConnectToAP();
 
         void Start();
+        void UDPCheck();
 
 
     protected:
 
     private:
-
+    friend class SingletonMixin<UDPIOHandler>;
+    /** Default constructor */
+    UDPIOHandler();
     void ProcessLightsChange(uint32_t eventtype);
     int m_minutes;
     int m_seconds;
     int m_hundredths;
     int previous_seconds;
-
+    AsyncUDP Commandudp;
 };
 
-extern UDPIOHandler MyUDPIOHandler;
+
 
 #endif // UDPIOHANDLER_H

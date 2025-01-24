@@ -7,7 +7,7 @@
 #include "network.h"
 using namespace std;
 #define MASK_REVERSE_COLORS 0x00000001
-RepeaterReceiver &LocalRepeaterReiver = RepeaterReceiver::getInstance();
+//RepeaterReceiver &LocalRepeaterReiver = RepeaterReceiver::getInstance();
 
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 static long LastNumber = 0;
@@ -16,7 +16,7 @@ static long MessageCounter = 0;
 
 struct_message m_message;
   memcpy(&m_message, incomingData, sizeof(m_message));
-
+  RepeaterReceiver &LocalRepeaterReiver = RepeaterReceiver::getInstance();
   if(m_message.piste_ID == LocalRepeaterReiver.MasterPiste())
   {
     LocalRepeaterReiver.ResetWatchDog();

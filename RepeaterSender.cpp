@@ -17,9 +17,41 @@ RepeaterSender::~RepeaterSender()
 {
     //dtor
 }
+/*
+bool addPeer(const uint8_t *peer_addr) {      // add pairing
+  memset(&slave, 0, sizeof(slave));
+  const esp_now_peer_info_t *peer = &slave;
+  memcpy(slave.peer_addr, peer_addr, 6);
+
+  slave.channel = chan; // pick a channel
+  slave.encrypt = 0; // no encryption
+  // check if the peer exists
+  bool exists = esp_now_is_peer_exist(slave.peer_addr);
+  if (exists) {
+    // Slave already paired.
+    Serial.println("Already Paired");
+    return true;
+  }
+  else {
+    esp_err_t addStatus = esp_now_add_peer(peer);
+    if (addStatus == ESP_OK) {
+      // Pair success
+      Serial.println("Pair success");
+      return true;
+    }
+    else
+    {
+      Serial.println("Pair failed");
+      return false;
+    }
+  }
+}
+
+*/
+
 
 // callback when data is sent
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+void OnDataSentMaster(const uint8_t *mac_addr, esp_now_send_status_t status) {
   //char macStr[18];
   //Serial.print("Packet to: ");
   // Copies the sender mac address to a string
@@ -29,6 +61,20 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print(" send status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
   */
+  //if(status != ESP_NOW_SEND_SUCCESS)
+
+}
+
+void OnDataRecvMaster(const unsigned char * mac_addr, const uint8_t *incomingData, int len) {
+/*    memcpy(&m_message, incomingData, sizeof(m_message));
+
+    if(m_message.piste_ID == m_MasterPiste)
+    {
+      if(m_message.type == PAIRING_REQUEST){
+
+      }
+    }
+    */
 }
 
 void RepeaterSender::begin()
@@ -41,7 +87,7 @@ void RepeaterSender::begin()
 
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
-  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_send_cb(OnDataSentMaster);
 
   uint8_t primary;
   wifi_second_chan_t second;

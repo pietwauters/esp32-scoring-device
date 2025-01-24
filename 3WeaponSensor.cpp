@@ -10,11 +10,12 @@
 #include "TimeScoreDisplay.h"
 #include "esp_task_wdt.h"
 
-MultiWeaponSensor &MyLocalSensor = MultiWeaponSensor::getInstance();
 TaskHandle_t CoreScoringMachineTask;
 
 void CoreScoringMachineHandler(void *parameter)
 {
+  MultiWeaponSensor &MyLocalSensor = MultiWeaponSensor::getInstance();
+
   while(true)
   {
     MyLocalSensor.DoFullScan();
@@ -83,6 +84,8 @@ MultiWeaponSensor::MultiWeaponSensor()
   LongCounter_c1 = LONG_COUNT_C_INIT_FOIL;
   LongCounter_c2 = LONG_COUNT_C_INIT_FOIL;
   LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
+  LongCounter_AtLeastOneNotConnected = LONG_COUNT_NOTCONNECTED_STOP_BUZZING;
+  
 
   SensorMutex = xSemaphoreCreateBinary();
 }
@@ -368,6 +371,7 @@ void MultiWeaponSensor::DoReset()
     bParrySignal = false;
 
     Counter_parry = Const_FOIL_PARRY_ON_TIME;
+
     return;
 }
 
@@ -585,7 +589,7 @@ weapon_t MultiWeaponSensor::GetWeapon()
           LongCounter_c1 = LONG_COUNT_C_INIT_SABRE;
           LongCounter_c2 = LONG_COUNT_C_INIT_SABRE;
           LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
-          
+
         }
         else
         {

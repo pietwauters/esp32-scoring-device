@@ -29,85 +29,93 @@
 #include "network.h"
 
 
-WS2812B_LedStrip &MyLedStrip = WS2812B_LedStrip::getInstance();
-TimeScoreDisplay MyTimeScoreDisplay;
-MultiWeaponSensor &MySensor = MultiWeaponSensor::getInstance();
-NetWork MyNetWork;
-FencingStateMachine &MyStatemachine= FencingStateMachine::getInstance();
-FPA422Handler MyFPA422Handler;
-UDPIOHandler MyUDPIOHandler;
-CyranoHandler MyCyranoHandler;
-RepeaterReceiver &MyRepeaterReiver=RepeaterReceiver::getInstance();;
-RepeaterSender MyRepeaterSender;
+WS2812B_LedStrip *MyLedStrip;
+TimeScoreDisplay *MyTimeScoreDisplay;
+MultiWeaponSensor *MySensor;
+NetWork *MyNetWork;
+FencingStateMachine *MyStatemachine;
+FPA422Handler *MyFPA422Handler;
+UDPIOHandler *MyUDPIOHandler;
+CyranoHandler *MyCyranoHandler;
+RepeaterReceiver *MyRepeaterReiver;
+RepeaterSender *MyRepeaterSender;
 
 bool bIsRepeater = false;
 void setup() {
-
-  MyLedStrip.begin();
-
+  cout << "Time to get here: " << millis() << endl;
+  MyLedStrip = &WS2812B_LedStrip::getInstance();
+  MyLedStrip->begin();
+  MyTimeScoreDisplay = new TimeScoreDisplay();
+  MyLedStrip->ClearAll();
+  MySensor = &MultiWeaponSensor::getInstance();
+  MyLedStrip->ClearAll();
+  MyStatemachine= &FencingStateMachine::getInstance();
   // put your setup code here, to run once:
   Serial.begin(115200);
-  MyLedStrip.ClearAll();
-  MyTimeScoreDisplay.begin();
-  MyLedStrip.ClearAll();
-  MyTimeScoreDisplay.DisplayPisteId();
-
+  MyLedStrip->ClearAll();
+  MyTimeScoreDisplay->begin();
+  MyLedStrip->ClearAll();
+  MyTimeScoreDisplay->DisplayPisteId();
+  MyFPA422Handler = new FPA422Handler();
   Preferences mypreferences;
   mypreferences.begin("scoringdevice", RO_MODE);
   bIsRepeater = mypreferences.getBool("RepeaterMode",false);
   mypreferences.end();
+  MyNetWork = &NetWork::getInstance();
+  MyNetWork->begin();
 
-  MyNetWork.begin();
-
-  MyNetWork.GlobalStartWiFi();
+  MyNetWork->GlobalStartWiFi();
   Serial.println("Wifi started");
   Serial.println("by now the you should have seen all the lights one by one");
-
-  MyUDPIOHandler.ConnectToAP();
-  MyUDPIOHandler.attach(MyNetWork);
-  esp_task_wdt_init(10, false);
+  MyUDPIOHandler = &UDPIOHandler::getInstance();
+  MyUDPIOHandler->ConnectToAP();
+  MyUDPIOHandler->attach(*MyNetWork);
+  esp_task_wdt_init(20, false);
 // In repeater mode don't start these 2 tasks
 if(!bIsRepeater){
 Serial.println("Bwahahaaha I am the master!");
-  MyStatemachine.ResetAll();
-  MyFPA422Handler.StartWiFi();
-  MyStatemachine.attach(MyFPA422Handler);
-  MyStatemachine.attach(MyTimeScoreDisplay);
-  MyUDPIOHandler.attach(MyStatemachine);
-  MyStatemachine.attach(MyUDPIOHandler);
-  MyStatemachine.attach(MyCyranoHandler);
-  MyUDPIOHandler.attach(MyCyranoHandler);
-  MyCyranoHandler.attach(MyStatemachine);
-  MyCyranoHandler.attach(MyFPA422Handler);
-  MySensor.attach(MyStatemachine);
-  MyStatemachine.RegisterMultiWeaponSensor(&MySensor);
-  MyStatemachine.begin();
-  MySensor.begin();
-  MyCyranoHandler.Begin();
-  MyRepeaterSender.begin();
-  MyStatemachine.attach(MyRepeaterSender);
-  MyStatemachine.attach(MyLedStrip);
-  MyStatemachine.SetMachineWeapon(MySensor.GetActualWeapon());
-  switch (MySensor.GetActualWeapon()) {
+  MyCyranoHandler = &CyranoHandler::getInstance();
+  MyStatemachine->ResetAll();
+  MyFPA422Handler->StartWiFi();
+  MyStatemachine->attach(*MyFPA422Handler);
+  MyStatemachine->attach(*MyTimeScoreDisplay);
+  MyUDPIOHandler->attach(*MyStatemachine);
+  MyStatemachine->attach(*MyUDPIOHandler);
+  MyStatemachine->attach(*MyCyranoHandler);
+  MyUDPIOHandler->attach(*MyCyranoHandler);
+  MyCyranoHandler->attach(*MyStatemachine);
+  MyCyranoHandler->attach(*MyFPA422Handler);
+  MySensor->attach(*MyStatemachine);
+  MyStatemachine->RegisterMultiWeaponSensor(MySensor);
+  MyStatemachine->begin();
+  MySensor->begin();
+  MyCyranoHandler->Begin();
+  MyRepeaterSender  = &RepeaterSender::getInstance();
+  MyRepeaterSender->begin();
+  MyStatemachine->attach(*MyRepeaterSender);
+  MyStatemachine->attach(*MyLedStrip);
+  MyStatemachine->SetMachineWeapon(MySensor->GetActualWeapon());
+  switch (MySensor->GetActualWeapon()) {
     case FOIL:
-    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_FOIL);
+    MyStatemachine->StateChanged(EVENT_WEAPON | WEAPON_MASK_FOIL);
     break;
     case EPEE:
-    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
+    MyStatemachine->StateChanged(EVENT_WEAPON | WEAPON_MASK_EPEE);
     break;
     case SABRE:
-    MyStatemachine.StateChanged(EVENT_WEAPON | WEAPON_MASK_SABRE);
+    MyStatemachine->StateChanged(EVENT_WEAPON | WEAPON_MASK_SABRE);
     break;
   }
 }
 else{
   // When running in repeater mode
+  MyRepeaterReiver = &RepeaterReceiver::getInstance();
   Serial.println("Ouch! I am a repeater!");
-  MyRepeaterReiver.begin();
-  MyRepeaterReiver.attach(MyLedStrip);
-  MyRepeaterReiver.attach(MyTimeScoreDisplay);
-  MyRepeaterReiver.StartWatchDog();
-  MyLedStrip.SetMirroring(MyRepeaterReiver.Mirror());
+  MyRepeaterReiver->begin();
+  MyRepeaterReiver->attach(*MyLedStrip);
+  MyRepeaterReiver->attach(*MyTimeScoreDisplay);
+  MyRepeaterReiver->StartWatchDog();
+  MyLedStrip->SetMirroring(MyRepeaterReiver->Mirror());
 }
 
 }
@@ -119,60 +127,60 @@ void loop() {
   delay(1); // without this it simply doesn't work
   //vTaskDelay(1 / portTICK_PERIOD_MS);
   if(!bIsRepeater){
-    MyFPA422Handler.WifiPeriodicalUpdate();
+    MyFPA422Handler->WifiPeriodicalUpdate();
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
-    MyTimeScoreDisplay.ProcessEvents();
+    MyTimeScoreDisplay->ProcessEvents();
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
-    MyFPA422Handler.WifiPeriodicalUpdate();
+    MyFPA422Handler->WifiPeriodicalUpdate();
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
-    if(MyNetWork.IsExternalWifiAvailable())
+    if(MyNetWork->IsExternalWifiAvailable())
     {
-      MyCyranoHandler.PeriodicallyBroadcastStatus();
+      MyCyranoHandler->PeriodicallyBroadcastStatus();
       esp_task_wdt_reset();
       vTaskDelay(1 / portTICK_PERIOD_MS);
-      MyCyranoHandler.CheckConnection();
-      MyFPA422Handler.WifiPeriodicalUpdate();  // Not really needed because already done above
+      MyCyranoHandler->CheckConnection();
+      MyFPA422Handler->WifiPeriodicalUpdate();  // Not really needed because already done above
     }
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
 
-    if(MyStatemachine.IsConnectedToRemote())
+    if(MyStatemachine->IsConnectedToRemote())
     {
-      MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
+      MyTimeScoreDisplay->CycleScoreMatchAndTimeWhenNotFighting();
       esp_task_wdt_reset();
       vTaskDelay(1 / portTICK_PERIOD_MS);
-      MyFPA422Handler.WifiPeriodicalUpdate();
-      MyFPA422Handler.WifiPeriodicalUpdate();
+      MyFPA422Handler->WifiPeriodicalUpdate();
+      MyFPA422Handler->WifiPeriodicalUpdate();
 
     }
 
-    MyStatemachine.PeriodicallyBroadcastFullState(&MyRepeaterSender,FULL_STATUS_REPETITION_PERIOD);
+    MyStatemachine->PeriodicallyBroadcastFullState(MyRepeaterSender,FULL_STATUS_REPETITION_PERIOD);
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
-    MyRepeaterSender.RepeatLastMessage();
+    MyRepeaterSender->RepeatLastMessage();
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
-    //MyRepeaterSender.BroadcastHeartBeat();
-    if(MyStatemachine.GoToSleep())
+    //MyRepeaterSender->BroadcastHeartBeat();
+    if(MyStatemachine->GoToSleep())
     {
       prepareforDeepSleep();
     }
   }
   else{ // when in repeater mode
-    MyTimeScoreDisplay.ProcessEvents();
-    MyTimeScoreDisplay.CycleScoreMatchAndTimeWhenNotFighting();
+    MyTimeScoreDisplay->ProcessEvents();
+    MyTimeScoreDisplay->CycleScoreMatchAndTimeWhenNotFighting();
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
 
-    if(MyRepeaterReiver.IsWatchDogTriggered())
+    if(MyRepeaterReiver->IsWatchDogTriggered())
     { // We lost connection with the master scoring device
       // clear displays and start looking for MasterId
-      MyTimeScoreDisplay.DisplayPisteId();
-      MyLedStrip.ClearAll();
-      MyNetWork.FindAndSetMasterChannel(1,false);
+      MyTimeScoreDisplay->DisplayPisteId();
+      MyLedStrip->ClearAll();
+      MyNetWork->FindAndSetMasterChannel(1,false);
     }
   }
   esp_task_wdt_reset();
