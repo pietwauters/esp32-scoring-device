@@ -456,9 +456,14 @@ void saveParamsCallback () {
   Preferences networkpreferences;
   networkpreferences.begin("credentials", false);
   networkpreferences.putInt("pisteNr", newPistId);
-  uint16_t ThePort = 50100;
+  uint16_t ThePort = 0;
   sscanf(CyranoPort.getValue(),"%d",&ThePort);
   networkpreferences.putUShort("CyranoPort", ThePort);
+
+  uint16_t TheBroadcastPort = 0;
+  sscanf(CyranoBroadcastPort.getValue(),"%d",&TheBroadcastPort);
+  networkpreferences.putUShort("CyranoBcPort", TheBroadcastPort);
+
   char theWiFiMode = TryGlobalWiFi.getValue()[0];
 
   bool bTryGlobalWiFi = false;
@@ -548,7 +553,8 @@ void NetWork::WaitForNewSettingsViaPortal()
   uint16_t CyranoPortNr = networkpreferences.getUShort("CyranoPort", 50100);
   sprintf(temp,"%d",CyranoPortNr);
   CyranoPort.setValue(temp,8);
-  uint16_t CyranoBroadcastPortNr = networkpreferences.getUShort("CyranoBroadcastPort", 50101);
+
+  uint16_t CyranoBroadcastPortNr = networkpreferences.getUShort("CyranoBcPort", 50999);
   sprintf(temp,"%d",CyranoBroadcastPortNr);
   CyranoBroadcastPort.setValue(temp,8);
 
