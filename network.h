@@ -52,6 +52,7 @@ class NetWork : public Observer<UDPIOHandler>, public SingletonMixin<NetWork>
         bool IsExternalWifiAvailable(){return bConnectedToExternalNetwork;}
         void FindAndSetMasterChannel(int soft_retries=5, bool restart_on_timeout=false);
         int begin();
+        void DoFactoryReset();
 
     protected:
 
@@ -67,7 +68,7 @@ class NetWork : public Observer<UDPIOHandler>, public SingletonMixin<NetWork>
     String ssid;
     String password;
     String soft_ap_ssid = "Piste_0";
-    const char *soft_ap_password = "01041967";
+    String soft_ap_password = "01041967";
     channel_t channels[CHANNEL_COUNT]; // Array with all the channels
     int networks = -1;
     bool SavedNetworkExists = false;

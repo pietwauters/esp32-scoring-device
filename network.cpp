@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <WiFiAP.h>
 #include <Preferences.h>
+#include <nvs_flash.h>
 #include "AsyncUDP.h"
 #include <esp_now.h>
 // Below is for OTA updates using a webserver
@@ -288,7 +289,7 @@ bool NetWork::ConnectToExternalNetwork(long ConnectTimeout)
   }
   if(bConnectedToExternalNetwork)// if connected with saved credentials is successful we have to start the local AP ourselves
   {
-    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
+    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
     Serial.print("ESP32 IP on the WiFi network: ");
     Serial.println(WiFi.localIP());
   }
@@ -296,14 +297,52 @@ bool NetWork::ConnectToExternalNetwork(long ConnectTimeout)
 }
 
 
+void SetIPAddress(int CurrentPisteNr){
+  if(CurrentPisteNr > 254)
+    return;
+  // Set your Gateway IP address
+
+  Preferences networkpreferences;
+  networkpreferences.begin("credentials", false);
+  String strBaseAddress = networkpreferences.getString("BaseAddress", "172.20.255.1");
+  networkpreferences.end();
+
+  uint8_t octet1=172;
+  uint8_t octet2=20;
+  uint8_t octet3=255;
+  uint8_t octet4=1;
+  sscanf(strBaseAddress.c_str(),"%d.%d.%d.%d",&octet1,&octet2,&octet3,&octet4);
+  IPAddress local_IP;
+  IPAddress gateway(octet1, octet2, 0, 1); // I may want to make that condigurable too
+  if(octet3 == 255){
+    local_IP = IPAddress(octet1, octet2, CurrentPisteNr, octet4);
+  }
+  else {
+    if(octet4 == 255){
+      local_IP = IPAddress(octet1, octet2, octet3,CurrentPisteNr);}
+    else
+      return;
+  }
+  IPAddress subnet(255, 255, 0, 0);
+  IPAddress primaryDNS(8, 8, 8, 8);   //optional
+  IPAddress secondaryDNS(8, 8, 4, 4); //optional
+  // Set your Static IP address
+  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
+    Serial.println("STA Failed to configure");
+  }
+
+
+}
 
 void NetWork::GlobalStartWiFi()
 {
   if(m_GlobalWifiStarted)
     return;
 
+  Preferences networkpreferences;
   networkpreferences.begin("credentials", false);
   int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
+  soft_ap_password = networkpreferences.getString("AP_Password", "01041967");
   networkpreferences.end();
   networkpreferences.begin("scoringdevice", false);
   bool bIsrepeater = networkpreferences.getBool("RepeaterMode", false);
@@ -311,8 +350,11 @@ void NetWork::GlobalStartWiFi()
   if(-1 != PisteNr )
   {
     char temp[8];
-    sprintf(temp,"%03d",FindFirstFreePisteID(PisteNr));
+    int CurrentNr = FindFirstFreePisteID(PisteNr);
+    sprintf(temp,"%03d",CurrentNr);
     soft_ap_ssid = "Piste_" + (String)temp;
+    // Set your Static IP address
+    SetIPAddress(CurrentNr);
   }
   else
   {
@@ -328,7 +370,7 @@ void NetWork::GlobalStartWiFi()
       bestchannel = findBestWifiChannel() + 1;
       WiFi.mode(WIFI_MODE_AP);
 
-      WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
+      WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
       esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
 
       //Serial.print("current best channel = "); Serial.println(bestchannel);
@@ -338,7 +380,7 @@ void NetWork::GlobalStartWiFi()
   else{
     FindAndSetMasterChannel();
     WiFi.mode(WIFI_MODE_AP);
-    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
+    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
     esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
   }
 
@@ -346,7 +388,7 @@ void NetWork::GlobalStartWiFi()
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Hi! I am ESP32.");
   });
-
+  //esp_wifi_set_max_tx_power(20);
 
 }
 
@@ -413,6 +455,10 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
     Serial.println("HTTP OTA Update server started");
     return;
   }
+  if(UI_FULL_RESET == subtype){
+    ESP.restart();
+  }
+
 
   switch(subtype)
   {
@@ -427,7 +473,7 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
     {
       WiFi.disconnect();
       WiFi.mode(WIFI_MODE_AP);
-      WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
+      WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
     }
 
 
@@ -437,17 +483,31 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
 }
 
 WiFiManagerParameter WiFiPistId("WiFiPisteId", "PisteNr","",16);
+WiFiManagerParameter WiFiAPPasswd("WiFiAPPasswd", "WiFiAPPasswd","01041967",64);
+WiFiManagerParameter PowerMode("PowerSaveMode", "Deep Sleep","N",1);
 WiFiManagerParameter TryGlobalWiFi("TryGlobalWiFi", "Look for external network","N",1);
 
 WiFiManagerParameter CyranoPort("CyranoPort", "Cyrano Port","50100",16);
 WiFiManagerParameter CyranoBroadcastPort("CyranoBroadcastPort", "Cyrano Broadcast Port","50101",16);
-WiFiManagerParameter StartUpWeapon("StartUpWeapon", "Default Weapon at start_upt","F",8);
+WiFiManagerParameter FixedIPAddress("IPAddressing", "IP Addressing mode","172.20.255.1",16);
+WiFiManagerParameter StartUpWeapon("StartUpWeapon", "Default Weapon at start_up","F",8);
 
-WiFiManagerParameter RepeaterMode("RepeaterMode", "Is this a repeater?(Y/N)","N",1);
+WiFiManagerParameter RepeaterMode("RepeaterMode", "Is this a repeater","N",1);
 WiFiManagerParameter MasterPisteId("MasterPiste", "Piste to repeat","500",3);
-WiFiManagerParameter MirrorLights("MirrorLights", "Mirror lights?(Y/N)","N",1);
+WiFiManagerParameter MirrorLights("MirrorLights", "Mirror lights","N",1);
 
-
+bool ToBool(const char* input){
+  bool result = false;
+    switch(input[0])
+    {
+      case 'Y':
+      case 'y':
+      case '1':
+        result = true;
+      break;
+    }
+    return result;
+}
 
 void saveParamsCallback () {
 
@@ -456,6 +516,7 @@ void saveParamsCallback () {
   Preferences networkpreferences;
   networkpreferences.begin("credentials", false);
   networkpreferences.putInt("pisteNr", newPistId);
+  networkpreferences.putString("AP_Password",WiFiAPPasswd.getValue());
   uint16_t ThePort = 0;
   sscanf(CyranoPort.getValue(),"%d",&ThePort);
   networkpreferences.putUShort("CyranoPort", ThePort);
@@ -464,18 +525,9 @@ void saveParamsCallback () {
   sscanf(CyranoBroadcastPort.getValue(),"%d",&TheBroadcastPort);
   networkpreferences.putUShort("CyranoBcPort", TheBroadcastPort);
 
-  char theWiFiMode = TryGlobalWiFi.getValue()[0];
+  networkpreferences.putBool("TryGlobalWiFi",ToBool(TryGlobalWiFi.getValue()));
+  networkpreferences.putString("BaseAddress",FixedIPAddress.getValue());
 
-  bool bTryGlobalWiFi = false;
-    switch(theWiFiMode)
-    {
-      case 'Y':
-      case 'y':
-      case '1':
-        bTryGlobalWiFi = true;
-      break;
-    }
-    networkpreferences.putBool("TryGlobalWiFi",bTryGlobalWiFi);
   networkpreferences.end();
   Preferences mypreferences;
   mypreferences.begin("scoringdevice", false);
@@ -497,31 +549,9 @@ void saveParamsCallback () {
   mypreferences.putUChar("START_WEAPON",startweapon);
 
 // Code related to repeater / master mode
-char theMode = RepeaterMode.getValue()[0];
-
-bool bMode = false;
-  switch(theMode)
-  {
-    case 'Y':
-    case 'y':
-    case '1':
-      bMode = true;
-    break;
-  }
-  mypreferences.putBool("RepeaterMode",bMode);
-
-  theMode = MirrorLights.getValue()[0];
-  bool bMirror = false;
-    switch(theMode)
-    {
-      case 'Y':
-      case 'y':
-      case '1':
-        bMirror = true;
-      break;
-    }
-    mypreferences.putBool("MirrorLights",bMirror);
-
+  mypreferences.putBool("RepeaterMode",ToBool(RepeaterMode.getValue()));
+  mypreferences.putBool("Powersave",ToBool(PowerMode.getValue()));
+  mypreferences.putBool("MirrorLights",ToBool(MirrorLights.getValue()));
   int MasterId = -1;
   sscanf(MasterPisteId.getValue(),"%d",&MasterId);
   mypreferences.putInt("MasterPiste",MasterId);
@@ -538,31 +568,38 @@ void ConfigResetCallback()
 {
   Serial.println("In ConfigResetCallback");
 }
+char temp[2];
+char *BoolToStr(bool value){
+  sprintf(temp,"N");
+  if(value)
+    sprintf(temp,"Y");
+  return temp;
+}
 
 void NetWork::WaitForNewSettingsViaPortal()
 {
   Serial.println("In WaitForNewSettingsViaPortal()");
   Serial.println(soft_ap_ssid);
-  //Serial.println(soft_ap_password);
+
   networkpreferences.begin("credentials", false);
   int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
   char temp[8];
   sprintf(temp,"%d",PisteNr);
-
   WiFiPistId.setValue(temp, 8);
+
+  String soft_ap_password = networkpreferences.getString("AP_Password", "01041967");
+  WiFiAPPasswd.setValue(soft_ap_password.c_str(),64);
+
   uint16_t CyranoPortNr = networkpreferences.getUShort("CyranoPort", 50100);
   sprintf(temp,"%d",CyranoPortNr);
   CyranoPort.setValue(temp,8);
 
-  uint16_t CyranoBroadcastPortNr = networkpreferences.getUShort("CyranoBcPort", 50999);
+  uint16_t CyranoBroadcastPortNr = networkpreferences.getUShort("CyranoBcPort", 50100);
   sprintf(temp,"%d",CyranoBroadcastPortNr);
   CyranoBroadcastPort.setValue(temp,8);
 
-  bool bTryGlobalWiFi = networkpreferences.getBool("TryGlobalWiFi",false);
-  sprintf(temp,"N");
-  if(bTryGlobalWiFi)
-    sprintf(temp,"Y");
-  TryGlobalWiFi.setValue(temp,1);
+  TryGlobalWiFi.setValue(BoolToStr(networkpreferences.getBool("TryGlobalWiFi",false)),1);
+  FixedIPAddress.setValue((networkpreferences.getString("BaseAddress","172.20.255.1")).c_str(),16);
 
   networkpreferences.end();
 
@@ -583,27 +620,16 @@ void NetWork::WaitForNewSettingsViaPortal()
     case 2:
     sprintf(temp,"S");
     break;
-    defaut:
+    default:
     sprintf(temp,"E");
 
   }
   StartUpWeapon.setValue(temp,1);
 
-  bool Mode = false;
-
-  Mode = mypreferences.getBool("RepeaterMode",true);
-  sprintf(temp,"N");
-  if(Mode)
-    sprintf(temp,"Y");
-  RepeaterMode.setValue(temp,1);
-
-  bool bMirror = false;
-
-  bMirror = mypreferences.getBool("MirrorLights",true);
-  sprintf(temp,"N");
-  if(bMirror)
-    sprintf(temp,"Y");
-  MirrorLights.setValue(temp,1);
+  PowerMode.setValue(BoolToStr(mypreferences.getBool("Powersave",false)),1);
+  RepeaterMode.setValue(BoolToStr(mypreferences.getBool("RepeaterMode",false)),1);
+  cout << mypreferences.getBool("RepeaterMode",false) << endl;
+  MirrorLights.setValue(BoolToStr(mypreferences.getBool("MirrorLights",false)),1);
 
   int32_t MasterNr = mypreferences.getInt("MasterPiste", -1);
   sprintf(temp,"%d",MasterNr);
@@ -613,12 +639,14 @@ void NetWork::WaitForNewSettingsViaPortal()
   server.end();
 
   wm.addParameter(&WiFiPistId);
+  wm.addParameter(&WiFiAPPasswd);
 
   wm.addParameter(&TryGlobalWiFi);
   wm.addParameter(&CyranoPort);
   wm.addParameter(&CyranoBroadcastPort);
+  wm.addParameter(&FixedIPAddress);
   wm.addParameter(&StartUpWeapon);
-
+  wm.addParameter(&PowerMode);
   wm.addParameter(&RepeaterMode);
   wm.addParameter(&MasterPisteId);
   wm.addParameter(&MirrorLights);
@@ -631,10 +659,24 @@ void NetWork::WaitForNewSettingsViaPortal()
   wm.setConfigResetCallback(ConfigResetCallback);
   wm.setShowInfoUpdate(false);
   wm.setParamsPage(true);
-  wm.startConfigPortal(soft_ap_ssid.c_str(), soft_ap_password);
+  wm.startConfigPortal(soft_ap_ssid.c_str(), soft_ap_password.c_str());
   //ESP.restart();
   m_GlobalWifiStarted = false;
   NetWork::GlobalStartWiFi();
+}
+
+void NetWork::DoFactoryReset(){
+  Preferences networkpreferences;
+  networkpreferences.begin("credentials", false);
+  networkpreferences.clear();
+  networkpreferences.end();
+
+  Preferences mypreferences;
+  mypreferences.begin("scoringdevice", false);
+  mypreferences.clear();
+  mypreferences.end();
+  nvs_flash_erase(); // erase the NVS partition and...
+  nvs_flash_init(); // initialize the NVS partition.
 }
 
 
