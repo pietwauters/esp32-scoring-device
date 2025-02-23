@@ -65,6 +65,7 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         int previous_seconds =99;  // This will always result in setting a correct initial value
         uint32_t m_timeToShowTimer = 0;
         long NextTimeToCheckConnection = 0;
+        long LastHelloReception = 0;
         bool bWifiConnected = false;
         bool bCyranoConnected = false;
 

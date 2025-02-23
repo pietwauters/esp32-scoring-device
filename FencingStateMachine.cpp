@@ -845,9 +845,11 @@ void FencingStateMachine::DoStateMachineTick()
   }
   else {
     if(!m_GlobalIdle){
-      if(m_LastLightEventTime + IDLE_TIME_MS < millis()){
-        StateChanged(EVENT_IDLE | EVENT_GO_INTO_IDLE);
-        m_GlobalIdle = true;
+      if(EPEE == m_MachineWeapon){
+        if(m_LastLightEventTime + IDLE_TIME_MS < millis()){
+          StateChanged(EVENT_IDLE | EVENT_GO_INTO_IDLE);
+          m_GlobalIdle = true;
+        }
       }
     }
     else{
@@ -917,14 +919,14 @@ void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
       m_nrOfRounds = 9;
     }
   }
-
+/*
   if(input[RoundNumber] != emptystring)
   {
   	//Do Something with input[RoundNumber];
     sscanf(input[RoundNumber].c_str(),"%d",& m_currentRound);
     StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
   }
-
+*/
   if(input[Weapon] != emptystring)
   {
   	//Do Something with input[Weapon];

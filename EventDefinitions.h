@@ -113,6 +113,7 @@ union mix_t
 #define UI_START_WIFI_PORTAL 0x00020000
 #define UI_START_OTA_PORTAL 0x00030000
 #define UI_CONNECT_TO_WIFI 0x00040000
+#define UI_FULL_RESET 0x00050000
 
 // Below are the subtype definitions for P-Card related events
 #define EVENT_NO_P_CARD 0x00000000
@@ -141,6 +142,7 @@ union mix_t
 #define EVENT_CYRANO_STATE_F 0x30000046
 #define EVENT_CYRANO_STATE_P 0x30000050
 #define EVENT_CYRANO_STATE_NAK 0x30000035
+#define EVENT_CYRANO_STATE_E 0x30000045
 
 // WS2812 Animation types
 #define EVENT_WS2812_WELCOME 0x08010000

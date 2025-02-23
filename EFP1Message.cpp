@@ -309,3 +309,48 @@ uint8_t EFP1Message::EFP1StatusString2Type10MessageStatus()
   // none of the above, retrun unknown
   return 'U';
 }
+
+void const EFP1Message::print()const {
+
+  std::cout << " Protocol: " << (*this)[Protocol] << std::endl;
+std::cout << " Command: " << (*this)[Command] << std::endl;
+std::cout << " PisteId: " << (*this)[PisteId] << std::endl;
+std::cout << " CompetitionId: " << (*this)[CompetitionId] << std::endl;
+std::cout << " PhaseNumber: " << (*this)[PhaseNumber] << std::endl;
+std::cout << " Poule_Tableau_Id: " << (*this)[Poule_Tableau_Id] << std::endl;
+std::cout << " MatchNumber: " << (*this)[MatchNumber] << std::endl;
+std::cout << " RoundNumber: " << (*this)[RoundNumber] << std::endl;
+std::cout << " Start_time: " << (*this)[Start_time] << std::endl;
+std::cout << " StopWatch: " << (*this)[StopWatch] << std::endl;
+std::cout << " CompetitionType: " << (*this)[CompetitionType] << std::endl;
+std::cout << " Weapon: " << (*this)[Weapon] << std::endl;
+std::cout << " Priority: " << (*this)[Priority] << std::endl;
+std::cout << " State: " << (*this)[State] << std::endl;
+std::cout << " RefereeId: " << (*this)[RefereeId] << std::endl;
+std::cout << " RefereeName: " << (*this)[RefereeName] << std::endl;
+std::cout << " RefereeNation: " << (*this)[RefereeNation] << std::endl;
+std::cout << " RightFencerId: " << (*this)[RightFencerId] << std::endl;
+std::cout << " RightFencerName: " << (*this)[RightFencerName] << std::endl;
+std::cout << " RightFencerNation: " << (*this)[RightFencerNation] << std::endl;
+std::cout << " RightScore: " << (*this)[RightScore] << std::endl;
+std::cout << " RightStatus: " << (*this)[RightStatus] << std::endl;
+std::cout << " RightYCard: " << (*this)[RightYCard] << std::endl;
+std::cout << " RightRCard: " << (*this)[RightRCard] << std::endl;
+std::cout << " RightLight: " << (*this)[RightLight] << std::endl;
+std::cout << " RightWhiteLight: " << (*this)[RightWhiteLight] << std::endl;
+std::cout << " RightMedicalIntervention: " << (*this)[RightMedicalIntervention] << std::endl;
+std::cout << " RightReserveIntroduction: " << (*this)[RightReserveIntroduction] << std::endl;
+std::cout << " RightPCards: " << (*this)[RightPCards] << std::endl;
+std::cout << " LeftFencerId: " << (*this)[LeftFencerId] << std::endl;
+std::cout << " LeftFencerName: " << (*this)[LeftFencerName] << std::endl;
+std::cout << " LeftFencerNation: " << (*this)[LeftFencerNation] << std::endl;
+std::cout << " LeftScore: " << (*this)[LeftScore] << std::endl;
+std::cout << " LeftStatus: " << (*this)[LeftStatus] << std::endl;
+std::cout << " LeftYCard: " << (*this)[LeftYCard] << std::endl;
+std::cout << " LeftRCard: " << (*this)[LeftRCard] << std::endl;
+std::cout << " LeftLight: " << (*this)[LeftLight] << std::endl;
+std::cout << " LeftWhiteLight: " << (*this)[LeftWhiteLight] << std::endl;
+std::cout << " LeftMedicalIntervention: " << (*this)[LeftMedicalIntervention] << std::endl;
+std::cout << " LeftReserveIntroduction: " << (*this)[LeftReserveIntroduction] << std::endl;
+std::cout << " LeftPCards: " << (*this)[LeftPCards] << std::endl;
+}

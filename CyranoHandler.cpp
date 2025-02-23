@@ -41,10 +41,12 @@ void CyranoHandler::SendInfoMessage()
   m_MachineStatus[Command] = "INFO";
   TheMessage = m_MachineStatus.ToString(TheMessage);
   //CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
-  CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
-  //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
 
-  //cout << "Sending info message: " << TheMessage << endl;
+if(false)
+  CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+else
+  CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), SoftwareIPAddress(),CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+  //cout << "Sending info message: " << TheMessage << "To:" << SoftwareIPAddress() << ":" << CyranoBroadcastPort <<endl;
   //StateChanged(TheMessage);
   return;
 }
@@ -65,9 +67,10 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
         }
         bOKToSend = true;
         bSoftwareIsLive = true;
+        LastHelloReception = millis();
         //m_MachineStatus[CompetitionId] = input[CompetitionId];
         SendInfoMessage();
-        //cout << "received HELLO" << endl;
+
         break;
 
         case DISP :
@@ -75,22 +78,17 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
         if(WAITING == m_State)
         {
             // Initialize with the received values
-
           EFP1Message  temp;
-
           temp = m_MachineStatus;
-
           temp.Prune(input);
-
           string msg;
           temp.ToString(msg);
-
           StateChanged(msg);
-
           m_MachineStatus.CopyIfNotEmpty(input);
-
+          m_MachineStatus[State] = "W";
+          m_State = WAITING;
+          StateChanged(EVENT_CYRANO_STATE_W);
           m_MachineStatus[Command] = "INFO";
-
         }
 
         break;
@@ -129,8 +127,13 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         {
             string TheMessage = m_MachineStatus.MakeNextMessageString();
             //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
-            CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+            //CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+            if(false)
+              CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+            else
+              CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), SoftwareIPAddress(),CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
 
+            StateChanged(EVENT_CYRANO_STATE_W);
         }
         break;
 
@@ -140,8 +143,12 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         {
           string TheMessage = m_MachineStatus.MakePrevMessageString();
           //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
-          CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
-          //cout << "Sending PREV message: " << TheMessage << endl;
+          //CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+          if(false)
+            CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+          else
+            CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), SoftwareIPAddress(),CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+          StateChanged(EVENT_CYRANO_STATE_W);
         }
         break;
 
@@ -162,7 +169,9 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         {
           m_State = ENDING;
           m_MachineStatus[State] = "E";
+          StateChanged(EVENT_CYRANO_STATE_E);
           SendInfoMessage();
+
         }
         break;
 
@@ -416,8 +425,7 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
 
 void ProcessCyranoPacket (AsyncUDPPacket packet)
 {
-  //Serial.println("received some data from the server");
-  //Serial.println((char*)packet.data());
+
   // If Software is live, we know the IP address. If the received packet does
   // come from the Software, we can ignore it.
   CyranoHandler &MyCyranoHandler = CyranoHandler::getInstance();
@@ -440,8 +448,14 @@ void ProcessCyranoPacket (AsyncUDPPacket packet)
 
 void CyranoHandler::CheckConnection()
 {
-  if(bCyranoConnected)
+  if(bCyranoConnected){
+    if(LastHelloReception + 40000 < millis()){
+      bSoftwareIsLive = false;
+      StateChanged(EVENT_CYRANO_STATE_W);
+    }
     return;
+  }
+
   /*if(millis() < NextTimeToCheckConnection)
     return;
   NextTimeToCheckConnection = millis() + 2500;*/
@@ -469,13 +483,14 @@ void CyranoHandler::CheckConnection()
 
   }
 }
+
 void CyranoHandler::PeriodicallyBroadcastStatus()
 {
   if(!bOKToSend)
     return;
   if(NextPeriodicalUpdate > millis())
     return;
-  NextPeriodicalUpdate = millis() + 10000;
+  NextPeriodicalUpdate = millis() + 17000;
   SendInfoMessage();
   return;
 

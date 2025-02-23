@@ -27,6 +27,9 @@
 #include "driver/adc.h"
 #include "esp_task_wdt.h"
 #include "network.h"
+#include "ResetHandler.h"
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 
 
 WS2812B_LedStrip *MyLedStrip;
@@ -41,8 +44,13 @@ RepeaterReceiver *MyRepeaterReiver;
 RepeaterSender *MyRepeaterSender;
 
 bool bIsRepeater = false;
+bool bEnableDeepSleep = false;
+int FactoryResetCounter = 50;
 void setup() {
-  cout << "Time to get here: " << millis() << endl;
+  //cout << "Time to get here: " << millis() << endl;
+  //uint32_t brown_reg_temp = READ_PERI_REG(RTC_CNTL_BROWN_OUT_REG); //save WatchDog register
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
+  //WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, brown_reg_temp); //enable brownout detector
   MyLedStrip = &WS2812B_LedStrip::getInstance();
   MyLedStrip->begin();
   MyTimeScoreDisplay = new TimeScoreDisplay();
@@ -60,10 +68,12 @@ void setup() {
   Preferences mypreferences;
   mypreferences.begin("scoringdevice", RO_MODE);
   bIsRepeater = mypreferences.getBool("RepeaterMode",false);
+  bEnableDeepSleep = mypreferences.getBool("Powersave",false);
   mypreferences.end();
   MyNetWork = &NetWork::getInstance();
   MyNetWork->begin();
-
+  update_reset_reasons();
+  print_historical_reset_reason();
   MyNetWork->GlobalStartWiFi();
   Serial.println("Wifi started");
   Serial.println("by now the you should have seen all the lights one by one");
@@ -117,6 +127,11 @@ else{
   MyRepeaterReiver->StartWatchDog();
   MyLedStrip->SetMirroring(MyRepeaterReiver->Mirror());
 }
+Serial.println(WiFi.localIP());
+Serial.println("MAC address: ");
+  Serial.println(WiFi.macAddress());
+// Add GPIO0 code here
+
 
 }
 
@@ -138,11 +153,11 @@ void loop() {
     vTaskDelay(1 / portTICK_PERIOD_MS);
     if(MyNetWork->IsExternalWifiAvailable())
     {
-      MyCyranoHandler->PeriodicallyBroadcastStatus();
+      //MyCyranoHandler->PeriodicallyBroadcastStatus();
       esp_task_wdt_reset();
       vTaskDelay(1 / portTICK_PERIOD_MS);
       MyCyranoHandler->CheckConnection();
-      MyFPA422Handler->WifiPeriodicalUpdate();  // Not really needed because already done above
+      //MyFPA422Handler->WifiPeriodicalUpdate();  // Not really needed because already done above
     }
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -154,7 +169,6 @@ void loop() {
       vTaskDelay(1 / portTICK_PERIOD_MS);
       MyFPA422Handler->WifiPeriodicalUpdate();
       MyFPA422Handler->WifiPeriodicalUpdate();
-
     }
 
     MyStatemachine->PeriodicallyBroadcastFullState(MyRepeaterSender,FULL_STATUS_REPETITION_PERIOD);
@@ -164,7 +178,8 @@ void loop() {
     esp_task_wdt_reset();
     vTaskDelay(1 / portTICK_PERIOD_MS);
     //MyRepeaterSender->BroadcastHeartBeat();
-    if(MyStatemachine->GoToSleep())
+
+    if(bEnableDeepSleep && MyStatemachine->GoToSleep())
     {
       prepareforDeepSleep();
     }
@@ -184,4 +199,18 @@ void loop() {
     }
   }
   esp_task_wdt_reset();
+  if(!digitalRead(0)){
+    if(!FactoryResetCounter){
+      cout << "Bootpin pressed" << endl;
+      MyNetWork->DoFactoryReset();
+      ESP.restart();
+      FactoryResetCounter = 200;
+    }
+    else
+      FactoryResetCounter--;
+  }
+  else {
+    FactoryResetCounter = 200;
+  }
+
 }

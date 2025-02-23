@@ -183,9 +183,11 @@ void FPA422Handler::StartWiFi()
   networkpreferences.end();
   Message10.SetPiste(PisteNr);
   Message10.SetIPAddress((uint32_t)localip);
-  Message10.Print();
+  //Message10.Print();
   AnnouncingPort = 65535 - (2* PisteNr) +1;
-
+  if(MyNetWork.IsExternalWifiAvailable()){
+    SetCyranoStatus('1');
+  }
 #ifdef ALLOW_BLE
   StartBLE();
 #endif

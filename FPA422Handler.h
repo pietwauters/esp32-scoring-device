@@ -49,7 +49,7 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
         void WifiTransmitMessage(int Type);
         void AllProtocolsTransmitMessage(int Type);
         void WifiPeriodicalUpdate();
-        void SetCyranoStatus();
+        void SetCyranoStatus(char TheState){Message10.SetCyranoStatus(TheState);};
 
     protected:
 
