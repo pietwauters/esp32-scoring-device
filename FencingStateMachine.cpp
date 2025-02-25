@@ -185,6 +185,28 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       event_data = UI_INPUT_START_TIMER;
     }
   }
+  
+  uint8_t val = (eventtype & 0x0000ff00)>>8;
+  switch(eventtype & 0x000000ff){
+
+    case UI_SET_MINUTES:
+      m_Timer.SetMinutes(val);
+      StateChanged(MakeTimerEvent());
+
+    break;
+
+    case UI_SET_SECONDS:
+    m_Timer.SetSeconds(val);
+
+    StateChanged(MakeTimerEvent());
+    break;
+
+    case UI_SET_HUNDREDS:
+    m_Timer.SetHundredths(val);
+
+    StateChanged(MakeTimerEvent());
+    break;
+  }
 
   switch(event_data)
   {
@@ -484,62 +506,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
   }
 
 }
-/*
-void FencingStateMachine::ProcessUW2F()
-{
-    if(m_ScoreLeft != m_ScoreRight)
-    {
-        if(m_ScoreLeft > m_ScoreRight)
-        {
-          if(m_PCardRight < 3)
-          {
-            m_PCardRight++;
-            if(m_PCardRight > 1)
-            {
-              m_ScoreLeft++;
-              StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
-            }
-          }
-        }
 
-        else
-        {
-          if(m_PCardLeft < 3)
-          {
-            m_PCardLeft++;
-            if(m_PCardLeft > 1)
-            {
-              m_ScoreRight++;
-              StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
-            }
-          }
-        }
-
-    }
-    else
-    {
-
-      if(m_PCardLeft < 3)
-      {
-        m_PCardLeft++;
-        if(m_PCardLeft > 1)
-        {
-          m_ScoreRight++;
-          StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
-        }
-      }
-      if(m_PCardRight < 3)
-      {
-        m_PCardRight++;
-        if(m_PCardRight > 1)
-        {
-          m_ScoreLeft++;
-          StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
-        }
-      }
-
-    }
-}*/
 // New Rule after FIE Congress 26/11/2022
 void FencingStateMachine::ProcessUW2F()
 {
