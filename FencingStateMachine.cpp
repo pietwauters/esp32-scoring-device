@@ -185,7 +185,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       event_data = UI_INPUT_START_TIMER;
     }
   }
-  
+
   uint8_t val = (eventtype & 0x0000ff00)>>8;
   switch(eventtype & 0x000000ff){
 
@@ -557,7 +557,7 @@ uint32_t FencingStateMachine::MakeTimerEvent()
   temp |= EVENT_TIMER;
   return temp;
 }
-void FencingStateMachine::ClearAllCards()
+void FencingStateMachine::ClearAllCards(bool bIncludePCards)
 {
   m_YellowCardLeft =0;
   m_YellowCardRight =0;
@@ -565,15 +565,17 @@ void FencingStateMachine::ClearAllCards()
   m_RedCardRight =0;
   m_BlackCardLeft =0;
   m_BlackCardRight =0;
-  m_YellowPCardLeft =0;
-  m_YellowPCardRight =0;
-  m_RedPCardLeft =0;
-  m_RedPCardRight =0;
-  m_BlackPCardLeft =0;
-  m_BlackPCardRight =0;
-  m_PCardLeft = 0;
-  m_PCardRight = 0;
-  StateChanged(EVENT_P_CARD);
+  if(bIncludePCards){
+    m_YellowPCardLeft =0;
+    m_YellowPCardRight =0;
+    m_RedPCardLeft =0;
+    m_RedPCardRight =0;
+    m_BlackPCardLeft =0;
+    m_BlackPCardRight =0;
+    m_PCardLeft = 0;
+    m_PCardRight = 0;
+    StateChanged(EVENT_P_CARD);
+  }
   StateChanged(EVENT_YELLOW_CARD_RIGHT);
   StateChanged(EVENT_RED_CARD_RIGHT);
   StateChanged(EVENT_BLACK_CARD_RIGHT);
@@ -658,7 +660,7 @@ void FencingStateMachine::SetNextTimerStateAndRoundAndNewTimeOnTimerZero()
           m_UW2FTimer.Reset();
           m_UW2FSeconds = 0;
           StateChanged(EVENT_UW2F_TIMER);
-          ClearAllCards();
+          ClearAllCards(false);
           m_currentRound++;
         }
       }

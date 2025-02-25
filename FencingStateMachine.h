@@ -164,7 +164,7 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         void GetFormattedStringTime(char *Destination, int MinutePrecision, int HundredthsPrecision){m_Timer.GetFormattedStringTime(Destination, MinutePrecision, HundredthsPrecision);};
         bool IsConnectedToRemote(){return m_IsConnectedToRemote;};
         void SetConnectedToRemote(bool value){m_IsConnectedToRemote = value;};
-        void ClearAllCards();
+        void ClearAllCards(bool bIncludePCards = true);
         void ProcessSpecialSetting (uint32_t eventtype);
         bool incrementScoreAndCheckForMinuteBreak(bool bLeftFencer);
         uint32_t get_max_score();
