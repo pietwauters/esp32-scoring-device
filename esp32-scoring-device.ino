@@ -46,11 +46,18 @@ RepeaterSender *MyRepeaterSender;
 bool bIsRepeater = false;
 bool bEnableDeepSleep = false;
 int FactoryResetCounter = 50;
+
+const int PowerPin = 12;
 void setup() {
   //cout << "Time to get here: " << millis() << endl;
   //uint32_t brown_reg_temp = READ_PERI_REG(RTC_CNTL_BROWN_OUT_REG); //save WatchDog register
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   //WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, brown_reg_temp); //enable brownout detector
+
+  //Switch the power of all LED modules on
+  pinMode(PowerPin, OUTPUT);
+  digitalWrite(PowerPin,HIGH);
+
   MyLedStrip = &WS2812B_LedStrip::getInstance();
   MyLedStrip->begin();
   MyTimeScoreDisplay = new TimeScoreDisplay();
