@@ -214,6 +214,26 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         }
         break;
 
+        case  UI_ABANDON_LEFT :
+        bOKToSend = true;
+        {
+          m_MachineStatus[LeftStatus] = "A";
+          string msg;
+          m_MachineStatus.ToString(msg);
+          StateChanged(msg);
+          SendInfoMessage();
+        }
+
+        case  UI_ABANDON_RIGHT :
+        bOKToSend = true;
+        {
+          m_MachineStatus[RightStatus] = "A";
+          string msg;
+          m_MachineStatus.ToString(msg);
+          StateChanged(msg);
+          SendInfoMessage();
+        }
+
     }
 
 }
@@ -387,6 +407,26 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
       stringstream ss; ss << event_data;
       ss >> m_MachineStatus[RightRCard];
     }
+    break;
+
+    case EVENT_BLACK_CARD_LEFT:
+    {
+      if(event_data)
+        m_MachineStatus[RightStatus] = "E";
+      else
+        m_MachineStatus[RightStatus] = "U";
+    }
+    //cout << "Right competitor status = " << m_MachineStatus[RightStatus] << endl;
+    break;
+
+    case EVENT_BLACK_CARD_RIGHT:
+    {
+      if(event_data)
+        m_MachineStatus[LeftStatus] = "E";
+      else
+        m_MachineStatus[LeftStatus] = "U";
+    }
+    //cout << "Left competitor status = " << m_MachineStatus[LeftStatus]<< endl;
     break;
 
     case EVENT_P_CARD:

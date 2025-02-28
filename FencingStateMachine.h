@@ -181,6 +181,7 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
       bool ShouldBlockHitsOnTimerZero();
       void SetNextTimerStateAndRoundAndNewTimeOnTimerZero();
       void ProcessUW2F();
+      void ProcessUW2FUndo();
 
     // private member variables
         bool m_Red; //!< Member variable "m_Red"

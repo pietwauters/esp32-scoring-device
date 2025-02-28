@@ -162,6 +162,7 @@ void FencingStateMachine::TransmitFullStateToDisplay (RepeaterSender *TheRepeate
 void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
 {
   uint32_t event_data = eventtype & UI_SUB_TYPE_MASK;
+
   uint32_t maineventtype = eventtype & MAIN_TYPE_MASK ;
   uint32_t card_event;
   m_IsConnectedToRemote = true;
@@ -383,6 +384,20 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
     break;
 
+    case UI_INPUT_BLACK_CARD_LEFT:
+        m_BlackCardLeft = 1;
+        card_event = m_BlackCardLeft | EVENT_BLACK_CARD_LEFT;
+        StateChanged(card_event );
+
+    break;
+
+    case UI_INPUT_BLACK_CARD_RIGHT:
+        m_BlackCardRight = 1;
+        card_event = m_BlackCardRight | EVENT_BLACK_CARD_RIGHT;
+        StateChanged(card_event );
+
+    break;
+
     case UI_INPUT_YELLOW_CARD_LEFT_DECR:
       if(m_YellowCardLeft == 1)
       {
@@ -431,12 +446,60 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
 
     break;
 
+    case UI_INPUT_BLACK_CARD_LEFT_DECR:
+        m_BlackCardLeft = 0;
+        card_event = m_BlackCardLeft | EVENT_BLACK_CARD_LEFT;
+        StateChanged(card_event );
+
+    break;
+
+    case UI_INPUT_BLACK_CARD_RIGHT_DECR:
+        m_BlackCardRight = 0;
+        card_event = m_BlackCardRight | EVENT_BLACK_CARD_RIGHT;
+        StateChanged(card_event );
+
+    break;
 
     case UI_INPUT_P_CARD:
     ProcessUW2F();
     StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
     m_UW2FTimer.Reset();
     StateChanged(EVENT_UW2F_TIMER);
+    break;
+
+    case UI_INPUT_P_CARD_UNDO:
+    ProcessUW2FUndo();
+    StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+
+    break;
+
+    case UI_INPUT_BLACK_PCARD_LEFT:
+    if(m_PCardLeft == 2){
+      m_PCardLeft +=2;
+      StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+    }
+    break;
+
+    case UI_INPUT_BLACK_PCARD_RIGHT:
+    if(m_PCardRight == 2){
+      m_PCardRight +=2;
+      StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+    }
+    break;
+
+    case UI_INPUT_BLACK_PCARD_LEFT_DECR:
+
+    if(m_PCardLeft == 4){
+      m_PCardLeft =2;
+      StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+    }
+    break;
+
+    case UI_INPUT_BLACK_PCARD_RIGHT_DECR:
+    if(m_PCardRight == 4){
+      m_PCardRight =2;
+      StateChanged(EVENT_P_CARD |  m_PCardLeft | m_PCardRight << 8);
+    }
     break;
 
     case UI_BUZZ:
@@ -515,12 +578,12 @@ void FencingStateMachine::ProcessUW2F()
   {
     if(m_ScoreLeft > m_ScoreRight)
     {
-      m_PCardRight++;
+      m_PCardRight+=2;
       return;
     }
     if(m_ScoreLeft < m_ScoreRight)
     {
-      m_PCardLeft++;
+      m_PCardLeft+=2;
       return;
     }
     // I don't know how to deal with the black P-Card in case of equal score
@@ -548,6 +611,50 @@ void FencingStateMachine::ProcessUW2F()
       }
     }
 
+}
+
+void FencingStateMachine::ProcessUW2FUndo()
+{
+  if(m_PCardLeft == 0){  // in this case also m_PCardRight = 0 -> noting to do
+    return;
+  }
+
+  if(m_PCardLeft == 1){  // in this case also m_PCardRight = 1 -> just remove the cards, no score change needed
+    m_PCardLeft = 0;
+    m_PCardRight = 0;
+    m_UW2FTimer.RestorePreviousState();
+    m_UW2FSeconds = m_UW2FTimer.GetIntermediateTime();
+    StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
+    return;
+  }
+
+
+  if((m_PCardLeft == 2) && (m_PCardRight == 2)){   //-> show yellow cards and change the score
+    m_PCardLeft = 1;
+    m_PCardRight = 1;
+    m_ScoreRight--;
+    m_ScoreLeft--;
+    StateChanged(EVENT_SCORE_RIGHT | m_ScoreRight);
+    StateChanged(EVENT_SCORE_LEFT | m_ScoreLeft);
+    m_UW2FTimer.RestorePreviousState();
+    m_UW2FSeconds = m_UW2FTimer.GetIntermediateTime();
+    StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
+    return;
+  }
+
+  // At least one of the 2 is black, otherwise we wouldn't be here. If it is not black, it is red, and requires no change
+  if(m_PCardLeft == 4){
+    m_PCardLeft = 2;
+  }
+
+  if(m_PCardRight == 4){
+    m_PCardRight = 2;
+  }
+
+  m_UW2FTimer.RestorePreviousState();
+  m_UW2FSeconds = m_UW2FTimer.GetIntermediateTime();
+  StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
+  return;
 }
 
 uint32_t FencingStateMachine::MakeTimerEvent()
@@ -1114,6 +1221,8 @@ bool FencingStateMachine::incrementScoreAndCheckForMinuteBreak(bool bLeftFencer)
   return false;
 
 }
+
+
 
 void FencingStateMachine::PeriodicallyBroadcastFullState(class RepeaterSender *TheRepeater,long Period){
   if(millis() > m_TimeToBroadcastFullState)

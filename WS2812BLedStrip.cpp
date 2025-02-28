@@ -486,7 +486,7 @@ void WS2812B_LedStrip::updateHelper(uint32_t eventtype)
           m_RedPCardLeft = 1;
           break;
 
-          case 3:
+          case 4:
           m_YellowPCardLeft = true;
           m_RedPCardLeft = 2;
           break;
@@ -510,7 +510,7 @@ void WS2812B_LedStrip::updateHelper(uint32_t eventtype)
           m_RedPCardRight = 1;
           break;
 
-          case 3:
+          case 4:
           m_YellowPCardRight = true;
           m_RedPCardRight = 2;
           break;
@@ -636,6 +636,7 @@ void WS2812B_LedStrip::AnimateWarning()
     vTaskDelay( (m_NextTimeToToggleBuzzer) / portTICK_PERIOD_MS );
   }
 }
+
 void WS2812B_LedStrip::StartWarning(uint32_t nr_beeps)
 {
   m_warningcounter = (nr_beeps * 2) + 1 ;
@@ -643,6 +644,49 @@ void WS2812B_LedStrip::StartWarning(uint32_t nr_beeps)
   m_WarningOngoing = true;
 }
 
+void WS2812B_LedStrip::AnimateEngardePretsAllez()
+{
+  while(m_EGAOngoing){
+    vTaskDelay( (EGPATiming[m_EngardePretsAllezCounter]) / portTICK_PERIOD_MS );
+    if(m_EGAOBuzzing)
+    {
+      setBuzz(false);
+      setWhiteLeft(false);
+      setWhiteRight(false);
+      myShow();
+      m_EGAOBuzzing = false;
+      if(m_EngardePretsAllezCounter < 12)
+      {
+        m_EngardePretsAllezCounter++;
+      }
+      else{
+        m_EGAOngoing = false;
+          }
+    }
+    else
+    {
+      if(m_EngardePretsAllezCounter < 11)
+      {
+        setBuzz(true);
+        setWhiteLeft(true);
+        setWhiteRight(true);
+        myShow();
+        m_EGAOBuzzing = true;
+        m_EngardePretsAllezCounter++;
+      }
+      else{
+        m_EGAOngoing = false;
+      }
+    }
+  }
+}
+void WS2812B_LedStrip::StartEngardePretsAllezSequence()
+{
+  m_EngardePretsAllezCounter = 0 ;
+  setBuzz(true);
+  m_EGAOngoing = true;
+  m_EGAOBuzzing = true;
+}
 
 void WS2812B_LedStrip::setBuzz(bool Value)
 {
@@ -888,7 +932,8 @@ void WS2812B_LedStrip::DoAnimation(uint32_t type){
     break;
 
     case EVENT_WS2812_ENGARDE_PRETS_ALLEZ:
-
+    StartEngardePretsAllezSequence();
+    AnimateEngardePretsAllez();
     break;
 
   }

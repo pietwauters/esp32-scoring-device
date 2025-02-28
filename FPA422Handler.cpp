@@ -619,6 +619,16 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
     AllProtocolsTransmitMessage(3);
     break;
 
+    case EVENT_BLACK_CARD_LEFT:
+    Message3.SetBlackCardLeft(event_data);
+    AllProtocolsTransmitMessage(3);
+    break;
+
+    case EVENT_BLACK_CARD_RIGHT:
+    Message3.SetBlackCardRight(event_data);
+    AllProtocolsTransmitMessage(3);
+    break;
+
     case EVENT_P_CARD:
 
         PCardInfo.theDWord = eventtype & DATA_24BIT_MASK;
