@@ -576,17 +576,8 @@ void FencingStateMachine::ProcessUW2F()
 
   if(m_PCardLeft == 2)
   {
-    if(m_ScoreLeft > m_ScoreRight)
-    {
-      m_PCardRight+=2;
-      return;
-    }
-    if(m_ScoreLeft < m_ScoreRight)
-    {
-      m_PCardLeft+=2;
-      return;
-    }
-    // I don't know how to deal with the black P-Card in case of equal score
+    m_PCardRight+=2;
+    m_PCardLeft+=2;
     return;
   }
     if(m_PCardLeft < 2)
@@ -641,20 +632,15 @@ void FencingStateMachine::ProcessUW2FUndo()
     StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
     return;
   }
-
-  // At least one of the 2 is black, otherwise we wouldn't be here. If it is not black, it is red, and requires no change
-  if(m_PCardLeft == 4){
+  if((m_PCardLeft == 4) && (m_PCardRight == 4)){   //-> show yellow cards and change the score
     m_PCardLeft = 2;
-  }
-
-  if(m_PCardRight == 4){
     m_PCardRight = 2;
-  }
 
-  m_UW2FTimer.RestorePreviousState();
-  m_UW2FSeconds = m_UW2FTimer.GetIntermediateTime();
-  StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
-  return;
+    m_UW2FTimer.RestorePreviousState();
+    m_UW2FSeconds = m_UW2FTimer.GetIntermediateTime();
+    StateChanged(EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
+    return;
+  }
 }
 
 uint32_t FencingStateMachine::MakeTimerEvent()
