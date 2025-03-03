@@ -287,8 +287,8 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     if(m_Priority != NO_PRIO)
     {
       m_Priority = NO_PRIO;
-      StateChanged(EVENT_PRIO);
 
+      StateChanged(EVENT_PRIO);
     }
     else
     {
@@ -296,12 +296,14 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       if(rnd & 1)
       {
         m_Priority = PRIO_LEFT;
+
         StateChanged(EVENT_PRIO | 1);
       }
 
       else
       {
         m_Priority = PRIO_RIGHT;
+        
         StateChanged(EVENT_PRIO | 2);
       }
     }
