@@ -370,15 +370,20 @@ void WS2812B_LedStrip::updateHelper(uint32_t eventtype)
     //StartPrioAnimation(event_data);
     switch(event_data){
       case 0:
+
         startAnimation(EVENT_WS2812_PRIO_NONE);
       break;
 
       case 1:
-        startAnimation(EVENT_WS2812_PRIO_RIGHT);
+
+        startAnimation(EVENT_WS2812_PRIO_LEFT);
+
       break;
 
       case 2:
-        startAnimation(EVENT_WS2812_PRIO_LEFT);
+
+        startAnimation(EVENT_WS2812_PRIO_RIGHT);
+
       break;
     }
 
@@ -901,6 +906,7 @@ void WS2812B_LedStrip::DoAnimation(uint32_t type){
     break;
 
     case EVENT_WS2812_PRIO_NONE:
+
     setGreenPrio(false,m_ReverseColors);
     setRedPrio(false,m_ReverseColors);
     m_pixels->show();  // clear directly, no animation needed
@@ -909,7 +915,8 @@ void WS2812B_LedStrip::DoAnimation(uint32_t type){
 
     break;
 
-    case EVENT_WS2812_PRIO_LEFT:
+    case EVENT_WS2812_PRIO_RIGHT:
+
     m_PrioLeft = false;
     m_PrioRight = true;
     m_targetprio = 1;
@@ -917,7 +924,8 @@ void WS2812B_LedStrip::DoAnimation(uint32_t type){
     NewAnimatePrio();
     break;
 
-    case EVENT_WS2812_PRIO_RIGHT:
+    case EVENT_WS2812_PRIO_LEFT:
+
     m_PrioLeft = true;
     m_PrioRight = false;
     m_targetprio = 2;
