@@ -303,7 +303,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
       else
       {
         m_Priority = PRIO_RIGHT;
-        
+
         StateChanged(EVENT_PRIO | 2);
       }
     }
@@ -954,6 +954,7 @@ void FencingStateMachine::DoStateMachineTick()
 #define emptystring ""
 void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
 {
+  // I'm not sure this is a good idea, as Cyrano has no fiels for this
   m_UW2FTimer.Reset();
   StateChanged(EVENT_UW2F_TIMER);
 
@@ -983,14 +984,23 @@ void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
       m_nrOfRounds = 9;
     }
   }
-/*
+
   if(input[RoundNumber] != emptystring)
   {
   	//Do Something with input[RoundNumber];
-    sscanf(input[RoundNumber].c_str(),"%d",& m_currentRound);
-    StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
+    int temp;
+    sscanf(input[RoundNumber].c_str(),"%d",& temp);
+    if(temp == m_currentRound+1){
+      SetNextTimerStateAndRoundAndNewTimeOnTimerZero();
+      StateChanged(EVENT_TIMER_STATE);
+      StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
+    }
+    else{
+      m_currentRound = temp;
+      StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
+    }
   }
-*/
+
   if(input[Weapon] != emptystring)
   {
   	//Do Something with input[Weapon];
