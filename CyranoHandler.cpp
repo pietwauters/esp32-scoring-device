@@ -1,6 +1,8 @@
 #include "CyranoHandler.h"
 #include "EFP1Message.h"
 #include <sstream>
+#include "esp_log.h"
+static const char* CYRANO_TAG = "Cyrano";
 
 CyranoHandler::CyranoHandler()
 {
@@ -489,9 +491,11 @@ void ProcessCyranoPacket (AsyncUDPPacket packet)
 void CyranoHandler::CheckConnection()
 {
   if(bCyranoConnected){
-    if(LastHelloReception + 40000 < millis()){
-      bSoftwareIsLive = false;
-      StateChanged(EVENT_CYRANO_STATE_W);
+    if(bSoftwareIsLive){
+      if(LastHelloReception + 40000 < millis()){
+        bSoftwareIsLive = false;
+        StateChanged(EVENT_CYRANO_STATE_W);
+      }
     }
     return;
   }
@@ -512,8 +516,8 @@ void CyranoHandler::CheckConnection()
 
       if(CyranoHandlerudpRcv.listen(CyranoPort))
       {
-        Serial.print("Cyrano Listening on IP: ");
-        Serial.println(WiFi.localIP());
+        ESP_LOGI(CYRANO_TAG, "%s","Cyrano Listening on IP: ");
+        ESP_LOGI(CYRANO_TAG, "%s",(WiFi.localIP().toString()).c_str());
         CyranoHandlerudpRcv.onPacket([](AsyncUDPPacket packet) {
           ProcessCyranoPacket (packet);
         });
