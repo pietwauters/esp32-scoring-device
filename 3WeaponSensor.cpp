@@ -9,6 +9,8 @@
 #include "WS2812BLedStrip.h"
 #include "TimeScoreDisplay.h"
 #include "esp_task_wdt.h"
+#include "esp_log.h"
+static const char* CORE_SCORING_MACHINE_TAG = "Core Scoring machine";
 
 TaskHandle_t CoreScoringMachineTask;
 
@@ -85,7 +87,7 @@ MultiWeaponSensor::MultiWeaponSensor()
   LongCounter_c2 = LONG_COUNT_C_INIT_FOIL;
   LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
   LongCounter_AtLeastOneNotConnected = LONG_COUNT_NOTCONNECTED_STOP_BUZZING;
-  
+
 
   SensorMutex = xSemaphoreCreateBinary();
 }
@@ -694,8 +696,9 @@ void prepareforDeepSleep()
   gpio_hold_en((gpio_num_t)cr_driver);
   gpio_hold_en((gpio_num_t)PIN);
   gpio_hold_en((gpio_num_t)HSPI_SS);
-  Serial.println("Going to sleep now");
-  Serial.flush();
-  delay(300);
+  ESP_LOGI(CORE_SCORING_MACHINE_TAG, "%s","Going to sleep now");
+
+
+  vTaskDelay(300 / portTICK_PERIOD_MS);
   esp_deep_sleep_start();
 }
