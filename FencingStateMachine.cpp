@@ -98,8 +98,7 @@ void FencingStateMachine::update (MultiWeaponSensor *subject, uint32_t eventtype
 
 void FencingStateMachine::update (CyranoHandler *subject, string eventtype)
 {
-  //Serial.print("received message =");
-  //Serial.println(eventtype.c_str());
+
   EFP1Message input(eventtype);
   ProcessDisplayMessage (input);
 }

@@ -11,6 +11,8 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncElegantOTA.h>
+#include "esp_log.h"
+static const char* NETWORK_TAG = "Network";
 
 //AsyncWebServer server(80);
 //WiFiManager wm;
@@ -61,8 +63,7 @@ int32_t NetWork::FindFirstFreePisteID(uint32_t RequestedPiste)
   bool RequestedPisteAlreadyInUse = false;
   for (int i = 0; i < networks; ++i)
   {
-    //WiFi.SSID(i);
-    //Serial.println(WiFi.SSID(i));
+
     if(sscanf(WiFi.SSID(i).c_str(),"%d",&TempPisteId))
     {
       if(RequestedPiste == TempPisteId)
@@ -208,55 +209,12 @@ long best_interference = -999999999;
     nr_intervals++;
     i = k-1;
   }
-  /*Serial.print("nr_intervals = "); Serial.println(nr_intervals);
-  Serial.print("max_width = "); Serial.println(max_width);
-  Serial.print("max_width_index = "); Serial.println(max_width_index);
-  Serial.print("max_width_interval = ("); Serial.print(intervals[max_width_index].start); Serial.print(",");Serial.println(intervals[max_width_index].end);*/
 
   return ((intervals[max_width_index].end - intervals[max_width_index].start) / 2 + intervals[max_width_index].start);
 
 }
 
 
-/*
-bool NetWork::ConnectToExternalNetwork(int ConnectTimeout)
-{
-  if(bConnectedToExternalNetwork)
-    return true;
-  if(! getWiFiIsSaved())
-    return false;
-WiFi.disconnect();
-  WiFi.mode(WIFI_MODE_APSTA);
-  wm.setEnableConfigPortal(false);
-  wm.setConfigPortalBlocking(false);
-  wm.setConfigPortalTimeout(5);
-  wm.setConnectTimeout(ConnectTimeout);
-  //wm.setConnectRetries(5);
-  //wm.setShowInfoUpdate(boolean enabled);
-  //reset settings - wipe credentials for testing
-  //wm.resetSettings();
-
-  //automatically connect using saved credentials if they exist
-  //If connection fails it starts an access point with the specified name
-  Serial.println("now looking to connect to global network");
-  if(wm.autoConnect(soft_ap_ssid.c_str(), soft_ap_password)){
-      Serial.println("connected...yeey :)");
-      bConnectedToExternalNetwork = true;
-  }
-  else {
-      Serial.println("Not connected to known network");
-  }
-
-  if(bConnectedToExternalNetwork)// if connected with saved credentials is successful we have to start the local AP ourselves
-  {
-    WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password);
-    Serial.print("ESP32 IP on the WiFi network: ");
-    Serial.println(WiFi.localIP());
-  }
-
-  return bConnectedToExternalNetwork;
-}
-*/
 bool NetWork::ConnectToExternalNetwork(long ConnectTimeout)
 {
   if(bConnectedToExternalNetwork)
@@ -284,14 +242,13 @@ bool NetWork::ConnectToExternalNetwork(long ConnectTimeout)
       Stop = 0;
       bConnectedToExternalNetwork= true;
     }
-    delay(200);
-    Serial.print("x");
+    vTaskDelay(200 / portTICK_PERIOD_MS);
+    ESP_LOGI(NETWORK_TAG, "%s","x");
   }
   if(bConnectedToExternalNetwork)// if connected with saved credentials is successful we have to start the local AP ourselves
   {
     WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
-    Serial.print("ESP32 IP on the WiFi network: ");
-    Serial.println(WiFi.localIP());
+    ESP_LOGI(NETWORK_TAG, "ESP32 IP on the WiFi network: %s","x",(WiFi.localIP().toString()).c_str());
   }
   return bConnectedToExternalNetwork;
 }
@@ -304,6 +261,8 @@ void SetIPAddress(int CurrentPisteNr){
 
   Preferences networkpreferences;
   networkpreferences.begin("credentials", false);
+  if(networkpreferences.getBool("UseDHCP",false))
+    return;
   String strBaseAddress = networkpreferences.getString("BaseAddress", "172.20.255.1");
   networkpreferences.end();
 
@@ -328,7 +287,8 @@ void SetIPAddress(int CurrentPisteNr){
   IPAddress secondaryDNS(8, 8, 4, 4); //optional
   // Set your Static IP address
   if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
-    Serial.println("STA Failed to configure");
+    ESP_LOGE(NETWORK_TAG, "%s","STA Failed to configure");
+
   }
 
 
@@ -372,9 +332,6 @@ void NetWork::GlobalStartWiFi()
 
       WiFi.softAP(soft_ap_ssid.c_str(), soft_ap_password.c_str());
       esp_wifi_set_channel(bestchannel,WIFI_SECOND_CHAN_NONE);
-
-      //Serial.print("current best channel = "); Serial.println(bestchannel);
-      //Serial.print("current password = "); Serial.println(soft_ap_password);
     }
   }
   else{
@@ -452,7 +409,8 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
 
     AsyncElegantOTA.begin(&server);    // Start ElegantOTA
     server.begin();
-    Serial.println("HTTP OTA Update server started");
+    
+    ESP_LOGI(NETWORK_TAG, "%s","HTTP OTA Update server started");
     return;
   }
   if(UI_FULL_RESET == subtype){
@@ -489,6 +447,7 @@ WiFiManagerParameter TryGlobalWiFi("TryGlobalWiFi", "Look for external network",
 
 WiFiManagerParameter CyranoPort("CyranoPort", "Cyrano Port","50100",16);
 WiFiManagerParameter CyranoBroadcastPort("CyranoBroadcastPort", "Cyrano Broadcast Port","50101",16);
+WiFiManagerParameter UseDHCP("UseDHCP", "Use DHCP","N",1);
 WiFiManagerParameter FixedIPAddress("IPAddressing", "IP Addressing mode","172.20.255.1",16);
 WiFiManagerParameter StartUpWeapon("StartUpWeapon", "Default Weapon at start_up","F",8);
 
@@ -526,6 +485,7 @@ void saveParamsCallback () {
   networkpreferences.putUShort("CyranoBcPort", TheBroadcastPort);
 
   networkpreferences.putBool("TryGlobalWiFi",ToBool(TryGlobalWiFi.getValue()));
+  networkpreferences.putBool("UseDHCP",ToBool(UseDHCP.getValue()));
   networkpreferences.putString("BaseAddress",FixedIPAddress.getValue());
 
   networkpreferences.end();
@@ -566,7 +526,7 @@ void ConfigPortalTimeoutCallback()
 }
 void ConfigResetCallback()
 {
-  Serial.println("In ConfigResetCallback");
+  ESP_LOGI(NETWORK_TAG, "%s","In ConfigResetCallback");
 }
 char temp[2];
 char *BoolToStr(bool value){
@@ -578,8 +538,8 @@ char *BoolToStr(bool value){
 
 void NetWork::WaitForNewSettingsViaPortal()
 {
-  Serial.println("In WaitForNewSettingsViaPortal()");
-  Serial.println(soft_ap_ssid);
+  ESP_LOGI(NETWORK_TAG, "%s","In WaitForNewSettingsViaPortal()");
+  ESP_LOGI(NETWORK_TAG, "%s",soft_ap_ssid);
 
   networkpreferences.begin("credentials", false);
   int32_t PisteNr = networkpreferences.getInt("pisteNr", -1);
@@ -599,6 +559,7 @@ void NetWork::WaitForNewSettingsViaPortal()
   CyranoBroadcastPort.setValue(temp,8);
 
   TryGlobalWiFi.setValue(BoolToStr(networkpreferences.getBool("TryGlobalWiFi",false)),1);
+  UseDHCP.setValue(BoolToStr(networkpreferences.getBool("UseDHCP",false)),1);
   FixedIPAddress.setValue((networkpreferences.getString("BaseAddress","172.20.255.1")).c_str(),16);
 
   networkpreferences.end();
@@ -628,7 +589,7 @@ void NetWork::WaitForNewSettingsViaPortal()
 
   PowerMode.setValue(BoolToStr(mypreferences.getBool("Powersave",false)),1);
   RepeaterMode.setValue(BoolToStr(mypreferences.getBool("RepeaterMode",false)),1);
-  cout << mypreferences.getBool("RepeaterMode",false) << endl;
+
   MirrorLights.setValue(BoolToStr(mypreferences.getBool("MirrorLights",false)),1);
 
   int32_t MasterNr = mypreferences.getInt("MasterPiste", -1);
@@ -644,6 +605,7 @@ void NetWork::WaitForNewSettingsViaPortal()
   wm.addParameter(&TryGlobalWiFi);
   wm.addParameter(&CyranoPort);
   wm.addParameter(&CyranoBroadcastPort);
+  wm.addParameter(&UseDHCP);
   wm.addParameter(&FixedIPAddress);
   wm.addParameter(&StartUpWeapon);
   wm.addParameter(&PowerMode);

@@ -310,6 +310,7 @@ uint8_t EFP1Message::EFP1StatusString2Type10MessageStatus()
   return 'U';
 }
 
+/*
 void const EFP1Message::print()const {
 
   std::cout << " Protocol: " << (*this)[Protocol] << std::endl;
@@ -354,3 +355,4 @@ std::cout << " LeftMedicalIntervention: " << (*this)[LeftMedicalIntervention] <<
 std::cout << " LeftReserveIntroduction: " << (*this)[LeftReserveIntroduction] << std::endl;
 std::cout << " LeftPCards: " << (*this)[LeftPCards] << std::endl;
 }
+*/

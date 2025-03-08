@@ -9,6 +9,8 @@
 #include "RS422_FPA_Type8_Message.h"
 #include <Preferences.h>
 #include "FPA422Handler.h"
+#include "esp_log.h"
+static const char* FPA422_TAG = "FPA422";
 
 #ifdef ALLOW_HARDWARESERIAL
 #include <HardwareSerial.h>
@@ -66,12 +68,13 @@ class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
       deviceConnected = true;
       BLEDevice::startAdvertising();
-      cout << "BLE Connected"  << endl;
+      ESP_LOGI(FPA422_TAG,"%s","BLE Connected");
+
     };
 
     void onDisconnect(BLEServer* pServer) {
       deviceConnected = false;
-      cout << "BLE Disconnected"  << endl;
+      ESP_LOGI(FPA422_TAG,"%s","BLE Disconnected");
     }
 };
 
@@ -167,13 +170,14 @@ void FPA422Handler::StartWiFi()
   IPAddress localip = WiFi.localIP();
   IPAddress ip = WiFi.softAPIP();
 
-  Serial.print("ESP32 IP as soft AP: ");
-  Serial.println(WiFi.softAPIP());
+ESP_LOGI(FPA422_TAG,"ESP32 IP as soft AP: %s",(WiFi.softAPIP().toString()).c_str());
 
 
   m_WifiStarted = true;
   TimeForNext1_2s =millis() + 1200;
   TimeForNext12s =millis() + 12500;
+  m_WifiPeriodicalUpdateCounter = 0;
+  m_SlowWifiPeriodicalUpdateCounter = 0;
 
   sprintf(LocalIPAddress, "%d.%d.%d.%d", localip[0], localip[1], localip[2], localip[3]);
   sprintf(SoftAPIPAddress, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
@@ -427,14 +431,18 @@ void FPA422Handler::WifiPeriodicalUpdate()
 
 }
 */
+
 void FPA422Handler::WifiTransmitMessage(int Type)
 {
   if((Type < 1) || (Type > MAX_MESSAGE_TYPE))
     return;
+
   if(m_WifiStarted)
   {
       udp.broadcastTo(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
-      //udp.broadcastTo(Message1.GetBuffer(),Message1.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+      NetWork &MyNetWork = NetWork::getInstance();
+      if(MyNetWork.IsExternalWifiAvailable())
+        udp.broadcastTo(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
   }
 }
 
@@ -458,7 +466,9 @@ void FPA422Handler::AllProtocolsTransmitMessage(int Type)
   if(m_WifiStarted)
   {
       udp.broadcastTo(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_AP);
-      //udp.broadcastTo(Message1.GetBuffer(),Message1.GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
+      NetWork &MyNetWork = NetWork::getInstance();
+      if(MyNetWork.IsExternalWifiAvailable())
+        udp.broadcastTo(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize(), UDPPort,TCPIP_ADAPTER_IF_STA);
   }
 #ifdef ALLOW_BLUETOOTH
   if(m_BlueToothStarted)

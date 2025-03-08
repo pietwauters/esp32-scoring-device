@@ -3,7 +3,8 @@
 
 #include <WiFi.h>
 #include "AsyncUDP.h"
-
+#include "esp_log.h"
+static const char* UDPIO_HANDLER_TAG = "UDPIOHandler";
 
 
 
@@ -41,8 +42,8 @@ UDPIOHandler &MyUDPIOHandler = UDPIOHandler::getInstance();
 
       if(Commandudp.listen(1234))
       {
-        Serial.print("UDP Listening on IP: ");
-        Serial.println(WiFi.localIP());
+        ESP_LOGI(NETWORK_TAG, "UDP Listening on IP: %s",(WiFi.localIP().toString()).c_str()));
+
         Commandudp.onPacket([](AsyncUDPPacket packet) {
           ProcessUDPPacket (packet);
         });
@@ -61,8 +62,9 @@ UDPIOHandler &MyUDPIOHandler = UDPIOHandler::getInstance();
 
         if(Commandudp.listen(1234))
         {
-            Serial.print("UDP Listening on IP: ");
-            Serial.println(WiFi.softAPIP());
+          ESP_LOGI(NETWORK_TAG, "UDP Listening on IP: %s",(WiFi.softAPIP().toString()).c_str());
+
+
             Commandudp.onPacket([](AsyncUDPPacket packet) {
               ProcessUDPPacket (packet);
             });
@@ -84,8 +86,8 @@ void UDPIOHandler::ConnectToAP()
     bUDPConnected = true;
     if(Commandudp.listen(1234))
     {
-        Serial.print("UDP Listening on IP: ");
-        Serial.println(WiFi.softAPIP());
+      ESP_LOGI(NETWORK_TAG, "UDP Listening on IP: %s",(WiFi.softAPIP().toString()).c_str());
+
         Commandudp.onPacket([](AsyncUDPPacket packet) {
           ProcessUDPPacket (packet);
         });

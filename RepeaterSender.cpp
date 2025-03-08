@@ -4,6 +4,8 @@
 #include <iostream>
 #include <Preferences.h>
 #include "esp_err.h"
+#include "esp_log.h"
+static const char* REPEATER_SND_TAG = "Repeater Sender";
 
 using namespace std;
 
@@ -17,37 +19,7 @@ RepeaterSender::~RepeaterSender()
 {
     //dtor
 }
-/*
-bool addPeer(const uint8_t *peer_addr) {      // add pairing
-  memset(&slave, 0, sizeof(slave));
-  const esp_now_peer_info_t *peer = &slave;
-  memcpy(slave.peer_addr, peer_addr, 6);
 
-  slave.channel = chan; // pick a channel
-  slave.encrypt = 0; // no encryption
-  // check if the peer exists
-  bool exists = esp_now_is_peer_exist(slave.peer_addr);
-  if (exists) {
-    // Slave already paired.
-    Serial.println("Already Paired");
-    return true;
-  }
-  else {
-    esp_err_t addStatus = esp_now_add_peer(peer);
-    if (addStatus == ESP_OK) {
-      // Pair success
-      Serial.println("Pair success");
-      return true;
-    }
-    else
-    {
-      Serial.println("Pair failed");
-      return false;
-    }
-  }
-}
-
-*/
 
 
 // callback when data is sent
@@ -81,7 +53,7 @@ void RepeaterSender::begin()
 {
     // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
-    Serial.println("Error initializing ESP-NOW");
+    ESP_LOGE(REPEATER_SND_TAG, "%s","Error initializing ESP-NOW");
     return;
   }
 
@@ -94,7 +66,8 @@ void RepeaterSender::begin()
   esp_wifi_get_channel(&primary, &second);
   peerInfo.channel = primary;
   peerInfo.ifidx = ESP_IF_WIFI_AP;
-  Serial.print("Wifi channel");Serial.println(peerInfo.channel);
+  ESP_LOGI(REPEATER_SND_TAG, "Wifi channel: %d",peerInfo.channel);
+
   peerInfo.encrypt = false;
   Preferences networkpreferences;
   networkpreferences.begin("credentials", false);
@@ -112,7 +85,7 @@ void RepeaterSender::RegisterRepeater(uint8_t *broadcastAddress)
 
   // Add peer
   if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Failed to add peer");
+    ESP_LOGE(REPEATER_SND_TAG, "%s","Failed to add peer");
     return;
   }
 }

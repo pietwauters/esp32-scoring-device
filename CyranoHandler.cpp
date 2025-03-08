@@ -22,7 +22,6 @@ void CyranoHandler::Begin()
     networkpreferences.end();
     char temp[8];
     sprintf(temp,"%d",PisteNr);
-    //cout << "PisteNr" << PisteNr << endl;
     m_MachineStatus[PisteId]= (std::string)temp;
     NextPeriodicalUpdate = millis() + 10000;
 }
@@ -48,8 +47,6 @@ if(false)
   CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
 else
   CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), SoftwareIPAddress(),CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
-  //cout << "Sending info message: " << TheMessage << "To:" << SoftwareIPAddress() << ":" << CyranoBroadcastPort <<endl;
-  //StateChanged(TheMessage);
   return;
 }
 
@@ -76,7 +73,7 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
         break;
 
         case DISP :
-        //cout << "received DISP" << endl;
+
         if(WAITING == m_State)
         {
             // Initialize with the received values
@@ -111,7 +108,8 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
         // The software doesn't accept the "END" message
         StateChanged(EVENT_CYRANO_STATE_NAK);
         break;
-        cout << "Interesting, I should never ever get here" << endl;
+        ESP_LOGE(CYRANO_TAG, "%s","Interesting, I should never ever get here");
+
 
     }
 
@@ -418,7 +416,6 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
       else
         m_MachineStatus[RightStatus] = "U";
     }
-    //cout << "Right competitor status = " << m_MachineStatus[RightStatus] << endl;
     break;
 
     case EVENT_BLACK_CARD_RIGHT:
@@ -428,7 +425,6 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
       else
         m_MachineStatus[LeftStatus] = "U";
     }
-    //cout << "Left competitor status = " << m_MachineStatus[LeftStatus]<< endl;
     break;
 
     case EVENT_P_CARD:
@@ -500,17 +496,14 @@ void CyranoHandler::CheckConnection()
     return;
   }
 
-  /*if(millis() < NextTimeToCheckConnection)
-    return;
-  NextTimeToCheckConnection = millis() + 2500;*/
-  //Serial.println("Checking WiFi connection");
+
   if(WiFi.status() == WL_CONNECTED)
   {
     if(!bWifiConnected)
     {
       bWifiConnected = true;
     }
-    //Serial.println("Wifi is connected");
+
     if(!bCyranoConnected)
     {// Somehow we should call this only once. It will keep on trying for ever.
 

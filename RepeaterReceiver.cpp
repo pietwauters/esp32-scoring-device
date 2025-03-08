@@ -5,13 +5,14 @@
 #include "esp_wifi.h"
 #include <Preferences.h>
 #include "network.h"
+#include "esp_log.h"
+static const char* REPEATER_RCV_TAG = "Repeater Receiver";
 using namespace std;
 #define MASK_REVERSE_COLORS 0x00000001
 //RepeaterReceiver &LocalRepeaterReiver = RepeaterReceiver::getInstance();
 
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 static long LastNumber = 0;
-static long lossCounter = 0;
 static long MessageCounter = 0;
 
 struct_message m_message;
@@ -24,14 +25,6 @@ struct_message m_message;
     if(difference > 0){
       LocalRepeaterReiver.StateChanged(m_message.event);
       MessageCounter++;
-      if(difference > 1){
-        lossCounter++;
-        /*Serial.print("Total Message count = ");Serial.println(MessageCounter);
-        Serial.print("Message lost; Total loss Count = ");
-        Serial.println(lossCounter);
-        Serial.print("Errorrate = ");
-        Serial.println((float)lossCounter*100/(float)MessageCounter);*/
-      }
     }
     LastNumber = m_message.messagenumber;
   }
@@ -147,7 +140,7 @@ void RepeaterReceiver::RegisterRepeater(uint8_t *broadcastAddress)
 
   // Add peer
   if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Failed to add peer");
+    ESP_LOGE(REPEATER_RCV_TAG, "%s","Failed to add peer");
     return;
   }
 }
@@ -161,7 +154,7 @@ void RepeaterReceiver::begin()
   networkpreferences.end();
     // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
-    Serial.println("Error initializing ESP-NOW");
+    ESP_LOGE(REPEATER_RCV_TAG, "%s","Error initializing ESP-NOW");
     return;
   }
 
@@ -176,7 +169,7 @@ void RepeaterReceiver::begin()
   m_espnowchannel = primary;
   peerInfo.channel = primary;
   peerInfo.ifidx = ESP_IF_WIFI_AP;
-  Serial.print("Wifi channel");Serial.println(peerInfo.channel);
+  ESP_LOGI(REPEATER_RCV_TAG, "Wifi channel: %d",peerInfo.channel);
   peerInfo.encrypt = false;
   networkpreferences;
 

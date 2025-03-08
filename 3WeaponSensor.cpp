@@ -49,18 +49,18 @@ MultiWeaponSensor::MultiWeaponSensor()
     int hw_timer_nr = 1;
     adc_power_on();
     if(ESP_OK != adc_set_clk_div(1))
-      cout << "I did not expect this!" << endl;
+      ESP_LOGE(CORE_SCORING_MACHINE_TAG, "%s","I did not expect this!");
     if(ESP_OK != adc1_config_width(ADC_WIDTH_BIT_12))
-      cout << "I did not expect this!" << endl;
+      ESP_LOGE(CORE_SCORING_MACHINE_TAG, "%s","I did not expect this!");
     if(ESP_OK != adc1_config_channel_atten(ADC1_CHANNEL_0,ADC_ATTEN_DB_11))
-      cout << "I did not expect this!" << endl;
+      ESP_LOGE(CORE_SCORING_MACHINE_TAG, "%s","I did not expect this!");
     adc1_config_channel_atten(ADC1_CHANNEL_3,ADC_ATTEN_DB_11);
     adc1_config_channel_atten(ADC1_CHANNEL_4,ADC_ATTEN_DB_11);
     adc1_config_channel_atten(ADC1_CHANNEL_6,ADC_ATTEN_DB_11);
     adc1_config_channel_atten(ADC1_CHANNEL_7,ADC_ATTEN_DB_11);
-    cout << "ADC configured" << endl;
+    ESP_LOGI(CORE_SCORING_MACHINE_TAG, "%s","ADC configured");
     int test = adc1_get_raw(ADC1_CHANNEL_0);
-    cout << "First measurement = " << tempADValue << endl;
+
   // Create semaphore to inform us when the timer has fired
   //timerSemaphore = xSemaphoreCreateCounting(20,0);
   // Use 2nd timer of 4 (counted from zero). It seems timer0 is already in use (with a different scaler?)

@@ -3,6 +3,8 @@
 #include <rom/rtc.h>
 #include <iostream>
 #include <string>
+#include "esp_log.h"
+static const char* RESET_HANDLER_TAG = "ResetHandler";
 using namespace std;
 
 char *strReasons[]={"","POWERON_RESET","","SW_RESET","OWDT_RESET","DEEPSLEEP_RESET","SDIO_RESET","TG0WDT_SYS_RESET","TG1WDT_SYS_RESET","RTCWDT_SYS_RESET","INTRUSION_RESET","TGWDT_CPU_RESET",
@@ -17,25 +19,25 @@ char * strreset_reason(RESET_REASON reason)
 
 void print_historical_reset_reason()
 {
-  cout << "\nHistorical reasons for reset:" << "\n";
+  ESP_LOGI(RESET_HANDLER_TAG,"%s","Historical reasons for reset:");
   Preferences mypreferences;
   mypreferences.begin("resetcauses0", RO_MODE);
-  cout << "Core 0: " ;
+  ESP_LOGI(RESET_HANDLER_TAG,"%s","Core 0: ");
   int tempvalue = 0;
   for(int i = 1; i<17; i++){
     tempvalue = mypreferences.getInt(strReasons[i],0);
     if(tempvalue){
-      cout << "\n" << strReasons[i] << ": " << tempvalue;
+      ESP_LOGI(RESET_HANDLER_TAG,"\n%s: %d",strReasons[i],tempvalue);
     }
   }
   mypreferences.end();
 
   mypreferences.begin("resetcauses1", RO_MODE);
-  cout << "\nCore 1: ";
+  ESP_LOGI(RESET_HANDLER_TAG,"%s","Core 1: ");
   for(int i = 1; i<17; i++){
     tempvalue = mypreferences.getInt(strReasons[i],0);
     if(tempvalue){
-      cout << "\n" << strReasons[i] << ": " << tempvalue;
+      ESP_LOGI(RESET_HANDLER_TAG,"\n%s: %d",strReasons[i],tempvalue);
     }
   }
   mypreferences.end();
@@ -45,7 +47,7 @@ void StoreInPreferences(RESET_REASON theReason, Preferences mypreferences){
   int currentValue = 0;
     currentValue = mypreferences.getInt(strreset_reason(theReason),0);
     mypreferences.putInt(strreset_reason(theReason),++currentValue);
-  
+
 }
 
 void update_reset_reasons(){

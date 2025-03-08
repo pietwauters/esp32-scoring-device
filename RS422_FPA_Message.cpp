@@ -19,7 +19,7 @@ RS422_FPA_Message::RS422_FPA_Message(const RS422_FPA_Message& other)
 
 void RS422_FPA_Message::Print()
 {
-
+/*
     int i = 1;
     cout << "SOH ";
     while(m_message[i] != EOT)
@@ -47,6 +47,7 @@ void RS422_FPA_Message::Print()
 
     }
     cout << " EOT" << endl;
+*/
 }
 
 size_t RS422_FPA_Message::CalculateSize()

@@ -30,6 +30,10 @@
 #include "ResetHandler.h"
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
+#include "esp_log.h"
+static const char* SET_UP_TAG = "SetUp";
+static const char* LOOP_TAG = "Loop";
+
 
 
 WS2812B_LedStrip *MyLedStrip;
@@ -50,25 +54,25 @@ int FactoryResetCounter = 50;
 const int PowerPin = 12;
 void setup() {
   //cout << "Time to get here: " << millis() << endl;
+  
   //uint32_t brown_reg_temp = READ_PERI_REG(RTC_CNTL_BROWN_OUT_REG); //save WatchDog register
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   //WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, brown_reg_temp); //enable brownout detector
 
-  //Switch the power of all LED modules on
-  pinMode(PowerPin, OUTPUT);
-  digitalWrite(PowerPin,HIGH);
+  MyTimeScoreDisplay = new TimeScoreDisplay();
+  MyTimeScoreDisplay->begin(); // this also powers up the led panels
 
   MyLedStrip = &WS2812B_LedStrip::getInstance();
   MyLedStrip->begin();
-  MyTimeScoreDisplay = new TimeScoreDisplay();
+
   MyLedStrip->ClearAll();
   MySensor = &MultiWeaponSensor::getInstance();
   MyLedStrip->ClearAll();
   MyStatemachine= &FencingStateMachine::getInstance();
   // put your setup code here, to run once:
-  Serial.begin(115200);
+
   MyLedStrip->ClearAll();
-  MyTimeScoreDisplay->begin();
+
   MyLedStrip->ClearAll();
   MyTimeScoreDisplay->DisplayPisteId();
   MyFPA422Handler = new FPA422Handler();
@@ -82,15 +86,15 @@ void setup() {
   update_reset_reasons();
   print_historical_reset_reason();
   MyNetWork->GlobalStartWiFi();
-  Serial.println("Wifi started");
-  Serial.println("by now the you should have seen all the lights one by one");
+  ESP_LOGI(SET_UP_TAG, "%s","Wifi started");
+  ESP_LOGI(SET_UP_TAG, "%s","by now the you should have seen all the lights one by one");
   MyUDPIOHandler = &UDPIOHandler::getInstance();
   MyUDPIOHandler->ConnectToAP();
   MyUDPIOHandler->attach(*MyNetWork);
   esp_task_wdt_init(20, false);
 // In repeater mode don't start these 2 tasks
 if(!bIsRepeater){
-Serial.println("Bwahahaaha I am the master!");
+ESP_LOGI(SET_UP_TAG, "%s","Bwahahaaha I am the master!");
   MyCyranoHandler = &CyranoHandler::getInstance();
   MyStatemachine->ResetAll();
   MyFPA422Handler->StartWiFi();
@@ -127,16 +131,16 @@ Serial.println("Bwahahaaha I am the master!");
 else{
   // When running in repeater mode
   MyRepeaterReiver = &RepeaterReceiver::getInstance();
-  Serial.println("Ouch! I am a repeater!");
+  ESP_LOGI(SET_UP_TAG, "%s","Ouch! I am a repeater!");
   MyRepeaterReiver->begin();
   MyRepeaterReiver->attach(*MyLedStrip);
   MyRepeaterReiver->attach(*MyTimeScoreDisplay);
   MyRepeaterReiver->StartWatchDog();
   MyLedStrip->SetMirroring(MyRepeaterReiver->Mirror());
 }
-Serial.println(WiFi.localIP());
-Serial.println("MAC address: ");
-  Serial.println(WiFi.macAddress());
+ESP_LOGI(SET_UP_TAG,"%s",(WiFi.localIP().toString()).c_str());
+ESP_LOGI(SET_UP_TAG, "%s","MAC address: ");
+ESP_LOGI(SET_UP_TAG,"%s",WiFi.macAddress().c_str());
 // Add GPIO0 code here
 
 
@@ -146,8 +150,8 @@ Serial.println("MAC address: ");
 
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(1); // without this it simply doesn't work
-  //vTaskDelay(1 / portTICK_PERIOD_MS);
+
+  vTaskDelay(1 / portTICK_PERIOD_MS);
   if(!bIsRepeater){
     MyFPA422Handler->WifiPeriodicalUpdate();
     esp_task_wdt_reset();
@@ -208,7 +212,7 @@ void loop() {
   esp_task_wdt_reset();
   if(!digitalRead(0)){
     if(!FactoryResetCounter){
-      cout << "Bootpin pressed" << endl;
+      ESP_LOGI(LOOP_TAG, "%s","Bootpin pressed");
       MyNetWork->DoFactoryReset();
       ESP.restart();
       FactoryResetCounter = 200;
