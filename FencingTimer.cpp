@@ -1,7 +1,7 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #include "FencingTimer.h"
 #include <iostream>
-using namespace std;
+//using namespace std;
 FencingTimer::FencingTimer()
 {
     //ctor

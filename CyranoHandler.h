@@ -8,7 +8,9 @@
 #include "FencingStateMachine.h"
 #include "EventDefinitions.h"
 #include <Preferences.h>
-
+#include <AsyncTCP.h>
+//#include <AsyncMqttClient.h>
+#include <AtlasAsyncMqttClient.h>
 
 #define CYRANO_PORT 50101
 #define CYRANO_BROADCAST_PORT 50100
@@ -40,11 +42,11 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         void ProcessMessageFromSoftware(const EFP1Message &input);
         void SendInfoMessage();
         void ProcessUIEvents(uint32_t const event);
-        void SetPisteID(const string & ID){m_MachineStatus[PisteId]=ID;};
+        void SetPisteID(const std::string & ID){m_MachineStatus[PisteId]=ID;};
         void update (FencingStateMachine *subject, uint32_t eventtype);
         void update (UDPIOHandler *subject, uint32_t eventtype){ProcessUIEvents(eventtype);};
         void StateChanged (uint32_t eventtype) {notify(eventtype);}
-        void StateChanged (string eventtype) {notify(eventtype);}
+        void StateChanged (std::string eventtype) {notify(eventtype);}
         void ProcessLightsChange(uint32_t eventtype);
         void CheckConnection();
         void PeriodicallyBroadcastStatus();
@@ -52,6 +54,7 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         bool SoftwareIsLive(){return bSoftwareIsLive;};
         IPAddress SoftwareIPAddress() {return mSoftwareIPAddress;};
         void SoftwareIPAddress(IPAddress theSoftwareIPAddress) {mSoftwareIPAddress = theSoftwareIPAddress;};
+        void ClearOnACK();
 
     protected:
 
@@ -78,6 +81,7 @@ class CyranoHandler : public Observer<FencingStateMachine> , public Observer<UDP
         long NextPeriodicalUpdate;
         bool bSoftwareIsLive = false;
         IPAddress mSoftwareIPAddress;
+
 
 };
 

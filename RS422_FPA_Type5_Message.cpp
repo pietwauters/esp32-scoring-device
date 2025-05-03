@@ -20,6 +20,9 @@ RS422_FPA_Type5_6_Message::~RS422_FPA_Type5_6_Message()
     //dtor
 }
 
+// Below is not correct because if the target message is shorter than the Source
+// there will be illegal memory access
+// Not an issue, because there is always storage for a max size packet
 RS422_FPA_Type5_6_Message::RS422_FPA_Type5_6_Message(const RS422_FPA_Type5_6_Message& other)
 {
     //copy ctor

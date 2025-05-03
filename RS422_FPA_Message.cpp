@@ -19,35 +19,35 @@ RS422_FPA_Message::RS422_FPA_Message(const RS422_FPA_Message& other)
 
 void RS422_FPA_Message::Print()
 {
-/*
+
     int i = 1;
-    cout << "SOH ";
+    std::cout << "SOH ";
     while(m_message[i] != EOT)
     {
         switch (m_message[i])
         {
             case DC3:
-            cout << "DC3 ";
+            std::cout << "DC3 ";
             break;
 
             case DC4:
-            cout << "DC4 ";
+            std::cout << "DC4 ";
             break;
 
             case STX:
-            cout << "STX ";
+            std::cout << "STX ";
             break;
 
             default:
-            cout << m_message[i];
+            std::cout << m_message[i];
             break;
 
         }
         i++;
 
     }
-    cout << " EOT" << endl;
-*/
+    std::cout << " EOT" << std::endl;
+
 }
 
 size_t RS422_FPA_Message::CalculateSize()
@@ -57,6 +57,7 @@ size_t RS422_FPA_Message::CalculateSize()
     while(m_message[i]!= EOT)
         i++;
     iCurrentSize = i+1;
+    return iCurrentSize;
 }
 
 void RS422_FPA_Message::setSingleDigitNumberInAscii(int value, int bytenumber)

@@ -7,7 +7,7 @@
 #include "esp_log.h"
 static const char* REPEATER_SND_TAG = "Repeater Sender";
 
-using namespace std;
+// using namespace std;
 
 RepeaterSender::RepeaterSender()
 {
@@ -65,7 +65,7 @@ void RepeaterSender::begin()
   wifi_second_chan_t second;
   esp_wifi_get_channel(&primary, &second);
   peerInfo.channel = primary;
-  peerInfo.ifidx = ESP_IF_WIFI_AP;
+  peerInfo.ifidx = WIFI_IF_AP;
   ESP_LOGI(REPEATER_SND_TAG, "Wifi channel: %d",peerInfo.channel);
 
   peerInfo.encrypt = false;

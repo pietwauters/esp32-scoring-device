@@ -90,6 +90,8 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         void setRedPrio(bool Value, bool bReverse = false);
         void AnimateWarning();
         void StartWarning(uint32_t prio);
+        void AnimateEngardePretsAllez();
+        void StartEngardePretsAllezSequence();
         void setYellowCardLeft(bool Value);
         void setYellowCardRight(bool Value);
         void setRedCardLeft(bool Value);
@@ -156,6 +158,11 @@ class WS2812B_LedStrip : public Observer<FencingStateMachine>,public Observer<Re
         bool m_WarningOngoing = false;
         uint32_t m_NextTimeToToggleBuzzer;
         uint32_t m_warningcounter = 0;
+        int m_EngardePretsAllezCounter = 0;
+        long m_NextTimeToToggleEGPA = 0;
+        bool m_EGAOngoing = false;
+        bool m_EGAOBuzzing = false;
+        long EGPATiming[13]={300,60,250,60,250,750,350,750,300,100,250,100,300};
 
         /*bool m_WelcomeAnimationStarted = false;
         long m_WelcomeAnimationNextChange;

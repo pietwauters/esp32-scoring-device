@@ -5,6 +5,16 @@
 // These are machine constants. It might be usefull to move this to flash and make it calibratable
 
 MeasurementCtl SabreSets[] = {{IODirection_al_cr, IOValues_al_cr, bl_analog, 1750},
+  {IODirection_ar_br, IOValues_ar_br, cr_analog, 1750},
+  {IODirection_ar_cl, IOValues_ar_cl, br_analog, 1750},
+  {IODirection_br_bl, IOValues_br_bl, cl_analog, 1750},
+  {IODirection_al_cl, IOValues_al_cl, bl_analog, 1184},
+  {IODirection_ar_cr, IOValues_ar_cr, cl_analog, 1750},
+  {IODirection_al_bl, IOValues_al_bl, cr_analog, 1750}
+};
+
+/*
+MeasurementCtl SabreSets[] = {{IODirection_al_cr, IOValues_al_cr, bl_analog, 1750},
   {IODirection_bl_cl, IOValues_bl_cl, cr_analog, 1750},
   {IODirection_ar_br, IOValues_ar_br, cl_analog, 1184},
   {IODirection_ar_cl, IOValues_ar_cl, br_analog, 1750},
@@ -14,7 +24,7 @@ MeasurementCtl SabreSets[] = {{IODirection_al_cr, IOValues_al_cr, bl_analog, 175
   {IODirection_ar_cr, IOValues_ar_cr, cl_analog, 1750},
   {IODirection_al_bl, IOValues_al_bl, cr_analog, 1750}
 };
-
+*/
 void MultiWeaponSensor::DoSabre()
 {
 static bool AdAboveThreshold;
@@ -119,7 +129,7 @@ static bool TempOrangeL, TempOrangeR;
     //*************************************************************************
     //    Phas_S2: Test if Leak jacket - Weapon: b1-c1 ==>  c1 ?= high        *
     //*************************************************************************
-    Skip_phase();
+    //Skip_phase();
     /*AdAboveThreshold = Do_Common_Start();
 
     if (AdAboveThreshold)
@@ -136,7 +146,7 @@ static bool TempOrangeL, TempOrangeR;
     //*************************************************************************
     // Phas_S3: Test if wire is broken: a2-b2 -> b2 =?= low                   *
     //*************************************************************************
-    if(FullScanCounter == 1)
+    if(FullScanCounter == 2)
     {
       AdAboveThreshold = Do_Common_Start();
       if (!AdAboveThreshold)
@@ -225,7 +235,7 @@ static bool TempOrangeL, TempOrangeR;
     //*************************************************************************
     //                      Phas_S5: Test if Leak jacket - Weapon: c2 =?= high*
     //*************************************************************************
-    Skip_phase();
+    //Skip_phase();
     /*{
         AdAboveThreshold = Do_Common_Start();
         if (AdAboveThreshold)
@@ -345,7 +355,7 @@ static bool TempOrangeL, TempOrangeR;
     //*************************************************************************
     //    Phas_S7: Test if contact jacket - point: a1-c1 ==>  c1 ?= high        *
     //*************************************************************************
-    if(FullScanCounter == 2)
+    if((FullScanCounter == 1)&& (m_DectionMode == AUTO))
     {
       AdAboveThreshold = Do_Common_Start();
       if (AdAboveThreshold)
@@ -367,7 +377,7 @@ static bool TempOrangeL, TempOrangeR;
     //*************************************************************************
     //    Phas_S8: Test if contact jacket - point: a1-c1 ==>  c1 ?= high        *
     //*************************************************************************
-    if(FullScanCounter == 3)
+    if((FullScanCounter == 3) && (m_DectionMode == AUTO))
     {
       AdAboveThreshold = Do_Common_Start();
       if (AdAboveThreshold)

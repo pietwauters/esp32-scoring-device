@@ -7,11 +7,11 @@
 #include "network.h"
 #include "esp_log.h"
 static const char* REPEATER_RCV_TAG = "Repeater Receiver";
-using namespace std;
+// using namespace std;
 #define MASK_REVERSE_COLORS 0x00000001
 //RepeaterReceiver &LocalRepeaterReiver = RepeaterReceiver::getInstance();
 
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
 static long LastNumber = 0;
 static long MessageCounter = 0;
 
@@ -168,7 +168,7 @@ void RepeaterReceiver::begin()
   esp_wifi_get_channel(&primary, &second);
   m_espnowchannel = primary;
   peerInfo.channel = primary;
-  peerInfo.ifidx = ESP_IF_WIFI_AP;
+  peerInfo.ifidx = WIFI_IF_AP;
   ESP_LOGI(REPEATER_RCV_TAG, "Wifi channel: %d",peerInfo.channel);
   peerInfo.encrypt = false;
   networkpreferences;

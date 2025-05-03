@@ -13,25 +13,25 @@
 /************************************************************************************************/
 /* Timing Constants for Foil  */
 /************************************************************************************************/
-#define FOIL_LOCK_TIME  300	// Time in milliseconds
-#define COUNT_B1_INIT_FOIL  12	/*  T = 14ms/1.1   */
+#define FOIL_LOCK_TIME  300	-10 // Time in milliseconds
+#define COUNT_B1_INIT_FOIL  28	/*  T = 14ms/1.1   */
 #define COUNT_C1_INIT_FOIL  5	/*  T = (n-1)*NrPhases*Time/Phase   */
 #define COUNTER_MINIMAL_BREAK  1
-#define LONG_COUNT_B_INIT_FOIL 1400
-#define LONG_COUNT_C_INIT_FOIL 1400
-#define COUNT_ON_PARRY_INIT_FOIL  5
-#define COUNT_OFF_PARRY_INIT_FOIL  43
+#define LONG_COUNT_B_INIT_FOIL 400
+#define LONG_COUNT_C_INIT_FOIL 400
+#define COUNT_ON_PARRY_INIT_FOIL  2
+#define COUNT_OFF_PARRY_INIT_FOIL  10
 
 /************************************************************************************************/
 /* Timing Constants for Epee  */
 /************************************************************************************************/
-#define EPEE_LOCK_TIME 45	// Time in milliseconds
+#define EPEE_LOCK_TIME 45 - 5	// Time in milliseconds
 #define COUNT_C1_INIT_EPEE  5	/*  T = 0.097 * n   */
 #define LONG_COUNT_C_INIT_EPEE  1200
 /************************************************************************************************/
 /* Timing Constants for Sabre  */
 /************************************************************************************************/
-#define SABRE_LOCK_TIME  170	// Time in milliseconds
+#define SABRE_LOCK_TIME  170 -5	// Time in milliseconds
 #define COUNT_B1_INIT_SABRE  6	/*  T = (n-1)*NrPhases*Time/Phase   */
 #define COUNT_C1_INIT_SABRE  2	/*  T = (n-1)*NrPhases*Time/Phase   */
 #define BLOCKINGPERIOD1  4	/*  T = (n-1)*NrPhases*Time/Phase   */
@@ -44,4 +44,5 @@
 // Below values are in microseconds
 #define FULLSCANDURATION_EPEE 1000
 #define FULLSCANDURATION_FOIL 1100
-#define FULLSCANDURATION_SABRE 480
+//#define FULLSCANDURATION_SABRE 480/4
+#define FULLSCANDURATION_SABRE 50

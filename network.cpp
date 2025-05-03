@@ -2,6 +2,7 @@
 #include "network.h"
 #include <esp_wifi.h>
 #include <WiFi.h>
+#include "MDNSResolver.h"
 #include <WiFiAP.h>
 #include <Preferences.h>
 #include <nvs_flash.h>
@@ -10,11 +11,12 @@
 // Below is for OTA updates using a webserver
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <AsyncElegantOTA.h>
+#define ELEGANTOTA_USE_ASYNC_WEBSERVER 1
+#include <ElegantOTA.h>
 #include "esp_log.h"
 static const char* NETWORK_TAG = "Network";
 
-//AsyncWebServer server(80);
+AsyncWebServer server(80);
 //WiFiManager wm;
 /**
    Sets all the channels back to 0.
@@ -30,13 +32,15 @@ void NetWork::reset_channels() {
 
 int NetWork::begin()
 {
+
   WiFi.disconnect();
   networkpreferences.begin("credentials", false);
   LookForExternalWiFi=networkpreferences.getBool("TryGlobalWiFi",false);
   networkpreferences.end();
-  /*if(!LookForExternalWiFi)
-    return 0;*/
+  if(!LookForExternalWiFi)
+    return 0;
   networks = WiFi.scanNetworks();
+
   if(wm.getWiFiIsSaved())
   {
     for (int i = 0; i < networks; ++i)
@@ -48,6 +52,7 @@ int NetWork::begin()
       }
     }
   }
+  return networks;
 }
 
 
@@ -342,6 +347,13 @@ void NetWork::GlobalStartWiFi()
   }
 
   m_GlobalWifiStarted = true;
+
+  // Start mDNS
+  MDNSResolver *MymDNS;
+  MymDNS->getInstance();
+    MymDNS->begin(soft_ap_ssid.c_str());
+
+
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Hi! I am ESP32.");
   });
@@ -407,9 +419,9 @@ void NetWork::update (UDPIOHandler *subject, uint32_t eventtype)
   if(UI_START_OTA_PORTAL == subtype)
   {
 
-    AsyncElegantOTA.begin(&server);    // Start ElegantOTA
+    ElegantOTA.begin(&server);    // Start ElegantOTA
     server.begin();
-    
+
     ESP_LOGI(NETWORK_TAG, "%s","HTTP OTA Update server started");
     return;
   }
@@ -449,6 +461,8 @@ WiFiManagerParameter CyranoPort("CyranoPort", "Cyrano Port","50100",16);
 WiFiManagerParameter CyranoBroadcastPort("CyranoBroadcastPort", "Cyrano Broadcast Port","50101",16);
 WiFiManagerParameter UseDHCP("UseDHCP", "Use DHCP","N",1);
 WiFiManagerParameter FixedIPAddress("IPAddressing", "IP Addressing mode","172.20.255.1",16);
+WiFiManagerParameter MqttBrokerIPAddress("MQTTIPAddress", "mqtt broker IP","10.154.1.130",16);
+
 WiFiManagerParameter StartUpWeapon("StartUpWeapon", "Default Weapon at start_up","F",8);
 
 WiFiManagerParameter RepeaterMode("RepeaterMode", "Is this a repeater","N",1);
@@ -487,6 +501,7 @@ void saveParamsCallback () {
   networkpreferences.putBool("TryGlobalWiFi",ToBool(TryGlobalWiFi.getValue()));
   networkpreferences.putBool("UseDHCP",ToBool(UseDHCP.getValue()));
   networkpreferences.putString("BaseAddress",FixedIPAddress.getValue());
+  networkpreferences.putString("MqttBroker",MqttBrokerIPAddress.getValue());
 
   networkpreferences.end();
   Preferences mypreferences;
@@ -561,6 +576,7 @@ void NetWork::WaitForNewSettingsViaPortal()
   TryGlobalWiFi.setValue(BoolToStr(networkpreferences.getBool("TryGlobalWiFi",false)),1);
   UseDHCP.setValue(BoolToStr(networkpreferences.getBool("UseDHCP",false)),1);
   FixedIPAddress.setValue((networkpreferences.getString("BaseAddress","172.20.255.1")).c_str(),16);
+  MqttBrokerIPAddress.setValue((networkpreferences.getString("MqttBroker","10.154.1.130")).c_str(),16);
 
   networkpreferences.end();
 
@@ -607,6 +623,7 @@ void NetWork::WaitForNewSettingsViaPortal()
   wm.addParameter(&CyranoBroadcastPort);
   wm.addParameter(&UseDHCP);
   wm.addParameter(&FixedIPAddress);
+  wm.addParameter(&MqttBrokerIPAddress);
   wm.addParameter(&StartUpWeapon);
   wm.addParameter(&PowerMode);
   wm.addParameter(&RepeaterMode);

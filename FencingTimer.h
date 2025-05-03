@@ -69,7 +69,7 @@ class FencingTimer
 
     private:
         /** MakeNewString
-         *  Determine Display string from internal Minutes, Seconds, Hundredths
+         *  Determine Display std::string from internal Minutes, Seconds, Hundredths
          */
         void MakeNewString();
 

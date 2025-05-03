@@ -13,6 +13,7 @@
 
 enum Priority_t {NO_PRIO, PRIO_LEFT, PRIO_RIGHT};
 enum TimerState_t{FIGHTING, BREAK, INJURY, ADDITIONAL_MINUTE, MATCH_ENDED,UNDEFINED};
+enum UI_State_t {LOCKED, UNLOCKED};
 //enum weapon_t{FOIL, EPEE, SABRE, UNKNOWN};
 //enum WeaponSelectionMode_t {MANUAL, AUTO, HYBRID};
 
@@ -32,8 +33,8 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         void update (MultiWeaponSensor *subject, uint32_t eventtype);
  //       void update (BlynkIOHandler *subject, uint32_t eventtype);
         void update (UDPIOHandler *subject, uint32_t eventtype);
-        void update (CyranoHandler *subject, uint32_t eventtype){};
-        void update (CyranoHandler *subject, string eventtype);
+        void update (CyranoHandler *subject, uint32_t eventtype);
+        void update (CyranoHandler *subject, std::string eventtype);
         void TransmitFullStateToDisplay (class RepeaterSender *TheRepeater);
         void StateChanged (uint32_t eventtype) {notify(eventtype);}
         void ProcessDisplayMessage (const EFP1Message &input);
@@ -234,7 +235,7 @@ class FencingStateMachine : public Subject<FencingStateMachine> , public Observe
         long m_LastLightEventTime = 0;
         bool m_GoToSleep = false;
         bool m_HasBegun = false;
-
+        UI_State_t m_UI_State = UNLOCKED;
 
 
 };

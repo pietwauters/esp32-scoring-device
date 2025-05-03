@@ -110,63 +110,77 @@ void MultiWeaponSensor::DoFoil(void)
     /************************************************************************/
     /*    Phase2: Test if point makes contact with ground: gnd =?= high      */
     /************************************************************************/
-    AdAboveThreshold = Do_Common_Start();
-    if (!SignalLeft)
-    {
-        if (!Counter_b1)
-        {
-            if (AdAboveThreshold)
-            {
-                Counter_b1 = Const_COUNT_B1_INIT_FOIL;
-            }
-        }
+    if ((Counter_b1) || Red){
+      Skip_phase();
+      }
+    else{
+      AdAboveThreshold = Do_Common_Start();
+      if (!SignalLeft)
+      {
+          if (!Counter_b1)
+          {
+              if (AdAboveThreshold)
+              {
+                  Counter_b1 = Const_COUNT_B1_INIT_FOIL;
+              }
+          }
+      }
     }
 
     /************************************************************************/
     /*    Phase3: Test if point makes contact with weapon: b2 =?= high    */
     /************************************************************************/
-    AdAboveThreshold = Do_Common_Start();
-    if (!SignalLeft)
-    {
-        if (!Counter_b1)
-        {
+    if ((Counter_b1) || Red){
+      Skip_phase();
+      }
+    else{
+      AdAboveThreshold = Do_Common_Start();
+      if (!SignalLeft)
+      {
+          if (!Counter_b1)
+          {
 
-            if (AdAboveThreshold)
-            {
-                Counter_b1 = Const_COUNT_B1_INIT_FOIL;
-            }
+              if (AdAboveThreshold)
+              {
+                  Counter_b1 = Const_COUNT_B1_INIT_FOIL;
+              }
 
-            else
-            {
-                WhiteL = true;
-                Buzz = true;
-                SignalLeft = true;
-                StartLock(Const_FOIL_LOCK_TIME);
-                Const_COUNT_B1_INIT_FOIL = COUNT_B1_INIT_FOIL-1;
-                Counter_b2--;	//here I assume Counter_b2 is not yet 0, or if it is, it will not make a difference anymore
-                b1_reached1 = false;
-            }
-        }
+              else
+              {
+                  WhiteL = true;
+                  Buzz = true;
+                  SignalLeft = true;
+                  StartLock(Const_FOIL_LOCK_TIME);
+                  Const_COUNT_B1_INIT_FOIL = COUNT_B1_INIT_FOIL-1;
+                  Counter_b2--;	//here I assume Counter_b2 is not yet 0, or if it is, it will not make a difference anymore
+                  b1_reached1 = false;
+              }
+          }
+      }
     }
 
     /************************************************************************/
     /*    Phase4: Test if weapon makes contact with jacket: c1 =?= high     */
     /************************************************************************/
-    AdAboveThreshold = Do_Common_Start();
-
-    if (AdAboveThreshold)
-    {
-        Counter_c1--;
-        if (!Counter_c1)
-        {
-            TempOrangeR = true;
-            Counter_c1++;
-        }
+    if(Red || Green || (FullScanCounter != 0)){
+      Skip_phase();
     }
-    else
-    {
-        Counter_c1 = Const_COUNT_C1_INIT_FOIL;
-        TempOrangeR = false;
+    else{
+      AdAboveThreshold = Do_Common_Start();
+      if (AdAboveThreshold)
+      {
+          Counter_c1--;
+          if (!Counter_c1)
+          {
+              TempOrangeR = true;
+              Counter_c1++;
+          }
+      }
+      else
+      {
+          Counter_c1 = Const_COUNT_C1_INIT_FOIL;
+          TempOrangeR = false;
+      }
     }
 
 
@@ -251,65 +265,77 @@ void MultiWeaponSensor::DoFoil(void)
     /************************************************************************/
     /*    Phase7: Test if point makes contact with ground: gnd =?= high      */
     /************************************************************************/
-    AdAboveThreshold = Do_Common_Start();
-    if (!SignalRight)
-    {
-        if (!Counter_b2)
-        {
-            if (AdAboveThreshold)
-            {
-                Counter_b2 = Const_COUNT_B1_INIT_FOIL;
-            }
-        }
+    if ((Counter_b2) || Green){
+      Skip_phase();}
+    else{
+      AdAboveThreshold = Do_Common_Start();
+      if (!SignalRight)
+      {
+          if (!Counter_b2)
+          {
+              if (AdAboveThreshold)
+              {
+                  Counter_b2 = Const_COUNT_B1_INIT_FOIL;
+              }
+          }
+      }
     }
 
     /************************************************************************/
     /*    Phase8: Test if point makes contact with weapon: b1 =?= high    */
     /************************************************************************/
-    AdAboveThreshold = Do_Common_Start();
-    if (!SignalRight)
-    {
-        if (!Counter_b2)
-        {
-            if (AdAboveThreshold)
-            {
-                Counter_b2 = Const_COUNT_B1_INIT_FOIL;
-            }
-            else
-            {
-                WhiteR = true;
-                Buzz = true;
-                SignalRight = true;
-                StartLock(Const_FOIL_LOCK_TIME);
-                Const_COUNT_B1_INIT_FOIL = COUNT_B1_INIT_FOIL-1;
-                Counter_b1--;	//here I assume Counter_b2 is not yet 0, or if it is, it will not make a difference anymore
-                b2_reached1 = false;
-            }
-        }
+    if ((Counter_b2) || Green){
+      Skip_phase();}
+    else{
+      AdAboveThreshold = Do_Common_Start();
+      if (!SignalRight)
+      {
+          if (!Counter_b2)
+          {
+              if (AdAboveThreshold)
+              {
+                  Counter_b2 = Const_COUNT_B1_INIT_FOIL;
+              }
+              else
+              {
+                  WhiteR = true;
+                  Buzz = true;
+                  SignalRight = true;
+                  StartLock(Const_FOIL_LOCK_TIME);
+                  Const_COUNT_B1_INIT_FOIL = COUNT_B1_INIT_FOIL-1;
+                  Counter_b1--;	//here I assume Counter_b2 is not yet 0, or if it is, it will not make a difference anymore
+                  b2_reached1 = false;
+              }
+          }
+      }
     }
 
     /************************************************************************/
     /*    Phase9: Test if weapon makes contact with jacket: c2 =?= high     */
     /************************************************************************/
-    AdAboveThreshold = Do_Common_Start();
+    if(Red || Green || (FullScanCounter != 1)){
+      Skip_phase();
+    }
+    else{
+      AdAboveThreshold = Do_Common_Start();
 //     	if (!SignalRight)
 //     	{
-    if (AdAboveThreshold)
-    {
-        Counter_c2--;
-        if (!Counter_c2)
-        {
-            TempOrangeL = true;
-            Counter_c2++;
-        }
-    }
-    else
-    {
-        Counter_c2 = Const_COUNT_C1_INIT_FOIL;
-        TempOrangeL = false;
-    }
+      if (AdAboveThreshold)
+      {
+          Counter_c2--;
+          if (!Counter_c2)
+          {
+              TempOrangeL = true;
+              Counter_c2++;
+          }
+      }
+      else
+      {
+          Counter_c2 = Const_COUNT_C1_INIT_FOIL;
+          TempOrangeL = false;
+      }
 //     	}
-
+}
 
 //*************************************************************************
 //    Phase10: The next 2 phases are used only in club-version with
@@ -318,31 +344,41 @@ void MultiWeaponSensor::DoFoil(void)
 //    if (ax-cx) & !(ax-bx) -> switch to epee
 //    Check if a2-c2  -> c2 low
 //*************************************************************************
+  if(Red || Green || (FullScanCounter != 2)){
+    Skip_phase();
+  }
+  else{
     AdAboveThreshold = Do_Common_Start();
-    if (!AdAboveThreshold)
-    {
-        LongCounter_c2 = LONG_COUNT_C_INIT_FOIL;
-        //LongCounter_c2 = LONG_COUNT_C_INIT_FOIL_H;
-    }
-    else
-    {
-        if(LongCounter_c2)
-            LongCounter_c2--;
+      if (!AdAboveThreshold)
+      {
+          LongCounter_c2 = LONG_COUNT_C_INIT_FOIL;
+          //LongCounter_c2 = LONG_COUNT_C_INIT_FOIL_H;
+      }
+      else
+      {
+          if(LongCounter_c2)
+              LongCounter_c2--;
+      }
     }
 
 //*************************************************************************
 //    Phase11:
 //*************************************************************************
+  if(Red || Green || (FullScanCounter != 3)){
+    Skip_phase();
+  }
+  else{
     AdAboveThreshold = Do_Common_Start();
-    if (!AdAboveThreshold)
-    {
-        LongCounter_c1 = LONG_COUNT_C_INIT_FOIL;
-        //LongCounter_c1_H = LONG_COUNT_C_INIT_FOIL_H;
-    }
-    else
-    {
-        if(LongCounter_c1)
-            LongCounter_c1--;
+      if (!AdAboveThreshold)
+      {
+          LongCounter_c1 = LONG_COUNT_C_INIT_FOIL;
+          //LongCounter_c1_H = LONG_COUNT_C_INIT_FOIL_H;
+      }
+      else
+      {
+          if(LongCounter_c1)
+              LongCounter_c1--;
+      }
     }
 
 
@@ -354,43 +390,48 @@ void MultiWeaponSensor::DoFoil(void)
     /* I have no clue yet of what a good parry debouncing time would be, but if we decide there was a parry,
     /* it has to stay visible for at least a few video frames*/
 
-    AdAboveThreshold = Do_Common_Start();
-
-    if(!bParrySignal)
-    {
-        //No Parry is signalled yet, check if we need to light the Parry signal
-        if (Counter_parry)
-        {
-            if (!AdAboveThreshold)
-            {
-                Counter_parry = Const_FOIL_PARRY_ON_TIME;
-            }
-            else
-                Counter_parry--;
-        }
-        else
-        {
-            bParrySignal = true;
-            Counter_parry = Const_FOIL_PARRY_OFF_TIME;
-        }
+    if(Red || Green || (FullScanCounter != 4)){
+      Skip_phase();
     }
-    else
-    {
-        // We have allready signalled a parry -> check if we should switch off the parry signal
-        if (Counter_parry)
-        {
-            if (AdAboveThreshold)
-            {
-                Counter_parry = Const_FOIL_PARRY_OFF_TIME;
-            }
-            else
-                Counter_parry--;
-        }
-        else
-        {
-            bParrySignal = false;
-            Counter_parry = Const_FOIL_PARRY_ON_TIME;
-        }
+    else{
+      AdAboveThreshold = Do_Common_Start();
+
+      if(!bParrySignal)
+      {
+          //No Parry is signalled yet, check if we need to light the Parry signal
+          if (Counter_parry)
+          {
+              if (!AdAboveThreshold)
+              {
+                  Counter_parry = Const_FOIL_PARRY_ON_TIME;
+              }
+              else
+                  Counter_parry--;
+          }
+          else
+          {
+              bParrySignal = true;
+              Counter_parry = Const_FOIL_PARRY_OFF_TIME;
+          }
+      }
+      else
+      {
+          // We have allready signalled a parry -> check if we should switch off the parry signal
+          if (Counter_parry)
+          {
+              if (AdAboveThreshold)
+              {
+                  Counter_parry = Const_FOIL_PARRY_OFF_TIME;
+              }
+              else
+                  Counter_parry--;
+          }
+          else
+          {
+              bParrySignal = false;
+              Counter_parry = Const_FOIL_PARRY_ON_TIME;
+          }
+      }
     }
     OrangeR = TempOrangeL;   // It seems I made a mistake and show the orange at the wrong side
     OrangeL = TempOrangeR;

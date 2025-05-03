@@ -3,7 +3,9 @@
 #include <iostream>
 #include <Preferences.h>
 #include "esp_task_wdt.h"
-using namespace std;
+#include "esp_log.h"
+static const char* FSM_TAG = "Fencing State Machine:";
+// using namespace std;
 
 #define FIGHTING_MINUTES 3
 #define FIGHTING_SECONDS 0
@@ -30,8 +32,11 @@ TaskHandle_t StateMachineTask;
 void StateMachineHandler(void *parameter)
 {
   FencingStateMachine &MyLocalStatemachine= FencingStateMachine::getInstance();
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+  const TickType_t xInterval = pdMS_TO_TICKS(10); // 10 ms interval
   while(true)
   {
+    vTaskDelayUntil(&xLastWakeTime, xInterval); // Maintains periodicity
     MyLocalStatemachine.DoStateMachineTick();
     esp_task_wdt_reset();
 
@@ -45,17 +50,17 @@ FencingStateMachine::FencingStateMachine(int hw_timer_nr, int tickPeriod)
 
     // Create semaphore to inform us when the timer has fired
     // Semaphore in Counting mode to allow some jitter if some tasks take a bit longer than the FSMPeriod
-    timerSemaphore_FSMPeriod = xSemaphoreCreateCounting(10,0);
+//timerSemaphore_FSMPeriod = xSemaphoreCreateCounting(10,0);
     // Use 2nd timer of 4 (counted from zero). It seems timer0 is already in use (with a different scaler?)
     // Set 8 divider for prescaler (see ESP32 Technical Reference Manual for more info).
-    timer_FSMPeriod = timerBegin(hw_timer_nr, 8, true);
+//timer_FSMPeriod = timerBegin(1000);// set timer at 100Hz
     // Attach onTimer function to our timer.
-    timerAttachInterrupt(timer_FSMPeriod, &onTimer_FSMPeriod, true);
+//    timerAttachInterrupt(timer_FSMPeriod, &onTimer_FSMPeriod);
     // Set alarm to call onTimer function every x microsecond microseconds.
     // Repeat the alarm (third parameter)
-    timerAlarmWrite(timer_FSMPeriod, 10000 * tickPeriod, true);
+//    timerAlarm(timer_FSMPeriod, 10, true,0);
     // Start an alarm
-    timerAlarmEnable(timer_FSMPeriod);
+    //timerAlarmEnable(timer_FSMPeriod);
     m_nrOfRounds = 1;
     ResetAll();
     m_Timer.SetTicksPeriod(tickPeriod);
@@ -72,7 +77,7 @@ void FencingStateMachine::begin()
     xTaskCreatePinnedToCore(
               StateMachineHandler,        /* Task function. */
               "StateMachineHandler",      /* String with name of task. */
-              24576,                            /* Stack size in words. 65535*/
+              32768,                            /* Stack size in words. 65535*/
               NULL,                             /* Parameter passed as input of the task */
               5,                                /* Priority of the task. */
               &StateMachineTask,           /* Task handle. */
@@ -96,7 +101,7 @@ void FencingStateMachine::update (MultiWeaponSensor *subject, uint32_t eventtype
     SetMachineWeapon(subject->GetActualWeapon());
 }
 
-void FencingStateMachine::update (CyranoHandler *subject, string eventtype)
+void FencingStateMachine::update (CyranoHandler *subject, std::string eventtype)
 {
 
   EFP1Message input(eventtype);
@@ -121,7 +126,8 @@ void FencingStateMachine::ProcessSpecialSetting (uint32_t eventtype)
 
 void FencingStateMachine::TransmitFullStateToDisplay (RepeaterSender *TheRepeater){
 
-  StateChanged(EVENT_LIGHTS | m_Lights);
+  //StateChanged(EVENT_LIGHTS | m_Lights);   // Wrong, this will cause everything to transmit
+  TheRepeater->update(this,EVENT_LIGHTS | m_Lights);
   m_low_prio_divider--;
   if(!m_low_prio_divider){
     m_low_prio_divider = m_low_prio_divider_init;
@@ -153,9 +159,16 @@ void FencingStateMachine::TransmitFullStateToDisplay (RepeaterSender *TheRepeate
 
   TheRepeater->update(this,MakeTimerEvent());
 
-
-
   //TheRepeater->update(this,EVENT_UW2F_TIMER | (m_UW2FSeconds/60)<<16 | (m_UW2FSeconds%60)<<8);
+}
+
+void FencingStateMachine::update (CyranoHandler *subject, uint32_t eventtype){
+  if(EVENT_CYRANO_STATE_LOCKED == eventtype){
+      m_UI_State = LOCKED;
+      return;}
+    if(EVENT_CYRANO_STATE_UNLOCKED == eventtype){
+      m_UI_State = UNLOCKED;
+    }
 }
 
 void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
@@ -167,8 +180,16 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
   m_IsConnectedToRemote = true;
   if(EVENT_UI_INPUT_SPECIAL_SETTINGS == maineventtype)
     ProcessSpecialSetting(eventtype);
+  if(m_UI_State == LOCKED){
+      // Limit UI reactions
+      if(UI_INPUT_RESET == event_data)
+        ResetAll();
+      // I should probably check the rounds settings as well
+      return;
+    }
   if(EVENT_UI_INPUT != maineventtype)
     return;
+
   if(m_Timer.IsRunning())
   {
     if(UI_INPUT_TOGGLE_TIMER == event_data)
@@ -207,6 +228,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     StateChanged(MakeTimerEvent());
     break;
   }
+
 
   switch(event_data)
   {
@@ -315,6 +337,10 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     switch(m_nrOfRounds)
     {
       case 1:
+      m_nrOfRounds = 2;
+      break;
+
+      case 2:
       m_nrOfRounds = 3;
       break;
 
@@ -503,7 +529,7 @@ void FencingStateMachine::update (UDPIOHandler *subject, uint32_t eventtype)
     }
     break;
 
-    case UI_BUZZ:
+    case UI_INPUT_BUZZ:
     StateChanged(EVENT_TOGGLE_BUZZER);
     break;
 
@@ -811,7 +837,7 @@ int RestartTimerTime;
 void FencingStateMachine::DoStateMachineTick()
 {
   bool idle = true;
-  while (!xSemaphoreTake(timerSemaphore_FSMPeriod, 1 / (portTICK_PERIOD_MS)) == pdTRUE); // check with 1 ms timeout
+  //while (!xSemaphoreTake(timerSemaphore_FSMPeriod, 1 / (portTICK_PERIOD_MS)) == pdTRUE); // check with 1 ms timeout
   //while(xSemaphoreTake(timerSemaphore_FSMPeriod, 0) == pdTRUE)
   {
     if(m_NoHitsAllowed)
@@ -954,6 +980,7 @@ void FencingStateMachine::DoStateMachineTick()
 void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
 {
   // I'm not sure this is a good idea, as Cyrano has no fiels for this
+
   m_UW2FTimer.Reset();
   StateChanged(EVENT_UW2F_TIMER);
 
@@ -972,9 +999,9 @@ void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
     m_Timer.SetMinutes(minutes);
     m_Timer.SetSeconds(seconds);
     m_Timer.SetHundredths(0);
+
     StateChanged(MakeTimerEvent());
   }
-
   if(input[CompetitionType] != emptystring)
   {
   	//Do Something with input[CompetitionType];
@@ -999,7 +1026,6 @@ void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
       StateChanged(EVENT_ROUND | m_currentRound | m_nrOfRounds<<8);
     }
   }
-
   if(input[Weapon] != emptystring)
   {
   	//Do Something with input[Weapon];
@@ -1044,6 +1070,7 @@ void FencingStateMachine::ProcessDisplayMessage (const EFP1Message &input)
       StateChanged(EVENT_PRIO);
     }
   }
+
 
   if(input[State] != emptystring)
   {
@@ -1178,6 +1205,10 @@ uint32_t FencingStateMachine::get_max_score()
     {
       case 1:
       return 5;
+      break;
+
+      case 2:
+      return 10;
       break;
 
       case 3:

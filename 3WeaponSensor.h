@@ -7,6 +7,7 @@
 #include "TimingConstants.h"
 #include <cstdio>
 #include <cinttypes>
+#include <cstddef>
 #include "weaponenum.h"
 #include "hardwaredefinition.h"
 
@@ -141,7 +142,10 @@ public:
         return m_DetectedWeapon;
     }
 
-
+void DoSabre();
+void DoEpee(void);
+void DoFoil(void);
+void Skip_phase();
     void DoFullScan();
     bool Wait_For_Next_Timer_Tick();
     unsigned char get_Lights(){return Lights;};
@@ -156,11 +160,11 @@ private:
     /** Default constructor */
     MultiWeaponSensor();
     bool Do_Common_Start();
-    void Skip_phase();
+    //void Skip_phase();
     void HandleLights();
-    void DoEpee(void);
-    void DoFoil(void);
-    void DoSabre();
+    //void DoEpee(void);
+    //void DoFoil(void);
+    //void DoSabre();
     void DoReset(void);
     void StartLock(int TimeToLock);
     bool IsLocked();

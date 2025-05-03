@@ -2,8 +2,10 @@
 #include "EFP1Message.h"
 #include <sstream>
 #include "esp_log.h"
-static const char* CYRANO_TAG = "Cyrano";
+#include "MDNSResolver.h"
 
+static const char* CYRANO_TAG = "Cyrano";
+const char* mdnsName = "CyranoBroker";
 CyranoHandler::CyranoHandler()
 {
     //ctor
@@ -12,6 +14,36 @@ CyranoHandler::CyranoHandler()
 
 }
 
+auto& mqttClient = AtlasAsyncMqttClient::getInstance();
+char mqttServer[16];  // MQTT Broker address
+const int mqttPort = 1883;  // MQTT Broker port
+const char* mqttUser = "";  // MQTT username (optional)
+const char* mqttPassword = "";  // MQTT password (optional)
+char* mqttClientId ;  // MQTT Client ID
+char* mqttPublishTopic;// = "MQTTCyrano/Piste_001/FromDevice";  // Topic to subscribe and publish to
+char* mqttListenTopic;// = "MQTTCyrano/Piste_001/FromSoftware";  // Topic to subscribe and publish to
+char * mqttLastWillTopic;
+
+void onMqttConnect(bool sessionPresent) {
+  Serial.println("Connected to MQTT broker");
+  mqttClient.publish(mqttLastWillTopic, 1, true, "online");
+
+  // Subscribe to the topic
+  mqttClient.subscribe(mqttListenTopic, 1);
+}
+
+void onMqttDisconnect() {
+  Serial.println("Disconnected from MQTT broker");
+}
+
+void onMqttMessage(const char* topic, const char* payload,  unsigned int length) {
+  // Null-terminate the payload to make it a string
+  //payload[length] = '\0';
+  CyranoHandler &MyCyranoHandler = CyranoHandler::getInstance();
+  MyCyranoHandler.ProcessMessageFromSoftware((EFP1Message((char*)payload)));
+}
+
+
 void CyranoHandler::Begin()
 {
 
@@ -19,11 +51,53 @@ void CyranoHandler::Begin()
     uint32_t PisteNr = networkpreferences.getInt("pisteNr", 304);
     CyranoPort = networkpreferences.getUShort("CyranoPort", CYRANO_PORT);
     CyranoBroadcastPort = networkpreferences.getUShort("CyranoBroadcastPort", CYRANO_BROADCAST_PORT);
-    networkpreferences.end();
+
     char temp[8];
     sprintf(temp,"%d",PisteNr);
     m_MachineStatus[PisteId]= (std::string)temp;
     NextPeriodicalUpdate = millis() + 10000;
+    strncpy(mqttServer,networkpreferences.getString("MqttBroker","10.154.1.130").c_str(),16);
+    networkpreferences.end();
+
+    mqttClientId = (char *)malloc(sizeof("Piste_001")+1);
+    sprintf(mqttClientId,"Piste_%.3d",PisteNr);
+    mqttPublishTopic = (char *)malloc(sizeof("MQTT_Cyrano/Piste_001/FromDevice")+1);
+    sprintf(mqttPublishTopic,"MQTT_Cyrano/Piste_%.3d/FromDevice",PisteNr);
+    mqttListenTopic = (char *)malloc(sizeof("MQTT_Cyrano/Piste_001/FromSoftware")+1);
+    sprintf(mqttListenTopic,"MQTT_Cyrano/Piste_%.3d/FromSoftware",PisteNr);
+    //mqttClient.setSecure(true);
+    //mqttClient.setMaxTopicLength(256);
+    mqttClient.onConnect(onMqttConnect);
+    mqttClient.onDisconnect(onMqttDisconnect);
+/*
+  mqttClient.onMessage([](char* topic, char* payload, AsyncMqttClientMessageProperties properties,
+                          size_t len, size_t index, size_t total) {
+    Serial.print("Message received on topic: ");
+    Serial.println(topic);
+    Serial.print("Payload: ");
+    Serial.println(payload);
+    CyranoHandler &MyCyranoHandler = CyranoHandler::getInstance();
+
+    MyCyranoHandler.ProcessMessageFromSoftware((EFP1Message((char*)payload)));
+
+  });*/
+
+  IPAddress theBroker;
+  uint16_t resolvedPort = mqttPort; // Default port
+
+  theBroker.fromString(mqttServer);
+  mqttClient.onMessage(onMqttMessage);
+
+MDNSResolver *MymDNS;
+MymDNS->getInstance();
+  mqttClient.setServer(MymDNS->lookupService("mqtt", "tcp", theBroker,mdnsName), mqttPort);
+
+  mqttClient.setCredentials(mqttUser, mqttPassword);
+  mqttClient.setClientId(mqttClientId);
+
+  mqttLastWillTopic = (char *)malloc(sizeof("MQTT_Cyrano/Piste_001/Connection")+1);
+  sprintf(mqttLastWillTopic,"MQTT_Cyrano/Piste_%.3d/Connection",PisteNr);
+  mqttClient.setWill(mqttLastWillTopic, "offline", 1, true);
 }
 
 CyranoHandler::~CyranoHandler()
@@ -33,20 +107,33 @@ CyranoHandler::~CyranoHandler()
 }
 
 
+void CyranoHandler::ClearOnACK(){
+  m_MachineStatus[RightFencerId] = "";
+  m_MachineStatus[RightFencerName] = "";
+  m_MachineStatus[RightFencerNation] = "";
+  m_MachineStatus[RightScore] = "";
+  m_MachineStatus[LeftFencerId] = "";
+  m_MachineStatus[LeftFencerName] = "";
+  m_MachineStatus[LeftFencerNation] = "";
+  m_MachineStatus[LeftScore] = "";
+  m_MachineStatus[Priority] = "";
+}
 
 void CyranoHandler::SendInfoMessage()
 {
   if(!bOKToSend)
     return;
-  string TheMessage;
+  std::string TheMessage;
   m_MachineStatus[Command] = "INFO";
   TheMessage = m_MachineStatus.ToString(TheMessage);
   //CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoPort,TCPIP_ADAPTER_IF_STA);
 
 if(false)
   CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
-else
+else{
   CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), SoftwareIPAddress(),CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+  mqttClient.publish(mqttPublishTopic, 0, true,TheMessage.c_str(),TheMessage.length());}
+
   return;
 }
 
@@ -54,7 +141,6 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
 {
     if(input[PisteId] != m_MachineStatus[PisteId])
         return; // wrong Piste
-
     switch(input.GetType())
     {
         case HELLO :
@@ -64,10 +150,11 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
           m_MachineStatus[State] = "W";
           StateChanged(EVENT_CYRANO_STATE_W);
         }
+
         bOKToSend = true;
         bSoftwareIsLive = true;
         LastHelloReception = millis();
-        //m_MachineStatus[CompetitionId] = input[CompetitionId];
+        m_MachineStatus[CompetitionId] = input[CompetitionId];
         SendInfoMessage();
 
         break;
@@ -76,18 +163,28 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
 
         if(WAITING == m_State)
         {
-            // Initialize with the received values
+            // Initialize with the received value
           EFP1Message  temp;
           temp = m_MachineStatus;
           temp.Prune(input);
-          string msg;
+
+          std::string msg;
+
           temp.ToString(msg);
+
           StateChanged(msg);
+
           m_MachineStatus.CopyIfNotEmpty(input);
+
           m_MachineStatus[State] = "W";
           m_State = WAITING;
           StateChanged(EVENT_CYRANO_STATE_W);
+
           m_MachineStatus[Command] = "INFO";
+
+          // Lock Machine
+          StateChanged(EVENT_CYRANO_STATE_LOCKED);
+
         }
 
         break;
@@ -98,8 +195,10 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
             // Initialize with the received values
             m_State = WAITING;
             m_MachineStatus[State] = "W";
+            ClearOnACK();
             StateChanged(EVENT_CYRANO_STATE_W);
             SendInfoMessage();
+
         }
 
         break;
@@ -107,6 +206,9 @@ void CyranoHandler::ProcessMessageFromSoftware(const EFP1Message &input)
         case NAK :
         // The software doesn't accept the "END" message
         StateChanged(EVENT_CYRANO_STATE_NAK);
+        m_State = HALT;
+        m_MachineStatus[State] = "H";
+        SendInfoMessage();
         break;
         ESP_LOGE(CYRANO_TAG, "%s","Interesting, I should never ever get here");
 
@@ -125,14 +227,15 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         bOKToSend = true;
         if(WAITING == m_State)
         {
-            string TheMessage = m_MachineStatus.MakeNextMessageString();
+            std::string TheMessage = m_MachineStatus.MakeNextMessageString();
             //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
             //CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
             if(false)
               CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
-            else
+            else{
               CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), SoftwareIPAddress(),CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
-
+              mqttClient.publish(mqttPublishTopic, 1, true,TheMessage.c_str(),TheMessage.length());
+            }
             StateChanged(EVENT_CYRANO_STATE_W);
         }
         break;
@@ -141,13 +244,15 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         bOKToSend = true;
         if(WAITING == m_State)
         {
-          string TheMessage = m_MachineStatus.MakePrevMessageString();
+          std::string TheMessage = m_MachineStatus.MakePrevMessageString();
           //CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), IPAddress(10,154,1,109),CYRANO_PORT,TCPIP_ADAPTER_IF_STA);
           //CyranoHandlerudpRcv.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
           if(false)
             CyranoHandlerudpBroadcast.broadcastTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
-          else
+          else{
             CyranoHandlerudpRcv.writeTo((uint8_t*)TheMessage.c_str(),TheMessage.length(), SoftwareIPAddress(),CyranoBroadcastPort,TCPIP_ADAPTER_IF_STA);
+            mqttClient.publish(mqttPublishTopic, 1, true, TheMessage.c_str(),TheMessage.length());
+          }
           StateChanged(EVENT_CYRANO_STATE_W);
         }
         break;
@@ -160,6 +265,9 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
           m_MachineStatus[State] = "H";
           StateChanged(EVENT_CYRANO_STATE_H);
           SendInfoMessage();
+
+          // Unlock Machine
+          StateChanged(EVENT_CYRANO_STATE_UNLOCKED);
         }
         break;
 
@@ -179,7 +287,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         bOKToSend = true;
         {
           m_MachineStatus.SwapFencersInclScoreCardsEtc();
-          string msg;
+          std::string msg;
           m_MachineStatus.ToString(msg);
           StateChanged(msg);
           SendInfoMessage();
@@ -193,7 +301,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
           if(m_MachineStatus[CompetitionType] == "T")
           {
             m_MachineStatus.HandleTeamReserve(true,true);
-            string msg;
+            std::string msg;
             m_MachineStatus.ToString(msg);
             StateChanged(msg);
             SendInfoMessage();
@@ -206,7 +314,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
           if(m_MachineStatus[CompetitionType] == "T")
           {
             m_MachineStatus.HandleTeamReserve(false,true);
-            string msg;
+            std::string msg;
             m_MachineStatus.ToString(msg);
             StateChanged(msg);
             SendInfoMessage();
@@ -218,7 +326,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         bOKToSend = true;
         {
           m_MachineStatus[LeftStatus] = "A";
-          string msg;
+          std::string msg;
           m_MachineStatus.ToString(msg);
           StateChanged(msg);
           SendInfoMessage();
@@ -228,7 +336,7 @@ void CyranoHandler::ProcessUIEvents(uint32_t const event)
         bOKToSend = true;
         {
           m_MachineStatus[RightStatus] = "A";
-          string msg;
+          std::string msg;
           m_MachineStatus.ToString(msg);
           StateChanged(msg);
           SendInfoMessage();
@@ -301,7 +409,7 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
 
     case EVENT_SCORE_LEFT:
     {
-      stringstream ss; ss << event_data;
+      std::stringstream  ss; ss << event_data;
       ss >> m_MachineStatus[LeftScore];
     }
 
@@ -309,7 +417,7 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
 
     case EVENT_SCORE_RIGHT:
     {
-      stringstream ss; ss << event_data;
+      std::stringstream  ss; ss << event_data;
       ss >> m_MachineStatus[RightScore];
     }
 
@@ -347,8 +455,9 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
       else
         m_timeToShowTimer = temp + 900;
     }
-
-
+    // Always show transition to zero
+    if(!event_data)
+      bTransmit = true;
     //newseconds = event_data & (DATA_BYTE1_MASK |DATA_BYTE2_MASK);
     TimeInfo.theDWord = eventtype & DATA_24BIT_MASK;
     //if(previous_seconds != newseconds)
@@ -374,7 +483,7 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
       currentRound = event_data & DATA_BYTE0_MASK;
       if(currentRound < 10)
       {
-        stringstream ss; ss << currentRound;
+        std::stringstream  ss; ss << currentRound;
         ss >> m_MachineStatus[RoundNumber];
       }
 
@@ -383,28 +492,28 @@ void CyranoHandler::update (FencingStateMachine *subject, uint32_t eventtype)
 
     case EVENT_YELLOW_CARD_LEFT:
     {
-      stringstream ss; ss << event_data;
+      std::stringstream  ss; ss << event_data;
       ss >> m_MachineStatus[LeftYCard];
     }
     break;
 
     case EVENT_YELLOW_CARD_RIGHT:
     {
-      stringstream ss; ss << event_data;
+      std::stringstream  ss; ss << event_data;
       ss >> m_MachineStatus[RightYCard];
     }
     break;
 
     case EVENT_RED_CARD_LEFT:
     {
-      stringstream ss; ss << event_data;
+      std::stringstream  ss; ss << event_data;
       ss >> m_MachineStatus[LeftRCard];
     }
     break;
 
     case EVENT_RED_CARD_RIGHT:
     {
-      stringstream ss; ss << event_data;
+      std::stringstream  ss; ss << event_data;
       ss >> m_MachineStatus[RightRCard];
     }
     break;
@@ -481,8 +590,11 @@ void ProcessCyranoPacket (AsyncUDPPacket packet)
     else
       return;
   }
+  //ESP_LOGE(CYRANO_TAG, "%s",(char*)packet.data());
   MyCyranoHandler.ProcessMessageFromSoftware((EFP1Message((char*)packet.data())));
 }
+
+
 
 void CyranoHandler::CheckConnection()
 {
@@ -503,6 +615,12 @@ void CyranoHandler::CheckConnection()
     {
       bWifiConnected = true;
     }
+    //if (!mqttClient.connected())
+    {
+      mqttClient.begin();
+      bSoftwareIsLive = true;
+      bCyranoConnected = true;
+    }
 
     if(!bCyranoConnected)
     {// Somehow we should call this only once. It will keep on trying for ever.
@@ -515,6 +633,14 @@ void CyranoHandler::CheckConnection()
           ProcessCyranoPacket (packet);
         });
       }
+
+      // Insert the MQTT connect code here
+      //if (!mqttClient.connected())
+      {
+      mqttClient.begin();
+      }
+
+
       bCyranoConnected = true;
     }
 

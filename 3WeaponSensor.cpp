@@ -1,7 +1,10 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
-
+#include "driver/gpio.h"
 #include "3WeaponSensor.h"
 #include "driver/adc.h"
+#include "soc/sens_reg.h"
+#include "soc/sens_struct.h"
+
 #include "esp_timer.h"
 #include <iostream>
 #include <Preferences.h>
@@ -10,22 +13,96 @@
 #include "TimeScoreDisplay.h"
 #include "esp_task_wdt.h"
 #include "esp_log.h"
+#include "driver/rtc_io.h"
+#include "driver/gpio.h" // Required for gpio_pad_select_gpio()
+#include "soc/io_mux_reg.h" // For IO_MUX register definitions
+
+
 static const char* CORE_SCORING_MACHINE_TAG = "Core Scoring machine";
 
 TaskHandle_t CoreScoringMachineTask;
 
+#include <driver/gpio.h> // Ensure ESP32 GPIO driver is included
+
+// ESP32 Register Addresses
+#define GPIO_ENABLE_REG     (DR_REG_GPIO_BASE + 0x20) // GPIO 0-31 direction
+#define GPIO_ENABLE1_REG    (DR_REG_GPIO_BASE + 0x24) // GPIO 32-39 direction
+#define GPIO_OUT_W1TS_REG   (DR_REG_GPIO_BASE + 0x08) // GPIO 0-31 set HIGH
+#define GPIO_OUT_W1TC_REG   (DR_REG_GPIO_BASE + 0x0C) // GPIO 0-31 set LOW
+#define GPIO_OUT1_W1TS_REG  (DR_REG_GPIO_BASE + 0x10) // GPIO 32-39 set HIGH
+#define GPIO_OUT1_W1TC_REG  (DR_REG_GPIO_BASE + 0x18) // GPIO 32-39 set LOW
+
+// Precomputed masks for your GPIOs (21,23,25,5,18,19)
+constexpr uint32_t LOWER_PINS = (1 << 21) | (1 << 23) | (1 << 25) | (1 << 5) | (1 << 18) | (1 << 19);
+constexpr uint32_t HIGHER_PIN_33 = (1 << 1); // Bit 1 in higher registers (GPIO33 = 32 + 1)
+
+// Disable pull-up/pull-down for GPIO33 (optional)
+void disable_gpio33_pull() {
+  REG_CLR_BIT(IO_MUX_GPIO33_REG, (1 << 7) | (1 << 6)); // Clear FUN_PU (bit7) and FUN_PD (bit6)
+}
+
+void Set_IODirectionAndValue(uint8_t direction, uint8_t values) {
+  // --- Lower GPIOs (21,23,25,5,18,19) ---
+  // 1. Direction (INPUT = 1, OUTPUT = 0)
+  uint32_t enable_lower = REG_READ(GPIO_ENABLE_REG);
+  enable_lower &= ~LOWER_PINS; // Clear existing bits for your pins
+  enable_lower |= ((direction & 0x02) ? 0 : (1 << 21)) // GPIO21
+                | ((direction & 0x04) ? 0 : (1 << 23)) // GPIO23
+                | ((direction & 0x08) ? 0 : (1 << 25)) // GPIO25
+                | ((direction & 0x10) ? 0 : (1 << 5))  // GPIO5
+                | ((direction & 0x20) ? 0 : (1 << 18)) // GPIO18
+                | ((direction & 0x40) ? 0 : (1 << 19)); // GPIO19
+  REG_WRITE(GPIO_ENABLE_REG, enable_lower);
+
+  // 2. Output levels (only for OUTPUT pins)
+  uint32_t lower_levels = ((values & 0x02) ? (1 << 21) : 0) // GPIO21
+                        | ((values & 0x04) ? (1 << 23) : 0) // GPIO23
+                        | ((values & 0x08) ? (1 << 25) : 0) // GPIO25
+                        | ((values & 0x10) ? (1 << 5)  : 0) // GPIO5
+                        | ((values & 0x20) ? (1 << 18) : 0) // GPIO18
+                        | ((values & 0x40) ? (1 << 19) : 0); // GPIO19
+  // Atomic writes (only modify your pins)
+  REG_WRITE(GPIO_OUT_W1TS_REG, lower_levels); // Set HIGH
+  REG_WRITE(GPIO_OUT_W1TC_REG, (~lower_levels) & LOWER_PINS); // Set LOW
+
+  // --- Higher GPIO33 (32-39) ---
+  if (direction & 0x01){
+    gpio_set_direction(GPIO_NUM_33,GPIO_MODE_INPUT);
+    gpio_set_pull_mode(GPIO_NUM_33,GPIO_FLOATING);
+   }
+   else{
+     gpio_set_direction(GPIO_NUM_33,GPIO_MODE_OUTPUT);
+     gpio_set_level(GPIO_NUM_33,(values & 0x01));
+   }
+}
+
 void CoreScoringMachineHandler(void *parameter)
 {
   MultiWeaponSensor &MyLocalSensor = MultiWeaponSensor::getInstance();
+  /*long start;
+  volatile int test;
 
+  MyLocalSensor.Setweapon_detection_mode(MANUAL);
+  MyLocalSensor.SetActualWeapon(SABRE);
+  while(true){
+    start = millis();
+  for(int i = 0; i < 10000; i++){
+    MyLocalSensor.DoFoil();
+
+
+    //esp_task_wdt_reset();
+  }
+  std::cout << "Duration = " << millis() - start << std::endl;
+}
+*/
   while(true)
   {
     MyLocalSensor.DoFullScan();
-    esp_task_wdt_reset();
+    //esp_task_wdt_reset();
   }
 }
 
-using namespace std;
+// using namespace std;
 
 // I have 7 Output /Tristate pins (3 per weapon + piste)
 const uint8_t driverpins[] = {al_driver, bl_driver, cl_driver, ar_driver, br_driver, cr_driver, piste_driver};
@@ -47,9 +124,10 @@ MultiWeaponSensor::MultiWeaponSensor()
 {
     //ctor
     int hw_timer_nr = 1;
-    adc_power_on();
-    if(ESP_OK != adc_set_clk_div(1))
-      ESP_LOGE(CORE_SCORING_MACHINE_TAG, "%s","I did not expect this!");
+    //adc_power_on();
+    //if(ESP_OK != adc_set_clk_div(9))
+    //  ESP_LOGE(CORE_SCORING_MACHINE_TAG, "%s","I did not expect this!");
+
     if(ESP_OK != adc1_config_width(ADC_WIDTH_BIT_12))
       ESP_LOGE(CORE_SCORING_MACHINE_TAG, "%s","I did not expect this!");
     if(ESP_OK != adc1_config_channel_atten(ADC1_CHANNEL_0,ADC_ATTEN_DB_11))
@@ -59,7 +137,12 @@ MultiWeaponSensor::MultiWeaponSensor()
     adc1_config_channel_atten(ADC1_CHANNEL_6,ADC_ATTEN_DB_11);
     adc1_config_channel_atten(ADC1_CHANNEL_7,ADC_ATTEN_DB_11);
     ESP_LOGI(CORE_SCORING_MACHINE_TAG, "%s","ADC configured");
-    int test = adc1_get_raw(ADC1_CHANNEL_0);
+    int test = adc1_get_raw(ADC1_CHANNEL_3);
+    test = adc1_get_raw(ADC1_CHANNEL_4);
+    test = adc1_get_raw(ADC1_CHANNEL_6);
+    test = adc1_get_raw(ADC1_CHANNEL_7);
+    test = adc1_get_raw(ADC1_CHANNEL_0);
+
 
   // Create semaphore to inform us when the timer has fired
   //timerSemaphore = xSemaphoreCreateCounting(20,0);
@@ -87,7 +170,8 @@ MultiWeaponSensor::MultiWeaponSensor()
   LongCounter_c2 = LONG_COUNT_C_INIT_FOIL;
   LongCounter_NotConnected = LONG_COUNT_NOTCONNECTED_INIT;
   LongCounter_AtLeastOneNotConnected = LONG_COUNT_NOTCONNECTED_STOP_BUZZING;
-
+  gpio_pad_select_gpio(GPIO_NUM_33); // Route pin to GPIO (not peripheral)
+gpio_set_direction(GPIO_NUM_33,GPIO_MODE_INPUT_OUTPUT);
 
   SensorMutex = xSemaphoreCreateBinary();
 }
@@ -120,7 +204,7 @@ void MultiWeaponSensor:: begin()
     case 2:
     m_ActualWeapon = SABRE;
     break;
-    defaut:
+    default:
     m_ActualWeapon = EPEE;
 
   }
@@ -143,13 +227,13 @@ void MultiWeaponSensor:: begin()
             0,                                /* Priority of the task. */
             &CoreScoringMachineTask,           /* Task handle. */
             0);
-  esp_task_wdt_add(CoreScoringMachineTask);
+  //esp_task_wdt_add(CoreScoringMachineTask);
 }
 
 
 
 
-void Set_IODirectionAndValue(uint8_t setting, uint8_t values)
+void OldSet_IODirectionAndValue(uint8_t setting, uint8_t values)
 {
   uint8_t mask = 1;
   for (int i = 0; i < 7; i++)
@@ -174,16 +258,15 @@ void Set_IODirectionAndValue(uint8_t setting, uint8_t values)
     mask <<= 1;
   }
 }
+
 adc1_channel_t ADC1_CHANNELS[] = {ADC1_CHANNEL_0,ADC1_CHANNEL_1,ADC1_CHANNEL_2,ADC1_CHANNEL_3,ADC1_CHANNEL_4,ADC1_CHANNEL_5,ADC1_CHANNEL_6,ADC1_CHANNEL_7};
 
 bool MultiWeaponSensor::Do_Common_Start()
 {
-  //while (!xSemaphoreTake(timerSemaphore, 1 / (portTICK_PERIOD_MS)) == pdTRUE);
-  //while (!xSemaphoreTake(timerSemaphore, 0) == pdTRUE);
-
-  //tempADValue = analogRead(Set->ADChannel);
   tempADValue = adc1_get_raw(ADC1_CHANNELS[Set->ADChannel]);
   Set_IODirectionAndValue(Set->IODirection, Set->IOValues);
+  //setGPIO(Set->IODirection, Set->IOValues);
+
   if (tempADValue > Set->ADThreashold)
   {
     Set++;
@@ -403,17 +486,12 @@ void MultiWeaponSensor::DoFullScan()
     /***************************************************************************************************/
     /*************  Start of Dummy phase          ******************************************************/
     /***************************************************************************************************/
-
-
-
+/* From now on, we go as fast as possible
     if(esp_timer_get_time() <  TimetoNextPhase)
       return;
 
     TimetoNextPhase = esp_timer_get_time() + CurrentPhaseDuration;
-    /*while(esp_timer_get_time() <  TimetoNextPhase)
-    {
-
-    }*/
+*/
     weapon_t temp = GetWeapon();
 
     if (m_ActualWeapon != temp)
@@ -465,6 +543,10 @@ void MultiWeaponSensor::DoFullScan()
     {
     case FOIL:
         DoFoil();
+        if(FullScanCounter)
+          FullScanCounter --;
+        else
+          FullScanCounter = 4;
         break;
 
     case EPEE:
@@ -473,14 +555,13 @@ void MultiWeaponSensor::DoFullScan()
 
     case SABRE:
         DoSabre();
+        if(FullScanCounter)
+          FullScanCounter --;
+        else
+          FullScanCounter = 3;
         break;
 
     }
-
-    if(FullScanCounter)
-      FullScanCounter --;
-    else
-      FullScanCounter = 3;
 
 }
 

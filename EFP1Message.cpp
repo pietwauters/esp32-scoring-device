@@ -65,7 +65,7 @@ std::string EFP1Message::ToString(std::string & Buffer)
         wxLogError("Aha! This is not good: Buffer should never exceed 210");*/
     return Buffer;
 }
-
+/*
 std::string & EFP1Message::operator [](int i)
 {
     // Todo: if you use the current field names, it is assumed that the 1.1 version is used, (So 41 fields: 17 general and 12 for right and 12 for left.
@@ -95,36 +95,86 @@ std::string & EFP1Message::operator [](int i)
     }
 
 }
-
-const std::string & EFP1Message::operator [](int i) const
+*/
+std::string& EFP1Message::accessField(std::vector<std::string>& general,
+                                      std::vector<std::string>& left,
+                                      std::vector<std::string>& right, int i)
 {
+    static std::string emptyString;
+    size_t generalCount = general.size();
+    size_t fencerCount = left.size();
 
-    if((i < 0) || (i > MAX_NR_FIELDS -1))
-        return mGeneralFields[0];
-    else
-    {
-        if(i < GetNrOfGeneralFields())
-        {
-            return mGeneralFields[i];
-        }
-        else
-        {
-            if(i >= GetNrOfFencerFields() + GetNrOfGeneralFields())
-            {
-                return mLeftFencerFields[i-GetNrOfFencerFields() - GetNrOfGeneralFields()];
-            }
-            else
-            {
-                return mRightFencerFields[i - GetNrOfGeneralFields()];
-            }
-        }
+    if (i < 0 || static_cast<size_t>(i) >= generalCount + 2 * fencerCount) {
+        return emptyString;
     }
+
+    if (static_cast<size_t>(i) < generalCount) {
+        return general[i];
+    }
+
+    i -= generalCount;
+
+    if (static_cast<size_t>(i) < fencerCount && !left.empty()) {
+        return left[i];
+    }
+
+    i -= fencerCount;
+
+    if (static_cast<size_t>(i) < fencerCount && !right.empty()) {
+        return right[i];
+    }
+
+    return emptyString;
 }
+
+const std::string& EFP1Message::accessField(const std::vector<std::string>& general,
+                                            const std::vector<std::string>& left,
+                                            const std::vector<std::string>& right, int i)
+{
+    static const std::string emptyString;
+    size_t generalCount = general.size();
+    size_t fencerCount = left.size();
+
+    if (i < 0 || static_cast<size_t>(i) >= generalCount + 2 * fencerCount) {
+        return emptyString;
+    }
+
+    if (static_cast<size_t>(i) < generalCount) {
+        return general[i];
+    }
+
+    i -= generalCount;
+
+    if (static_cast<size_t>(i) < fencerCount && !left.empty()) {
+        return left[i];
+    }
+
+    i -= fencerCount;
+
+    if (static_cast<size_t>(i) < fencerCount && !right.empty()) {
+        return right[i];
+    }
+
+    return emptyString;
+}
+
+
+std::string& EFP1Message::operator[](int i)
+{
+    return accessField(mGeneralFields, mLeftFencerFields, mRightFencerFields, i);
+}
+
+const std::string& EFP1Message::operator[](int i) const
+{
+    return accessField(mGeneralFields, mLeftFencerFields, mRightFencerFields, i);
+}
+
+
 
 EFP1Message::EFP1Message(const std::string &Buffer)
 {
 
-    // Vector of string to save tokens
+    // Vector of std::string to save tokens
     char dummy;
     std::vector <std::string> main_areas;
     std::stringstream BufferStream(Buffer);
@@ -161,7 +211,7 @@ EFP1Message::EFP1Message(const std::string &Buffer)
             mLeftFencerFields.push_back(intermediate);
 
         }
-        if(mLeftFencerFields.size() != 12)
+        while(mLeftFencerFields.size() < GetNrOfFencerFields())
           mLeftFencerFields.push_back("");
 
         std::stringstream RightFencerFields(main_areas[1]);
@@ -171,9 +221,16 @@ EFP1Message::EFP1Message(const std::string &Buffer)
             mRightFencerFields.push_back(intermediate);
 
         }
-        if(mRightFencerFields.size() != 12)
+        while(mRightFencerFields.size() < GetNrOfFencerFields())
           mRightFencerFields.push_back("");
 
+    }
+    else    // make sure there are always all sections
+    {
+      for(int i=0; i < GetNrOfFencerFields(); i++)
+          mLeftFencerFields.push_back("");
+      for(int i=0; i < GetNrOfFencerFields(); i++)
+          mRightFencerFields.push_back("");
     }
 
 
@@ -186,16 +243,16 @@ EFP1Message::EFP1Message(const std::string &Buffer)
 }
 
 
-string EFP1Message::MakeNextMessageString()
+std::string EFP1Message::MakeNextMessageString()
 {
-    string message = "|" + (*this)[Protocol] + "|NEXT|" ;
+    std::string message = "|" + (*this)[Protocol] + "|NEXT|" ;
     message = message + (*this)[PisteId] + "|" + (*this)[CompetitionId] + "|%|";
     return message;
 
 }
-string EFP1Message::MakePrevMessageString()
+std::string EFP1Message::MakePrevMessageString()
 {
-    string message = "|" + (*this)[Protocol] + "|PREV|" ;
+    std::string message = "|" + (*this)[Protocol] + "|PREV|" ;
     message = message + (*this)[PisteId] + "|" + (*this)[CompetitionId] + "|%|";
     return message;
 }
@@ -226,7 +283,7 @@ MessageType EFP1Message::GetType() const
 }
 
 
-void EFP1Message::CopyIfNotEmpty(const EFP1Message &Source)
+/*void EFP1Message::CopyIfNotEmpty(const EFP1Message &Source)
 {// we should check if the versions are equal
     for(int i=0; i < MAX_NR_FIELDS; i++)
     {
@@ -236,8 +293,24 @@ void EFP1Message::CopyIfNotEmpty(const EFP1Message &Source)
         }
     }
 }
+*/
+void EFP1Message::CopyIfNotEmpty(const EFP1Message& Source)
+{
+    auto copyIfNotEmpty = [](std::vector<std::string>& target, const std::vector<std::string>& source) {
+        size_t minSize = std::min(target.size(), source.size());
+        for (size_t i = 0; i < minSize; ++i) {
+            if (source[i] != "") {
+                target[i] = source[i];
+            }
+        }
+    };
 
-void EFP1Message::Prune(const EFP1Message &Source)
+    copyIfNotEmpty(mGeneralFields, Source.mGeneralFields);
+    copyIfNotEmpty(mLeftFencerFields, Source.mLeftFencerFields);
+    copyIfNotEmpty(mRightFencerFields, Source.mRightFencerFields);
+}
+
+/*void EFP1Message::Prune(const EFP1Message &Source)
 {// we should check if the versions are equal
 
     for(int i=CompetitionId; i < MAX_NR_FIELDS; i++)
@@ -251,10 +324,29 @@ void EFP1Message::Prune(const EFP1Message &Source)
         {
           (*this)[i] = Source[i];
         }
-
     }
-}
 
+
+
+}
+*/
+void EFP1Message::Prune(const EFP1Message& Source)
+{
+    auto pruneVector = [](std::vector<std::string>& target, const std::vector<std::string>& source) {
+        size_t minSize = std::min(target.size(), source.size());
+        for (size_t i = 0; i < minSize; ++i) {
+            if (target[i] == source[i]) {
+                target[i] = ""; // Set to ""
+            }
+            else{
+                target[i] = source[i];
+            }
+        }
+    };
+    pruneVector(mGeneralFields, Source.mGeneralFields);
+    pruneVector(mLeftFencerFields, Source.mLeftFencerFields);
+    pruneVector(mRightFencerFields, Source.mRightFencerFields);
+}
 
 void EFP1Message::SwapFencersInclScoreCardsEtc()
 {
@@ -295,7 +387,7 @@ void EFP1Message::HandleTeamReserve(bool left, bool value)
 uint8_t EFP1Message::EFP1StatusString2Type10MessageStatus()
 {
   std::string EFP1Status = (*this)[State];
-  //cout << "EFP1Status: "<< EFP1Status<< endl;
+  //std::cout << "EFP1Status: "<< EFP1Status<< std::endl;
   if("F" == EFP1Status)
     return 'F';
   if("H" == EFP1Status)

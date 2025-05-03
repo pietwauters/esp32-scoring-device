@@ -6,7 +6,7 @@
 #include "EventDefinitions.h"
 #include <Preferences.h>
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
-#include <AsyncTCP.h>
+//#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 // It seems we should not use channels above 11
 #define CHANNEL_COUNT  12
@@ -74,7 +74,7 @@ class NetWork : public Observer<UDPIOHandler>, public SingletonMixin<NetWork>
     bool SavedNetworkExists = false;
     bool LookForExternalWiFi = false;
     int bestchannel = -1;
-    AsyncWebServer server={80};
+    //AsyncWebServer server={80};
     WiFiManager wm;
 };
 #endif //NETWORK_H

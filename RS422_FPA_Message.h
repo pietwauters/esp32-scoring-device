@@ -4,7 +4,7 @@
 #include <iostream>
 #include "weaponenum.h"
 //#include <Arduino.h>
-using namespace std;
+// using namespace std;
 
 #define MAX_MESSAGE_LENGTH_RS422	39 + 4
 #define SOH  0x01

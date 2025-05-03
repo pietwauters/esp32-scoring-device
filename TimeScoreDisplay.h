@@ -64,6 +64,7 @@ class TimeScoreDisplay : public Observer<FencingStateMachine>,public Observer<Re
         void DisplayWeapon(weapon_t weapon);
         void DisplayPisteId();
         void SetBrightness(int value);
+        static void SetPower(bool bValue){if(bValue){digitalWrite(PowerPin,HIGH);}else{digitalWrite(PowerPin,LOW);}};
 
     protected:
 

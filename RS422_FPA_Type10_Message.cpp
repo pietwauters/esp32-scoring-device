@@ -2,7 +2,7 @@
 #include "RS422_FPA_Type10_Message.h"
 #include <iostream>
 #include <cstdio>
-using namespace std;
+// using namespace std;
 
 RS422_FPA_Type10_Message::RS422_FPA_Type10_Message()
 {

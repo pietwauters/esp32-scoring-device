@@ -42,7 +42,7 @@ UDPIOHandler &MyUDPIOHandler = UDPIOHandler::getInstance();
 
       if(Commandudp.listen(1234))
       {
-        ESP_LOGI(NETWORK_TAG, "UDP Listening on IP: %s",(WiFi.localIP().toString()).c_str()));
+        ESP_LOGI(UDPIO_HANDLER_TAG, "UDP Listening on IP: %s",(WiFi.localIP().toString()).c_str()));
 
         Commandudp.onPacket([](AsyncUDPPacket packet) {
           ProcessUDPPacket (packet);
@@ -62,7 +62,7 @@ UDPIOHandler &MyUDPIOHandler = UDPIOHandler::getInstance();
 
         if(Commandudp.listen(1234))
         {
-          ESP_LOGI(NETWORK_TAG, "UDP Listening on IP: %s",(WiFi.softAPIP().toString()).c_str());
+          ESP_LOGI(UDPIO_HANDLER_TAG, "UDP Listening on IP: %s",(WiFi.softAPIP().toString()).c_str());
 
 
             Commandudp.onPacket([](AsyncUDPPacket packet) {
@@ -86,7 +86,7 @@ void UDPIOHandler::ConnectToAP()
     bUDPConnected = true;
     if(Commandudp.listen(1234))
     {
-      ESP_LOGI(NETWORK_TAG, "UDP Listening on IP: %s",(WiFi.softAPIP().toString()).c_str());
+      ESP_LOGI(UDPIO_HANDLER_TAG, "UDP Listening on IP: %s",(WiFi.softAPIP().toString()).c_str());
 
         Commandudp.onPacket([](AsyncUDPPacket packet) {
           ProcessUDPPacket (packet);

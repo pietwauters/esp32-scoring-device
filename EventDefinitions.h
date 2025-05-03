@@ -2,10 +2,12 @@
 #ifndef EVENTDEFINITIONS_H
 #define EVENTDEFINITIONS_H
 // Typedefinition to access individual bytes of a 32 bit unsigned
+#include <cstdint>
+#include <cstddef>
 union mix_t
 {
-    std::uint32_t theDWord;
-    std::uint8_t theBytes[4];
+    uint32_t theDWord;
+    uint8_t theBytes[4];
 };
 
 // An event is represented as a 32 bit unsigned integer
@@ -49,6 +51,9 @@ union mix_t
 #define EVENT_UI_INPUT_SPECIAL_SETTINGS 0x15000000
 #define EVENT_WS2812_START_ANIMATION 0x16000000
 #define EVENT_IDLE 0x17000000
+
+
+
 #define EVENT_GO_INTO_IDLE 0x00000001
 #define EVENT_GO_OUT_OF_IDLE 0x00000000
 
@@ -90,7 +95,7 @@ union mix_t
 #define UI_INPUT_P_CARD 0x00000017
 #define UI_INPUT_P_CARD_UNDO 0x0000ff17
 
-#define UI_BUZZ 0x00000018
+#define UI_INPUT_BUZZ 0x00000018
 
 #define UI_INPUT_BLACK_CARD_RIGHT 0x00000050
 #define UI_INPUT_BLACK_CARD_RIGHT_DECR 0x0000ff50
@@ -162,6 +167,9 @@ union mix_t
 #define EVENT_CYRANO_STATE_P 0x30000050
 #define EVENT_CYRANO_STATE_NAK 0x30000035
 #define EVENT_CYRANO_STATE_E 0x30000045
+#define EVENT_CYRANO_STATE_LOCKED 0x300000A1
+#define EVENT_CYRANO_STATE_UNLOCKED 0x300000A0
+
 
 // WS2812 Animation types
 #define EVENT_WS2812_WELCOME 0x08010000

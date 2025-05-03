@@ -1,6 +1,9 @@
 //Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
 #include "WS2812BLedStrip.h"
 #include "esp_task_wdt.h"
+#include "driver/gpio.h"
+
+
 TaskHandle_t LedStripTask;
 void LedStripHandler(void *parameter)
 {
@@ -39,6 +42,11 @@ WS2812B_LedStrip::WS2812B_LedStrip()
 {
     //ctor
     gpio_hold_dis((gpio_num_t)PIN);
+    /*gpio_config_t io_conf = {};
+    io_conf.pin_bit_mask = (1ULL << BUZZERPIN);
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    gpio_config(&io_conf);
+    gpio_set_level(BUZZERPIN, RELATIVE_LOW);*/
     pinMode(BUZZERPIN, OUTPUT);
     digitalWrite(BUZZERPIN, RELATIVE_LOW);
     /*m_pixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);

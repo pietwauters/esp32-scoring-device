@@ -148,13 +148,14 @@ void FPA422Handler::StartBluetooth()
 }
 #endif
 
-#ifdef ALLOW_HWSERIAL
+#ifdef ALLOW_HARDWARESERIAL
 HardwareSerial MySerial(2);
 void FPA422Handler::StartHWSerial()
 {
     if(!m_HWSerialStarted)
     {
-        MySerial.begin(38400, SERIAL_8N1, 16, 17);
+        MySerial.begin(115200, SERIAL_8N1, 16, 17);
+        //MySerial.begin(9600, SERIAL_8N1, 16, 17);
         m_HWSerialStarted = true;
     }
 
@@ -195,6 +196,9 @@ ESP_LOGI(FPA422_TAG,"ESP32 IP as soft AP: %s",(WiFi.softAPIP().toString()).c_str
 #ifdef ALLOW_BLE
   StartBLE();
 #endif
+#ifdef ALLOW_HARDWARESERIAL
+    StartHWSerial();
+#endif
 }
 
 #ifdef ALLOW_BLUETOOTH
@@ -218,7 +222,6 @@ void FPA422Handler::BTTPeriodicalUpdate()
         TimeForNext12s = millis() + 12000;
         return;
     }
-
 }
 #endif
 void FPA422Handler::WifiPeriodicalUpdate()
@@ -269,7 +272,7 @@ void FPA422Handler::WifiPeriodicalUpdate()
       }
       if(2 == m_SlowWifiPeriodicalUpdateCounter)
       {
-        WifiTransmitMessage(5);
+        WifiTransmitMessage(6);
       }
       if(3 == m_SlowWifiPeriodicalUpdateCounter)
       {
@@ -483,6 +486,10 @@ if (deviceConnected) {
       //Meassages[Type-1]->Print();
   }
 #endif
+#ifdef ALLOW_HARDWARESERIAL
+MySerial.write(Meassages[Type-1]->GetBuffer(),Meassages[Type-1]->GetCurrentSize());
+
+#endif
 }
 
 #define MASK_ANY_ORANGE (MASK_ORANGE_L | MASK_ORANGE_R)
@@ -680,7 +687,7 @@ void FPA422Handler::update (FencingStateMachine *subject, uint32_t eventtype)
 /*void SetName(const char* name, size_t len = 20);
 void SetNOC(const char* NOC);*/
 
-void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
+void FPA422Handler::update (CyranoHandler *subject, std::string strEFP1Message)
 {
   EFP1Message EFP1Input(strEFP1Message);
   if(EFP1Input[Command] == "NAK")
@@ -694,7 +701,7 @@ void FPA422Handler::update (CyranoHandler *subject, string strEFP1Message)
     // Ignore for now
     return;
   }
-  if(EFP1Input[Command] == "INFO")
+  if((EFP1Input[Command] == "INFO") || (EFP1Input[Command] == "DISP"))
   {
     if(EFP1Input[RightFencerId] != "")
       Message6.SetUID(EFP1Input[RightFencerId].c_str(),EFP1Input[RightFencerId].length());

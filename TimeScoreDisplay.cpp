@@ -82,6 +82,10 @@ void TimeScoreDisplay::begin()
     gpio_hold_dis((gpio_num_t)HSPI_SS);
     hspi.begin();
     pinMode(HSPI_SS, OUTPUT); //HSPI SS
+    //Switch the power of all LED modules on
+    pinMode(PowerPin, OUTPUT);
+    digitalWrite(PowerPin,HIGH);
+
     mx.begin();
     mx.clear();
     queue = xQueueCreate( 60, sizeof( int ) );
@@ -241,12 +245,14 @@ void TimeScoreDisplay::ProcessEvents ()
     case EVENT_IDLE:
     if(event_data == EVENT_GO_INTO_IDLE){
       m_Idle = true;
-
       mx.control(MD_MAX72XX::SHUTDOWN, MD_MAX72XX::ON);
+      SetPower(false);
     }
     else {
+      SetPower(true); // this will also shut_down the WS2812B panels
       m_Idle = false;
-
+      mx.begin();
+      mx.clear();
       mx.control(MD_MAX72XX::SHUTDOWN, MD_MAX72XX::OFF);
 
     }

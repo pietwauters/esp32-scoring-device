@@ -1,43 +1,42 @@
-//Copyright (c) Piet Wauters 2022 <piet.wauters@gmail.com>
+//Copyright (c) Piet Wauters 2025 <piet.wauters@gmail.com>
 #ifndef AUTOREF_H
 #define AUTOREF_H
 #include "SubjectObserverTemplate.h"
+#include "Singleton.h"
 #include "3WeaponSensor.h"
 #include "WS2812BLedStrip.h"
 #include "FencingStateMachine.h"
 
+
 enum RefereeState_t {IDLE,STARTING, ENDING, WATCHING, WAITING_FOR_CONFIRMATION};
 
 class UDPIOHandler;
+class FencingStateMachine;
 
-class AutoRef : public Subject<FencingStateMachine> , public Observer<MultiWeaponSensor> ,  public Observer<UDPIOHandler>
+class AutoRef :  public Subject<AutoRef> ,public Observer<FencingStateMachine>, public SingletonMixin<AutoRef>
 {
     public:
-        /** Default constructor */
-        AutoRef();  // tickPeriod in miliseconds
+
         /** Default destructor */
         virtual ~AutoRef();
-
-
-        //void StateChanged () {notify();}
-
-        void update (MultiWeaponSensor *subject, uint32_t eventtype);
- //       void update (BlynkIOHandler *subject, uint32_t eventtype);
-        void update (UDPIOHandler *subject, uint32_t eventtype);
-        void update (CyranoHandler *subject, uint32_t eventtype){};
-        void update (CyranoHandler *subject, string eventtype);
-
         void StateChanged (uint32_t eventtype) {notify(eventtype);}
-
+        void begin();
+        void static AutoRefHandler(void *parameter);
+        void update (FencingStateMachine *subject, uint32_t eventtype);
 
 
     protected:
 
     private:
     // private methods
-
+    friend class SingletonMixin<AutoRef>;
+    /** Default constructor */
+    AutoRef();
     // private member variables
+    bool m_HasBegun = false;
+    QueueHandle_t AutoRefqueue = NULL;
     RefereeState_t m_RefState = IDLE;
+    long timesincetimertoggle;
 
 
 };

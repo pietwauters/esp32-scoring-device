@@ -132,7 +132,7 @@ BRIEF_MEMBER_DESC      = YES
 REPEAT_BRIEF           = YES
 
 # This tag implements a quasi-intelligent brief description abbreviator that is
-# used to form the text in various listings. Each string in this list, if found
+# used to form the text in various listings. Each std::string in this list, if found
 # as the leading text of the brief description, will be stripped from the text
 # and the result, after processing the whole list, is used as the annotated
 # text. Otherwise, the brief description is used as-is. If left blank, the
@@ -705,7 +705,7 @@ SORT_BY_SCOPE_NAME     = NO
 # type resolution of all parameters of a function it will reject a match between
 # the prototype and the implementation of a member function even if there is
 # only one candidate or it is obvious which candidate to choose by doing a
-# simple string match. By disabling STRICT_PROTO_MATCHING doxygen will still
+# simple std::string match. By disabling STRICT_PROTO_MATCHING doxygen will still
 # accept a match between prototype and implementation in such cases.
 # The default value is: NO.
 
@@ -878,7 +878,7 @@ WARN_IF_UNDOC_ENUM_VAL = NO
 WARN_AS_ERROR          = NO
 
 # The WARN_FORMAT tag determines the format of the warning messages that doxygen
-# can produce. The string should contain the $file, $line, and $text tags, which
+# can produce. The std::string should contain the $file, $line, and $text tags, which
 # will be replaced by the file and line number from which the warning originated
 # and the warning text. Optionally the format may contain $version, which will
 # be replaced by the version of the file (if it could be obtained via
@@ -1457,7 +1457,7 @@ DOCSET_FEEDNAME        = "Doxygen generated docs"
 
 DOCSET_FEEDURL         =
 
-# This tag specifies a string that should uniquely identify the documentation
+# This tag specifies a std::string that should uniquely identify the documentation
 # set bundle. This should be a reverse domain-name style string, e.g.
 # com.mycompany.MyDocSet. Doxygen will append .docset to the name.
 # The default value is: org.doxygen.Project.
@@ -1465,7 +1465,7 @@ DOCSET_FEEDURL         =
 
 DOCSET_BUNDLE_ID       = org.doxygen.Project
 
-# The DOCSET_PUBLISHER_ID tag specifies a string that should uniquely identify
+# The DOCSET_PUBLISHER_ID tag specifies a std::string that should uniquely identify
 # the documentation publisher. This should be a reverse domain-name style
 # string, e.g. com.mycompany.MyDocSet.documentation.
 # The default value is: org.doxygen.Publisher.
@@ -2266,7 +2266,7 @@ PERLMOD_LATEX          = NO
 PERLMOD_PRETTY         = YES
 
 # The names of the make variables in the generated doxyrules.make file are
-# prefixed with the string contained in PERLMOD_MAKEVAR_PREFIX. This is useful
+# prefixed with the std::string contained in PERLMOD_MAKEVAR_PREFIX. This is useful
 # so different doxyrules.make files included by the same Makefile don't
 # overwrite each other's variables.
 # This tag requires that the tag GENERATE_PERLMOD is set to YES.

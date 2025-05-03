@@ -9,6 +9,7 @@
 #include "RS422_FPA_Type5_Message.h"
 #include "RS422_FPA_Type8_Message.h"
 #include "RS422_FPA_Type10_Message.h"
+#include "RS422_FPA_Type20_Message.h"
 #include "SubjectObserverTemplate.h"
 #include "FencingStateMachine.h"
 #include "EventDefinitions.h"
@@ -31,7 +32,7 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
         /** Default destructor */
         virtual ~FPA422Handler();
         void update (FencingStateMachine *subject, uint32_t eventtype);
-        void update (CyranoHandler *subject, string strEFP1Message);
+        void update (CyranoHandler *subject, std::string strEFP1Message);
         void update (CyranoHandler *subject, uint32_t eventtype);
         void ProcessLightsChange(uint32_t eventtype);
 #ifdef ALLOW_BLUETOOTH
@@ -43,7 +44,7 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
 
 #endif
         void StartWiFi();
-#ifdef ALLOW_HWSERIAL
+#ifdef ALLOW_HARDWARESERIAL
         void StartHWSerial();
 #endif
         void WifiTransmitMessage(int Type);
@@ -63,6 +64,7 @@ class FPA422Handler : public Observer<FencingStateMachine> , public Observer<Cyr
     //RS422_FPA_Type7_Message Message7;
     RS422_FPA_Type8_Message Message8;
     RS422_FPA_Type10_Message Message10;
+    RS422_FPA_Type20_Message Message11;
 
     RS422_FPA_Message *Meassages[10]={&Message1,&Message2,&Message3,&Message4,&Message5,&Message6,&Message1,&Message8,&Message1,&Message10};
 

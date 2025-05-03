@@ -4,7 +4,7 @@
 #include <string>
 
 #define MAX_NR_FIELDS 41
-using namespace std;
+// using namespace std;
 
 
 enum EPF1SubMessage
@@ -86,8 +86,8 @@ class EFP1Message
         void Prune(const EFP1Message &Source);
         void TruncateToMaxLength(void){return;}  // ToDo make sure the length of the fields is conform to the specification. I don't think I really need it.
         MessageType GetType() const;
-        string MakeNextMessageString();
-        string MakePrevMessageString();
+        std::string MakeNextMessageString();
+        std::string MakePrevMessageString();
         void SetRed(bool value){if(value){(*this)[LeftLight]= '1';}else{(*this)[LeftLight]= '0';}};
         void SetGreen(bool value){if(value){(*this)[RightLight]= '1';}else{(*this)[RightLight]= '0';}};
         void SetWhiteLeft(bool value){if(value){(*this)[LeftWhiteLight]= '1';}else{(*this)[LeftWhiteLight]= '0';}};
@@ -107,6 +107,14 @@ class EFP1Message
         std::vector<std::string> mRightFencerFields; //!< Member variable "mRightFencerFields"
         int const GetNrOfGeneralFields()const {return 17;}
         int const GetNrOfFencerFields()const ;
+        // Overloaded helpers for const and non-const access
+    static std::string& accessField(std::vector<std::string>& general,
+                                    std::vector<std::string>& left,
+                                    std::vector<std::string>& right, int i);
+
+    static const std::string& accessField(const std::vector<std::string>& general,
+                                          const std::vector<std::string>& left,
+                                          const std::vector<std::string>& right, int i);
 };
 
 #endif // EFP1Message_H
