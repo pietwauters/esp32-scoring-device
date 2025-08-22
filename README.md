@@ -6,6 +6,17 @@ This project has 3 repositories:
 * [One with the Android Studio code for the remote control app ](https://github.com/pietwauters/remotecontrolapp)
 * [One with the KiCad files for the pcb design](https://github.com/pietwauters/esp32_scoring_device_hardware)
 
+## Integration with Home Assistant
+
+This device supports MQTT communication and can be easily integrated with Home Assistant for monitoring and automation. See our comprehensive [Home Assistant Integration Guide](docs/home-assistant-integration.md) for:
+
+- Complete MQTT sensor configurations
+- Example automations for match notifications  
+- Proper YAML syntax and templating examples
+- Troubleshooting guide for common issues
+
+## Hardware
+
 3D printing files for an enclosure can be found here: https://www.printables.com/model/1138815-enclosure-for-scoring-device
 
 However, a transparent plastic box and some plywood is also a good starting point if you don't own a 3D-printer or if you just want to make a demonstrator.
