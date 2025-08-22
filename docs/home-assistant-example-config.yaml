@@ -1,0 +1,99 @@
+# Example Home Assistant Configuration
+# Copy the relevant sections to your configuration.yaml or package files
+# Note: !secret tags are Home Assistant specific and reference secrets.yaml
+
+# MQTT Configuration (in configuration.yaml)
+mqtt:
+  broker: 192.168.1.100  # Replace with your MQTT broker IP
+  port: 1883
+  username: !secret mqtt_username  # Optional - references secrets.yaml
+  password: !secret mqtt_password  # Optional - references secrets.yaml
+
+# Sensors for Piste 1 (add to configuration.yaml or a package file)
+sensor:
+  - platform: mqtt
+    name: "Piste 1 Status"
+    state_topic: "MQTT_Cyrano/Piste_001/FromDevice"
+    value_template: "{{ value_json.state | default('unknown') }}"
+    json_attributes_topic: "MQTT_Cyrano/Piste_001/FromDevice"
+    unique_id: "piste_001_status"
+
+  - platform: mqtt
+    name: "Piste 1 Left Score"
+    state_topic: "MQTT_Cyrano/Piste_001/FromDevice"
+    value_template: "{{ value_json.left_score | default(0) | int }}"
+    unit_of_measurement: "points"
+    unique_id: "piste_001_left_score"
+
+  - platform: mqtt
+    name: "Piste 1 Right Score"
+    state_topic: "MQTT_Cyrano/Piste_001/FromDevice"
+    value_template: "{{ value_json.right_score | default(0) | int }}"
+    unit_of_measurement: "points"
+    unique_id: "piste_001_right_score"
+
+# Binary sensors for connection and lights
+binary_sensor:
+  - platform: mqtt
+    name: "Piste 1 Connection"
+    state_topic: "MQTT_Cyrano/Piste_001/Connection"
+    payload_on: "online"
+    payload_off: "offline"
+    device_class: connectivity
+    unique_id: "piste_001_connection"
+
+  - platform: mqtt
+    name: "Piste 1 Red Light"
+    state_topic: "MQTT_Cyrano/Piste_001/FromDevice"
+    value_template: "{{ value_json.left_light == '1' }}"
+    payload_on: true
+    payload_off: false
+    unique_id: "piste_001_red_light"
+
+  - platform: mqtt
+    name: "Piste 1 Green Light"
+    state_topic: "MQTT_Cyrano/Piste_001/FromDevice"
+    value_template: "{{ value_json.right_light == '1' }}"
+    payload_on: true
+    payload_off: false
+    unique_id: "piste_001_green_light"
+
+# Example automation (in automations.yaml or configuration.yaml)
+automation:
+  - alias: "Piste 1 Touch Scored"
+    description: "Notify when a touch is scored on Piste 1"
+    trigger:
+      - platform: state
+        entity_id: sensor.piste_1_left_score
+      - platform: state
+        entity_id: sensor.piste_1_right_score
+    condition:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state | int > trigger.from_state.state | int }}
+    action:
+      - service: notify.persistent_notification
+        data:
+          title: "Touch Scored!"
+          message: >
+            Touch scored on Piste 1! 
+            Score: {{ states('sensor.piste_1_left_score') }} - {{ states('sensor.piste_1_right_score') }}
+
+# Example script (in scripts.yaml or configuration.yaml)
+script:
+  reset_piste_1:
+    alias: "Reset Piste 1"
+    description: "Send reset command to Piste 1"
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: "MQTT_Cyrano/Piste_001/FromSoftware"
+          payload: >
+            {
+              "protocol": "EFP1",
+              "command": "DISP",
+              "piste_id": "001",
+              "left_score": "0",
+              "right_score": "0",
+              "state": "W"
+            }
